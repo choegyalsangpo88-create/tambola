@@ -459,9 +459,31 @@ async def create_booking(
     if len(tickets) != len(booking_data.ticket_ids):
         raise HTTPException(status_code=400, detail="Some tickets are already booked")
     
+    # Check for Full Sheet Bonus (all 6 tickets of same sheet)
+    full_sheets = {}
+    for ticket in tickets:
+        sheet_id = ticket.get("full_sheet_id", "")
+        if sheet_id not in full_sheets:
+            full_sheets[sheet_id] = []
+        full_sheets[sheet_id].append(ticket["ticket_position_in_sheet"])
+    
+    # Check if any full sheet has all 6 tickets
+    full_sheet_bonus = False
+    bonus_sheet_id = None
+    for sheet_id, positions in full_sheets.items():
+        if len(positions) == 6 and set(positions) == {1, 2, 3, 4, 5, 6}:
+            full_sheet_bonus = True
+            bonus_sheet_id = sheet_id
+            break
+    
     # Create booking
     booking_id = f"booking_{uuid.uuid4().hex[:8]}"
     total_amount = game["price"] * len(booking_data.ticket_ids)
+    
+    # Add Full Sheet Bonus to amount if applicable
+    full_sheet_bonus_amount = 0
+    if full_sheet_bonus:
+        full_sheet_bonus_amount = game["prizes"].get("Full Sheet Bonus", 1000)
     
     booking = {
         "booking_id": booking_id,
@@ -471,7 +493,9 @@ async def create_booking(
         "total_amount": total_amount,
         "booking_date": datetime.now(timezone.utc),
         "status": "pending",
-        "whatsapp_confirmed": False
+        "whatsapp_confirmed": False,
+        "has_full_sheet_bonus": full_sheet_bonus,
+        "full_sheet_id": bonus_sheet_id
     }
     
     await db.bookings.insert_one(booking)
@@ -479,7 +503,13 @@ async def create_booking(
     # Mark tickets as booked
     await db.tickets.update_many(
         {"ticket_id": {"$in": booking_data.ticket_ids}},
-        {"$set": {"is_booked": True, "user_id": user.user_id, "booking_status": "pending"}}
+        {
+            "$set": {
+                "is_booked": True,
+                "user_id": user.user_id,
+                "booking_status": "pending"
+            }
+        }
     )
     
     # Update available tickets count
@@ -487,6 +517,9 @@ async def create_booking(
         {"game_id": booking_data.game_id},
         {"$inc": {"available_tickets": -len(booking_data.ticket_ids)}}
     )
+    
+    if full_sheet_bonus:
+        toast_msg = f"Booking created! 🎉 Full Sheet Bonus eligible for {bonus_sheet_id}!"
     
     return Booking(**booking)
 
