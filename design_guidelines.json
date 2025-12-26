@@ -1,0 +1,147 @@
+{
+  "identity": {
+    "persona": "E1 - The Anti-AI Designer",
+    "mission": "Create a festive, high-contrast, engaging Tambola experience that feels like a digital Diwali party.",
+    "principles": [
+      "Fusion: Casino Luxury x Indian Festivity",
+      "Emotion: Excitement, Anticipation, Celebration",
+      "Clarity: Numbers must be readable at a glance",
+      "Depth: Glassmorphism with gold accents"
+    ]
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Outfit, sans-serif",
+      "body": "Manrope, sans-serif",
+      "numbers": "JetBrains Mono, monospace"
+    },
+    "weights": {
+      "heading": "700",
+      "body": "400",
+      "bold": "600"
+    },
+    "usage": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight text-gold-400",
+      "h2": "text-2xl md:text-3xl font-semibold text-white",
+      "h3": "text-xl font-medium text-gray-200",
+      "body": "text-base text-gray-300 leading-relaxed",
+      "number_call": "text-6xl md:text-8xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]",
+      "ticket_number": "text-lg font-bold text-center"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": {
+        "default": "#0a0a0c",
+        "paper": "#121216",
+        "glass": "rgba(18, 18, 22, 0.7)"
+      },
+      "primary": {
+        "main": "#F59E0B",
+        "light": "#FBBF24",
+        "dark": "#B45309",
+        "contrast": "#000000"
+      },
+      "secondary": {
+        "main": "#EC4899",
+        "light": "#F472B6",
+        "dark": "#BE185D",
+        "contrast": "#FFFFFF"
+      },
+      "accent": {
+        "success": "#10B981",
+        "error": "#EF4444",
+        "info": "#3B82F6",
+        "gold": "linear-gradient(135deg, #FDE68A 0%, #D97706 100%)"
+      }
+    },
+    "gradients": {
+      "gold_rush": "bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-600",
+      "festive_night": "bg-gradient-to-b from-slate-900 via-purple-950 to-slate-900",
+      "glass_surface": "bg-white/5 backdrop-blur-xl border border-white/10"
+    }
+  },
+  "layout": {
+    "spacing": {
+      "container": "px-4 md:px-8 max-w-7xl mx-auto",
+      "section": "py-12 md:py-20",
+      "card_padding": "p-6 md:p-8"
+    },
+    "grid": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "tickets": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    },
+    "mobile": {
+      "nav_height": "h-16",
+      "safe_area": "pb-safe"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold shadow-lg hover:shadow-amber-500/25 hover:scale-105 transition-all duration-300",
+      "secondary": "rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all",
+      "ghost": "text-gray-400 hover:text-white transition-colors"
+    },
+    "cards": {
+      "base": "rounded-2xl bg-[#18181b] border border-white/10 shadow-xl overflow-hidden",
+      "glass": "rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl",
+      "interactive": "hover:border-amber-500/50 transition-colors cursor-pointer"
+    },
+    "inputs": {
+      "base": "bg-black/20 border-white/10 focus:border-amber-500/50 text-white placeholder:text-gray-600 rounded-xl h-12"
+    },
+    "ticket": {
+      "container": "bg-[#fff8e1] text-black rounded-lg overflow-hidden shadow-lg border-4 border-amber-600",
+      "grid": "grid grid-cols-9 gap-[1px] bg-amber-600/20",
+      "cell": "h-10 flex items-center justify-center text-lg font-bold bg-white",
+      "cell_empty": "bg-amber-100/50",
+      "cell_marked": "bg-green-500 text-white relative overflow-hidden after:content-[''] after:absolute after:inset-0 after:bg-white/20 after:rounded-full after:scale-0 after:animate-ping"
+    }
+  },
+  "assets": {
+    "images": {
+      "backgrounds": [
+        {
+          "url": "https://images.unsplash.com/photo-1728566849567-c68e8530c254?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHw0fHxpbmRpYW4lMjBmZXN0aXZhbCUyMGJhY2tncm91bmQlMjBkYXJrJTIwZ29sZCUyMGNvbmZldHRpfGVufDB8fHx8MTc2Njc4NDY1NXww&ixlib=rb-4.1.0&q=85",
+          "usage": "Hero Section Overlay (Low Opacity)",
+          "alt": "Festive Bokeh"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1663181890734-9710eeb39853?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBmZXN0aXZhbCUyMGJhY2tncm91bmQlMjBkYXJrJTIwZ29sZCUyMGNvbmZldHRpfGVufDB8fHx8MTc2Njc4NDY1NXww&ixlib=rb-4.1.0&q=85",
+          "usage": "Login Screen Background",
+          "alt": "Dark Festive Fire"
+        }
+      ],
+      "avatars": [
+        "https://images.unsplash.com/photo-1647663386171-7b4deaba904c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwaW5kaWFuJTIwdXNlciUyMGF2YXRhcnMlMjBwb3J0cmFpdCUyMGhhcHB5fGVufDB8fHx8MTc2Njc4NDY1N3ww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1520875557929-b3dde468605a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxkaXZlcnNlJTIwaW5kaWFuJTIwdXNlciUyMGF2YXRhcnMlMjBwb3J0cmFpdCUyMGhhcHB5fGVufDB8fHx8MTc2Njc4NDY1N3ww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1583852469342-18a99d0133f9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHw0fHxkaXZlcnNlJTIwaW5kaWFuJTIwdXNlciUyMGF2YXRhcnMlMjBwb3J0cmFpdCUyMGhhcHB5fGVufDB8fHx8MTc2Njc4NDY1N3ww&ixlib=rb-4.1.0&q=85"
+      ]
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-width: 1.5px"
+    }
+  },
+  "motion": {
+    "transitions": {
+      "default": "transition-all duration-300 ease-out",
+      "slow": "transition-all duration-700 ease-in-out"
+    },
+    "animations": {
+      "fade_in": "animate-in fade-in duration-500",
+      "slide_up": "animate-in slide-in-from-bottom-4 duration-500",
+      "pulse_gold": "animate-pulse shadow-amber-500/50"
+    }
+  },
+  "universal_guidelines": [
+    "Use 'sonner' for all toast notifications.",
+    "All interactive elements MUST have a data-testid attribute.",
+    "Do not use gradients for text unless it is a large heading.",
+    "Ensure 4.5:1 contrast ratio for all text.",
+    "Use Shadcn UI components for complex interactions (Dialog, Sheet, Dropdown).",
+    "Customize Shadcn components to match the 'Royal Night' theme (remove default white backgrounds, add glassmorphism).",
+    "Mobile First: Always design for 360px width first, then scale up."
+  ],
+  "instructions_to_main_agent": "You are building a Tambola Game. Focus on the 'Live Game' experience. The ticket grid is the most important component. It must be responsive and easy to tap. Use the provided colors to create a festive but usable dark mode interface. Use the 'Outfit' font for headings to give it a modern feel. Implement the 'My Tickets' section with a clear distinction between 'Upcoming' and 'Past' games."
+}
