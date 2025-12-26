@@ -61,6 +61,8 @@ class Ticket(BaseModel):
     ticket_id: str
     game_id: str
     ticket_number: str
+    full_sheet_id: str  # Format: FS001, FS002, etc.
+    ticket_position_in_sheet: int  # 1-6
     numbers: List[List[Optional[int]]]  # 3x9 grid
     is_booked: bool = False
     user_id: Optional[str] = None
