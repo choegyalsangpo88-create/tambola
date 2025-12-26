@@ -78,6 +78,8 @@ class Booking(BaseModel):
     booking_date: datetime
     status: str  # pending, confirmed, cancelled
     whatsapp_confirmed: bool = False
+    has_full_sheet_bonus: bool = False
+    full_sheet_id: Optional[str] = None
 
 class GameSession(BaseModel):
     model_config = ConfigDict(extra="ignore")
