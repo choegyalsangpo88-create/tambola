@@ -380,7 +380,7 @@ def generate_full_sheet():
 
 @api_router.post("/games/{game_id}/generate-tickets")
 async def generate_tickets(game_id: str):
-    """Generate 600 tickets for a game"""
+    """Generate 600 tickets (100 Full Sheets × 6 tickets each) for a game"""
     game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
@@ -391,19 +391,29 @@ async def generate_tickets(game_id: str):
         return {"message": f"Tickets already generated ({existing_count} tickets)"}
     
     tickets = []
-    for i in range(600):
-        ticket = {
-            "ticket_id": f"{game_id}_T{i+1:03d}",
-            "game_id": game_id,
-            "ticket_number": f"T{i+1:03d}",
-            "numbers": generate_tambola_ticket(),
-            "is_booked": False,
-            "booking_status": "available"
-        }
-        tickets.append(ticket)
+    ticket_counter = 1
+    
+    # Generate 100 Full Sheets (each with 6 tickets)
+    for sheet_num in range(1, 101):
+        full_sheet = generate_full_sheet()
+        sheet_id = f"FS{sheet_num:03d}"
+        
+        for ticket_num_in_sheet, ticket_numbers in enumerate(full_sheet, 1):
+            ticket = {
+                "ticket_id": f"{game_id}_T{ticket_counter:03d}",
+                "game_id": game_id,
+                "ticket_number": f"T{ticket_counter:03d}",
+                "full_sheet_id": sheet_id,
+                "ticket_position_in_sheet": ticket_num_in_sheet,
+                "numbers": ticket_numbers,
+                "is_booked": False,
+                "booking_status": "available"
+            }
+            tickets.append(ticket)
+            ticket_counter += 1
     
     await db.tickets.insert_many(tickets)
-    return {"message": f"Generated 600 tickets for game {game_id}"}
+    return {"message": f"Generated 600 tickets (100 Full Sheets × 6 tickets) for game {game_id}"}
 
 @api_router.get("/games/{game_id}/tickets")
 async def get_game_tickets(
