@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, Play, StopCircle, Award, Check } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { ArrowLeft, Plus, Play, StopCircle, Award, Check, Volume2, VolumeX, Pause } from 'lucide-react';
 import { toast } from 'sonner';
+import { getCallName } from '@/utils/tambolaCallNames';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -16,6 +20,14 @@ export default function AdminPanel() {
   const [bookings, setBookings] = useState([]);
   const [liveGame, setLiveGame] = useState(null);
   const [session, setSession] = useState(null);
+  
+  // Auto-calling state
+  const [autoCall, setAutoCall] = useState(false);
+  const [callInterval, setCallInterval] = useState(10); // seconds
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceSpeed, setVoiceSpeed] = useState(0.9); // 0.9 = slightly slower for clarity
+  const autoCallTimer = useRef(null);
+  const speechSynthesis = window.speechSynthesis;
 
   // Create Game Form
   const [newGame, setNewGame] = useState({
@@ -40,6 +52,21 @@ export default function AdminPanel() {
     fetchGames();
     fetchBookings();
   }, []);
+
+  useEffect(() => {
+    // Auto-call numbers when enabled
+    if (autoCall && liveGame && session) {
+      autoCallTimer.current = setInterval(() => {
+        handleCallNumber(true); // true = auto mode
+      }, callInterval * 1000);
+    }
+
+    return () => {
+      if (autoCallTimer.current) {
+        clearInterval(autoCallTimer.current);
+      }
+    };
+  }, [autoCall, callInterval, liveGame, session]);
 
   const fetchGames = async () => {
     try {
@@ -71,6 +98,36 @@ export default function AdminPanel() {
     } catch (error) {
       console.error('Failed to fetch session:', error);
     }
+  };
+
+  const speakNumber = (number) => {
+    if (!voiceEnabled || !speechSynthesis) return;
+
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+
+    const callName = getCallName(number);
+    const utterance = new SpeechSynthesisUtterance(callName);
+    
+    // Try to get Indian English female voice
+    const voices = speechSynthesis.getVoices();
+    const indianVoice = voices.find(voice => 
+      voice.lang.includes('en-IN') && voice.name.toLowerCase().includes('female')
+    ) || voices.find(voice => 
+      voice.lang.includes('en-IN')
+    ) || voices.find(voice => 
+      voice.lang.includes('en') && voice.name.toLowerCase().includes('female')
+    ) || voices[0];
+
+    if (indianVoice) {
+      utterance.voice = indianVoice;
+    }
+    
+    utterance.rate = voiceSpeed;
+    utterance.pitch = 1.1; // Slightly higher pitch for female voice
+    utterance.volume = 1.0;
+
+    speechSynthesis.speak(utterance);
   };
 
   const handleCreateGame = async (e) => {
@@ -123,20 +180,34 @@ export default function AdminPanel() {
     }
   };
 
-  const handleCallNumber = async () => {
+  const handleCallNumber = async (isAuto = false) => {
     if (!liveGame) return;
     try {
       const response = await axios.post(`${API}/games/${liveGame.game_id}/call-number`);
-      toast.success(`Number called: ${response.data.number}`);
+      const calledNumber = response.data.number;
+      
+      if (!isAuto) {
+        toast.success(`Number called: ${calledNumber}`);
+      }
+      
+      // Speak the number with call name
+      speakNumber(calledNumber);
+      
       fetchSession(liveGame.game_id);
     } catch (error) {
       console.error('Failed to call number:', error);
-      toast.error('Failed to call number');
+      if (!isAuto) {
+        toast.error('Failed to call number');
+      }
     }
   };
 
   const handleEndGame = async () => {
     if (!liveGame) return;
+    
+    // Stop auto-calling
+    setAutoCall(false);
+    
     try {
       await axios.post(`${API}/games/${liveGame.game_id}/end`);
       toast.success('Game ended');
@@ -158,6 +229,20 @@ export default function AdminPanel() {
       console.error('Failed to confirm booking:', error);
       toast.error('Failed to confirm booking');
     }
+  };
+
+  const toggleAutoCall = () => {
+    setAutoCall(!autoCall);
+    if (!autoCall) {
+      toast.success(`Auto-calling enabled (every ${callInterval}s)`);
+    } else {
+      toast.info('Auto-calling disabled');
+    }
+  };
+
+  const testVoice = () => {
+    const testNumber = Math.floor(Math.random() * 90) + 1;
+    speakNumber(testNumber);
   };
 
   return (
@@ -345,6 +430,103 @@ export default function AdminPanel() {
           <TabsContent value="live">
             {liveGame && session ? (
               <div className="space-y-6">
+                {/* Voice & Auto-Call Settings */}
+                <div className="glass-card p-6">
+                  <h3 className="text-xl font-bold text-white mb-6">Caller Settings</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Voice Controls */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {voiceEnabled ? <Volume2 className="w-5 h-5 text-amber-500" /> : <VolumeX className="w-5 h-5 text-gray-500" />}
+                          <Label htmlFor="voice-toggle" className="text-white">Voice Announcements</Label>
+                        </div>
+                        <Switch
+                          id="voice-toggle"
+                          checked={voiceEnabled}
+                          onCheckedChange={setVoiceEnabled}
+                          data-testid="voice-toggle"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label className="text-gray-400 text-sm mb-2 block">Voice Speed: {voiceSpeed.toFixed(1)}x</Label>
+                        <Slider
+                          value={[voiceSpeed]}
+                          onValueChange={(value) => setVoiceSpeed(value[0])}
+                          min={0.5}
+                          max={1.5}
+                          step={0.1}
+                          disabled={!voiceEnabled}
+                          className="w-full"
+                          data-testid="voice-speed-slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>Slow</span>
+                          <span>Normal</span>
+                          <span>Fast</span>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={testVoice}
+                        disabled={!voiceEnabled}
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-white/10"
+                        data-testid="test-voice-btn"
+                      >
+                        <Volume2 className="w-4 h-4 mr-2" />
+                        Test Voice
+                      </Button>
+                    </div>
+
+                    {/* Auto-Call Controls */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {autoCall ? <Play className="w-5 h-5 text-green-500" /> : <Pause className="w-5 h-5 text-gray-500" />}
+                          <Label htmlFor="auto-call-toggle" className="text-white">Auto Call Numbers</Label>
+                        </div>
+                        <Switch
+                          id="auto-call-toggle"
+                          checked={autoCall}
+                          onCheckedChange={toggleAutoCall}
+                          data-testid="auto-call-toggle"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-gray-400 text-sm mb-2 block">Call Interval: {callInterval}s</Label>
+                        <Slider
+                          value={[callInterval]}
+                          onValueChange={(value) => setCallInterval(value[0])}
+                          min={5}
+                          max={30}
+                          step={5}
+                          disabled={autoCall}
+                          className="w-full"
+                          data-testid="interval-slider"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>5s</span>
+                          <span>15s</span>
+                          <span>30s</span>
+                        </div>
+                      </div>
+
+                      {autoCall && (
+                        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                          <p className="text-xs text-green-500 font-medium">
+                            🎯 Auto-calling active: New number every {callInterval} seconds
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Game Controls */}
                 <div className="glass-card p-6">
                   <h2 className="text-2xl font-bold text-white mb-4">{liveGame.name}</h2>
                   <div className="flex items-center gap-4 mb-6">
@@ -358,11 +540,11 @@ export default function AdminPanel() {
                   <div className="flex gap-4">
                     <Button
                       data-testid="call-number-btn"
-                      onClick={handleCallNumber}
+                      onClick={() => handleCallNumber(false)}
                       className="flex-1 h-16 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                      disabled={session.called_numbers.length >= 90}
+                      disabled={session.called_numbers.length >= 90 || autoCall}
                     >
-                      Call Next Number
+                      {autoCall ? 'Auto-Calling...' : 'Call Next Number'}
                     </Button>
                     <Button
                       data-testid="end-game-btn"
@@ -375,15 +557,20 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
+                {/* Current Number Display */}
                 {session.current_number && (
                   <div className="glass-card p-8 text-center">
                     <p className="text-amber-500 text-sm font-bold mb-2">CURRENT NUMBER</p>
-                    <p className="text-8xl font-black text-white number-font" style={{ textShadow: '0 0 15px rgba(234, 179, 8, 0.5)' }}>
+                    <p className="text-8xl font-black text-white number-font mb-4" style={{ textShadow: '0 0 15px rgba(234, 179, 8, 0.5)' }}>
                       {session.current_number}
+                    </p>
+                    <p className="text-xl text-gray-300 font-medium">
+                      {getCallName(session.current_number).split(' - ')[1] || ''}
                     </p>
                   </div>
                 )}
 
+                {/* Called Numbers */}
                 <div className="glass-card p-6">
                   <h3 className="text-lg font-bold text-white mb-4">Called Numbers</h3>
                   <div className="flex flex-wrap gap-2">
