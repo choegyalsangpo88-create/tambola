@@ -97,6 +97,42 @@ export default function GameDetails() {
     }
   };
 
+  const fetchFullSheets = async () => {
+    try {
+      const response = await axios.get(
+        `${API}/games/${gameId}/tickets?page=1&limit=600&available_only=true`
+      );
+      const allTickets = response.data.tickets;
+      
+      // Group tickets by Full Sheet ID
+      const sheetsMap = {};
+      allTickets.forEach(ticket => {
+        const sheetId = ticket.full_sheet_id;
+        if (!sheetsMap[sheetId]) {
+          sheetsMap[sheetId] = [];
+        }
+        sheetsMap[sheetId].push(ticket);
+      });
+      
+      // Convert to array and sort
+      const sheetsArray = Object.entries(sheetsMap).map(([sheetId, tickets]) => ({
+        sheetId,
+        tickets: tickets.sort((a, b) => a.ticket_position_in_sheet - b.ticket_position_in_sheet),
+        isComplete: tickets.length === 6,
+        availableCount: tickets.filter(t => !t.is_booked).length
+      })).sort((a, b) => {
+        const numA = parseInt(a.sheetId.replace('FS', ''));
+        const numB = parseInt(b.sheetId.replace('FS', ''));
+        return numA - numB;
+      });
+      
+      setFullSheets(sheetsArray);
+    } catch (error) {
+      console.error('Failed to fetch full sheets:', error);
+      toast.error('Failed to load full sheets');
+    }
+  };
+
   const toggleTicket = (ticketId) => {
     setSelectedTickets(prev =>
       prev.includes(ticketId)
