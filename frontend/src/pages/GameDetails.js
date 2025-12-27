@@ -11,31 +11,31 @@ const API = `${BACKEND_URL}/api`;
 function TambolaTicket({ ticket, isSelected, onToggle, isCompact }) {
   return (
     <div
-      className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
+      className={`p-3 rounded-xl border-3 cursor-pointer transition-all shadow-lg ${
         isSelected
-          ? 'border-amber-500 bg-amber-500/10 scale-105'
-          : 'border-white/10 bg-[#18181b] hover:border-amber-500/50'
+          ? 'border-amber-500 bg-amber-500/20 scale-105 shadow-amber-500/50'
+          : 'border-white/20 bg-[#18181b] hover:border-amber-500/50 hover:scale-105'
       }`}
       data-testid={`ticket-${ticket.ticket_id}`}
       onClick={() => onToggle(ticket.ticket_id)}
     >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-bold text-amber-500">{ticket.ticket_number}</span>
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => {}}
-          className="w-3 h-3"
-          data-testid={`checkbox-${ticket.ticket_id}`}
-        />
+      <div className="flex items-center justify-between mb-2">
+        <span className={`text-sm font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500'}`}>
+          {ticket.ticket_number}
+        </span>
+        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+          isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/30'
+        }`}>
+          {isSelected && <span className="text-black font-bold text-xs">✓</span>}
+        </div>
       </div>
-      <div className="ticket-grid" style={{ fontSize: isCompact ? '0.6rem' : '0.75rem' }}>
+      <div className="ticket-grid" style={{ fontSize: '0.75rem' }}>
         {ticket.numbers.map((row, rowIndex) => (
           row.map((num, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
               className={`ticket-cell ${num === null ? 'empty' : ''}`}
-              style={{ fontSize: isCompact ? '0.5rem' : '0.65rem', padding: '2px' }}
+              style={{ fontSize: '0.7rem', padding: '4px' }}
             >
               {num || ''}
             </div>
