@@ -56,6 +56,8 @@ export default function GameDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
+  const [fullSheets, setFullSheets] = useState([]);
+  const [viewMode, setViewMode] = useState('sheets'); // 'sheets' or 'individual'
   const ticketsPerPage = 20;
 
   useEffect(() => {
