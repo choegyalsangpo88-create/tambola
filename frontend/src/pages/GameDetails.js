@@ -66,9 +66,13 @@ export default function GameDetails() {
 
   useEffect(() => {
     if (showModal) {
-      fetchTickets(currentPage);
+      if (viewMode === 'sheets') {
+        fetchFullSheets();
+      } else {
+        fetchTickets(currentPage);
+      }
     }
-  }, [showModal, currentPage]);
+  }, [showModal, currentPage, viewMode]);
 
   const fetchGame = async () => {
     try {
