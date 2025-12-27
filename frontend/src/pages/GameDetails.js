@@ -11,10 +11,10 @@ const API = `${BACKEND_URL}/api`;
 function TambolaTicket({ ticket, isSelected, onToggle, isCompact }) {
   return (
     <div
-      className={`p-3 rounded-xl border-3 cursor-pointer transition-all shadow-lg ${
+      className={`p-3 rounded-xl cursor-pointer transition-all ${
         isSelected
-          ? 'border-amber-500 bg-amber-500/20 scale-105 shadow-amber-500/50'
-          : 'border-white/20 bg-[#18181b] hover:border-amber-500/50 hover:scale-105'
+          ? 'bg-amber-500/20 scale-105 shadow-xl shadow-amber-500/30'
+          : 'bg-[#1a1a1f] hover:bg-[#222228] hover:scale-105'
       }`}
       data-testid={`ticket-${ticket.ticket_id}`}
       onClick={() => onToggle(ticket.ticket_id)}
@@ -23,24 +23,30 @@ function TambolaTicket({ ticket, isSelected, onToggle, isCompact }) {
         <span className={`text-sm font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500'}`}>
           {ticket.ticket_number}
         </span>
-        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
           isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/30'
         }`}>
-          {isSelected && <span className="text-black font-bold text-xs">✓</span>}
+          {isSelected && <span className="text-black font-bold text-sm">✓</span>}
         </div>
       </div>
-      <div className="ticket-grid" style={{ fontSize: '0.75rem' }}>
-        {ticket.numbers.map((row, rowIndex) => (
-          row.map((num, colIndex) => (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              className={`ticket-cell ${num === null ? 'empty' : ''}`}
-              style={{ fontSize: '0.7rem', padding: '4px' }}
-            >
-              {num || ''}
-            </div>
-          ))
-        ))}
+      <div className="bg-white p-2 rounded-lg">
+        <div className="grid grid-cols-9 gap-0.5">
+          {ticket.numbers.map((row, rowIndex) => (
+            row.map((num, colIndex) => (
+              <div
+                key={`${rowIndex}-${colIndex}`}
+                className={`aspect-square flex items-center justify-center text-center font-bold ${
+                  num === null 
+                    ? 'bg-gray-100' 
+                    : 'bg-white text-black border border-gray-300'
+                }`}
+                style={{ fontSize: '0.65rem' }}
+              >
+                {num || ''}
+              </div>
+            ))
+          ))}
+        </div>
       </div>
     </div>
   );
