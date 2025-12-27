@@ -106,6 +106,29 @@ export default function LiveGame() {
   useEffect(() => {
     if (session && session.called_numbers) {
       setMarkedNumbers(new Set(session.called_numbers));
+      
+      // Check for new winners and celebrate
+      if (session.winners) {
+        const currentWinners = Object.keys(session.winners);
+        const previousWinnerKeys = Object.keys(previousWinners);
+        
+        // Find newly added winners
+        const newWinnerPrizes = currentWinners.filter(prize => !previousWinnerKeys.includes(prize));
+        
+        if (newWinnerPrizes.length > 0) {
+          newWinnerPrizes.forEach(prize => {
+            celebrateWinner(prize);
+          });
+        }
+        
+        setPreviousWinners(session.winners);
+      }
+      
+      // Play sound when new number is called
+      if (session.current_number && session.current_number !== previousWinners.lastNumber) {
+        playNumberSound();
+        setPreviousWinners(prev => ({ ...prev, lastNumber: session.current_number }));
+      }
     }
   }, [session]);
 
