@@ -16,13 +16,13 @@ export default function LoginScreen() {
     <div
       className="min-h-screen flex items-center justify-center relative overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, #0f172a 0%, #4c1d95 50%, #0f172a 100%)'
+        background: 'linear-gradient(135deg, #000000 0%, #0a3d2c 50%, #1a1a1a 100%)'
       }}
     >
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-amber-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-64 h-64 bg-purple-500 rounded-full blur-3xl"></div>
+      {/* Premium glow effect */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500 rounded-full blur-[120px]"></div>
       </div>
 
       {/* Login Card */}
@@ -31,15 +31,46 @@ export default function LoginScreen() {
           className="glass-card p-8 md:p-10 text-center"
           data-testid="login-card"
         >
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl flex items-center justify-center mb-4">
-              <Sparkles className="w-10 h-10 text-white" />
+          {/* 3D Tambola Ball Logo */}
+          <div className="mb-6">
+            <div className="relative w-32 h-32 mx-auto mb-4">
+              {/* 3D Ball */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400 via-amber-500 to-orange-600 shadow-2xl" style={{
+                boxShadow: '0 20px 60px rgba(251, 146, 60, 0.6), inset 0 -10px 30px rgba(0,0,0,0.3), inset 0 10px 30px rgba(255,255,255,0.2)'
+              }}>
+                {/* Shine effect */}
+                <div className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full opacity-40 blur-xl"></div>
+                {/* Number 67 */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-5xl font-black text-white" style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                  }}>67</span>
+                </div>
+              </div>
+              {/* Shadow */}
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-28 h-6 bg-black opacity-30 rounded-full blur-lg"></div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
-              Tambola
+            
+            {/* TAMBOLA Text - Modern Premium Font */}
+            <h1 className="text-5xl md:text-6xl font-black mb-3" style={{
+              fontFamily: 'Outfit, sans-serif',
+              background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 50%, #D97706 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '0.05em',
+              textShadow: '0 0 30px rgba(251, 191, 36, 0.3)'
+            }}>
+              TAMBOLA
             </h1>
-            <p className="text-gray-400 text-sm">Win Big, Play Smart</p>
+            
+            {/* New Tagline */}
+            <p className="text-lg text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 font-semibold tracking-wide" style={{
+              fontFamily: 'Dancing Script, cursive',
+              fontSize: '1.25rem'
+            }}>
+              Turn ur free time into fun time
+            </p>
           </div>
 
           {/* Login Button */}
@@ -69,6 +100,9 @@ export default function LoginScreen() {
           Join thousands of players winning daily!
         </p>
       </div>
+      
+      {/* Add Dancing Script font */}
+      <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet" />
     </div>
   );
 }
