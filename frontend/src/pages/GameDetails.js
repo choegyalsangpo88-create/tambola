@@ -300,66 +300,78 @@ export default function GameDetails() {
         </div>
 
         {/* All Full Sheets */}
-        <div className="space-y-6">
-          {displayedSheets.map((sheet) => {
+        <div className="space-y-8 mb-24">
+          {displayedSheets.map((sheet, sheetIndex) => {
             const isSelected = isFullSheetSelected(sheet.tickets);
             const isFullyAvailable = sheet.availableCount === 6;
+            
+            // Assign unique border color to each sheet
+            const borderColors = [
+              'border-blue-500',
+              'border-purple-500',
+              'border-pink-500',
+              'border-red-500',
+              'border-orange-500',
+              'border-yellow-500',
+              'border-green-500',
+              'border-teal-500',
+              'border-cyan-500',
+              'border-indigo-500'
+            ];
+            const borderColor = isSelected 
+              ? 'border-amber-500' 
+              : borderColors[sheetIndex % borderColors.length];
             
             return (
               <div
                 key={sheet.sheetId}
-                className={`glass-card p-6 border-2 transition-all ${
-                  isSelected
-                    ? 'border-amber-500 bg-amber-500/5'
-                    : isFullyAvailable
-                    ? 'border-white/10'
-                    : 'border-white/5 opacity-50'
-                }`}
+                className={`glass-card p-6 border-4 transition-all ${borderColor} ${
+                  isSelected ? 'bg-amber-500/10' : ''
+                } ${!isFullyAvailable ? 'opacity-50' : ''}`}
                 data-testid={`full-sheet-${sheet.sheetId}`}
               >
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-2xl font-bold text-white mb-1">
                       {sheet.sheetId}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      Tickets: {sheet.tickets.map(t => t.ticket_number).join(', ')}
+                      {sheet.tickets[0]?.ticket_number} - {sheet.tickets[5]?.ticket_number}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                    <span className={`px-4 py-2 text-sm font-bold rounded-full ${
                       isFullyAvailable
-                        ? 'bg-green-500/20 text-green-400'
-                        : 'bg-red-500/20 text-red-400'
+                        ? 'bg-green-500/20 text-green-400 border-2 border-green-500'
+                        : 'bg-red-500/20 text-red-400 border-2 border-red-500'
                     }`}>
                       {sheet.availableCount}/6 Available
                     </span>
                     {isFullyAvailable && (
                       <Button
                         onClick={() => selectFullSheet(sheet.tickets)}
-                        size="sm"
-                        className={`rounded-full font-bold ${
+                        className={`rounded-full font-bold px-6 h-10 ${
                           isSelected
                             ? 'bg-red-600 hover:bg-red-700'
                             : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700'
                         }`}
                         data-testid={`select-sheet-${sheet.sheetId}`}
                       >
-                        {isSelected ? 'Deselect Sheet' : 'Select Full Sheet'}
+                        {isSelected ? '✓ Selected' : 'Select Full Sheet'}
                       </Button>
                     )}
                   </div>
                 </div>
 
-                {/* Tickets Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {/* Tickets Grid - 6 tickets in one row on desktop */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   {sheet.tickets.map((ticket) => (
                     <TambolaTicket
                       key={ticket.ticket_id}
                       ticket={ticket}
                       isSelected={selectedTickets.includes(ticket.ticket_id)}
                       onToggle={toggleTicket}
-                      isCompact={true}
+                      isCompact={false}
                     />
                   ))}
                 </div>
@@ -367,6 +379,39 @@ export default function GameDetails() {
             );
           })}
         </div>
+
+        {/* Fixed Bottom Book Button */}
+        {selectedTickets.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t-4 border-amber-500 py-4 px-4 z-50">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div>
+                <p className="text-white font-bold text-lg">
+                  {selectedTickets.length} Tickets Selected
+                </p>
+                <p className="text-amber-500 text-sm">
+                  Total: ₹{(selectedTickets.length * game.price).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTickets([])}
+                  className="border-white/20 px-6 h-12"
+                >
+                  Clear All
+                </Button>
+                <Button
+                  onClick={handleBookViaWhatsApp}
+                  disabled={isBooking}
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 font-bold px-8 h-12 text-lg"
+                  data-testid="book-via-whatsapp-btn"
+                >
+                  {isBooking ? 'Processing...' : '📱 Book via WhatsApp'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
