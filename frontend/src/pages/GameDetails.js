@@ -292,6 +292,26 @@ export default function GameDetails() {
             <DialogTitle className="text-2xl font-bold text-white">Select Tickets</DialogTitle>
           </DialogHeader>
 
+          {/* View Mode Toggle */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={viewMode === 'sheets' ? 'default' : 'outline'}
+              onClick={() => setViewMode('sheets')}
+              className={viewMode === 'sheets' ? 'bg-amber-500 text-black' : 'border-white/10'}
+              data-testid="view-sheets-btn"
+            >
+              📋 Full Sheets (Bonus ₹1,000)
+            </Button>
+            <Button
+              variant={viewMode === 'individual' ? 'default' : 'outline'}
+              onClick={() => setViewMode('individual')}
+              className={viewMode === 'individual' ? 'bg-amber-500 text-black' : 'border-white/10'}
+              data-testid="view-individual-btn"
+            >
+              🎫 Individual Tickets
+            </Button>
+          </div>
+
           {/* Selected Info */}
           <div className="sticky top-0 bg-[#121216] py-4 border-b border-white/10 z-10">
             <div className="flex items-center justify-between">
@@ -311,40 +331,123 @@ export default function GameDetails() {
             </div>
           </div>
 
-          {/* Tickets Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4">
-            {tickets.map((ticket) => (
-              <TambolaTicket
-                key={ticket.ticket_id}
-                ticket={ticket}
-                isSelected={selectedTickets.includes(ticket.ticket_id)}
-                onToggle={toggleTicket}
-              />
-            ))}
-          </div>
+          {/* Full Sheets View */}
+          {viewMode === 'sheets' && (
+            <div className="space-y-4 py-4">
+              {fullSheets.map((sheet) => {
+                const isSelected = isFullSheetSelected(sheet.tickets);
+                const isFullyAvailable = sheet.availableCount === 6;
+                
+                return (
+                  <div
+                    key={sheet.sheetId}
+                    className={`glass-card p-6 border-2 transition-all ${
+                      isSelected
+                        ? 'border-amber-500 bg-amber-500/10'
+                        : isFullyAvailable
+                        ? 'border-white/10 hover:border-amber-500/50'
+                        : 'border-white/5 opacity-50'
+                    }`}
+                    data-testid={`full-sheet-${sheet.sheetId}`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-2">
+                          {sheet.sheetId} - Full Sheet
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          Tickets: {sheet.tickets.map(t => t.ticket_number).join(', ')}
+                        </p>
+                        <p className="text-xs text-emerald-400 font-bold mt-1">
+                          🎁 Book all 6 tickets → Get ₹1,000 Full Sheet Bonus!
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                          isFullyAvailable
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {sheet.availableCount}/6 Available
+                        </span>
+                        {isFullyAvailable && (
+                          <Button
+                            onClick={() => selectFullSheet(sheet.tickets)}
+                            size="sm"
+                            className={`rounded-full font-bold ${
+                              isSelected
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700'
+                            }`}
+                            data-testid={`select-sheet-${sheet.sheetId}`}
+                          >
+                            {isSelected ? 'Deselect Sheet' : 'Select Full Sheet'}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-center gap-4 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              data-testid="prev-page-btn"
-            >
-              Previous
-            </Button>
-            <span className="text-gray-400">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              data-testid="next-page-btn"
-            >
-              Next
-            </Button>
-          </div>
+                    {/* Show ticket preview in grid */}
+                    <div className="grid grid-cols-6 gap-2 mt-4">
+                      {sheet.tickets.map((ticket) => (
+                        <div
+                          key={ticket.ticket_id}
+                          className={`p-2 rounded border text-center text-xs font-bold ${
+                            selectedTickets.includes(ticket.ticket_id)
+                              ? 'bg-amber-500 text-black border-amber-600'
+                              : ticket.is_booked
+                              ? 'bg-gray-700 text-gray-500 border-gray-600'
+                              : 'bg-white/5 text-white border-white/10'
+                          }`}
+                        >
+                          {ticket.ticket_number}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Individual Tickets View */}
+          {viewMode === 'individual' && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4">
+                {tickets.map((ticket) => (
+                  <TambolaTicket
+                    key={ticket.ticket_id}
+                    ticket={ticket}
+                    isSelected={selectedTickets.includes(ticket.ticket_id)}
+                    onToggle={toggleTicket}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-center gap-4 py-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  data-testid="prev-page-btn"
+                >
+                  Previous
+                </Button>
+                <span className="text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  data-testid="next-page-btn"
+                >
+                  Next
+                </Button>
+              </div>
+            </>
+          )}
 
           {/* Book Button */}
           <div className="sticky bottom-0 bg-[#121216] pt-4 border-t border-white/10">
