@@ -19,7 +19,71 @@ export default function LiveGame() {
   const [allBookedTickets, setAllBookedTickets] = useState([]);
   const [markedNumbers, setMarkedNumbers] = useState(new Set());
   const [top5Players, setTop5Players] = useState([]);
+  const [previousWinners, setPreviousWinners] = useState({});
   const pollInterval = useRef(null);
+  const audioRef = useRef(null);
+
+  // Confetti celebration function
+  const celebrateWinner = (prizeType) => {
+    // Confetti burst
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#FCD34D', '#F59E0B', '#D97706', '#10B981']
+    });
+    
+    // Fireworks effect
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    function randomInRange(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      
+      // Fireworks from different positions
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        colors: ['#FCD34D', '#F59E0B']
+      });
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        colors: ['#10B981', '#34D399']
+      });
+    }, 250);
+    
+    // Show toast notification
+    toast.success(`🎉 ${prizeType} Winner Declared!`, {
+      duration: 5000,
+      style: {
+        background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
+        color: '#000',
+        fontWeight: 'bold'
+      }
+    });
+  };
+
+  // Play number call sound
+  const playNumberSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => console.log('Audio play failed:', e));
+    }
+  };
 
   useEffect(() => {
     fetchGameData();
