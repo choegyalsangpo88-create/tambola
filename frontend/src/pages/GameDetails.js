@@ -52,7 +52,7 @@ export default function GameDetails() {
   const [game, setGame] = useState(null);
   const [fullSheets, setFullSheets] = useState([]);
   const [selectedTickets, setSelectedTickets] = useState([]);
-  const [filterSelected, setFilterSelected] = useState(false);
+  const [filterMode, setFilterMode] = useState('all'); // 'all', 'selected', 'fullsheets'
   const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
