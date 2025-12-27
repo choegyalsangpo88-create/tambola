@@ -258,9 +258,9 @@ export default function LiveGame() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Game Area */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Game Area - 3/4 width */}
+          <div className="lg:col-span-3 space-y-6">
             {/* Current Number - 3D Ball */}
             <div className="glass-card p-8 text-center" data-testid="current-number-display">
               <p className="text-amber-500 text-sm font-bold mb-4">CURRENT CALL</p>
