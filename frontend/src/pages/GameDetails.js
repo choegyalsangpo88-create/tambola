@@ -204,7 +204,7 @@ export default function GameDetails() {
           {/* Left: Game Details */}
           <div className="lg:col-span-2 glass-card p-6">
             <h2 className="text-2xl font-bold text-white mb-4">{game.name}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
                   <Calendar className="w-4 h-4" />
@@ -233,37 +233,6 @@ export default function GameDetails() {
                   <span>Available</span>
                 </div>
                 <p className="text-xl font-bold text-white">{game.available_tickets}</p>
-              </div>
-            </div>
-
-            {/* Selection Summary */}
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white font-bold">{selectedTickets.length} Tickets Selected</p>
-                  <p className="text-amber-500 text-sm">Total: ₹{(selectedTickets.length * game.price).toLocaleString()}</p>
-                </div>
-                {selectedTickets.length > 0 && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedTickets([])}
-                      className="border-white/20"
-                    >
-                      Clear
-                    </Button>
-                    <Button
-                      onClick={handleBookViaWhatsApp}
-                      disabled={isBooking}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700 font-bold"
-                      data-testid="book-via-whatsapp-btn"
-                    >
-                      {isBooking ? 'Processing...' : 'Book via WhatsApp'}
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
