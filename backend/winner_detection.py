@@ -1,0 +1,199 @@
+# Auto Winner Detection for Tambola Patterns
+import logging
+
+logger = logging.getLogger(__name__)
+
+def check_quick_five(ticket_numbers, called_numbers):
+    """Check if any 5 numbers are marked (Quick Five / First Five)"""
+    marked_count = 0
+    for row in ticket_numbers:
+        for num in row:
+            if num and num in called_numbers:
+                marked_count += 1
+                if marked_count >= 5:
+                    return True
+    return False
+
+
+def check_four_corners(ticket_numbers, called_numbers):
+    """Check if all four corner numbers are marked"""
+    corners = [
+        ticket_numbers[0][0],   # Top-left
+        ticket_numbers[0][8],   # Top-right
+        ticket_numbers[2][0],   # Bottom-left
+        ticket_numbers[2][8]    # Bottom-right
+    ]
+    
+    # Filter out None values and check if all corners are in called numbers
+    valid_corners = [num for num in corners if num is not None]
+    if len(valid_corners) < 4:
+        return False  # Not all corners have numbers
+    
+    return all(num in called_numbers for num in valid_corners)
+
+
+def check_line_complete(row, called_numbers):
+    """Check if a single line (row) is complete"""
+    marked_count = 0
+    total_numbers = 0
+    
+    for num in row:
+        if num is not None:
+            total_numbers += 1
+            if num in called_numbers:
+                marked_count += 1
+    
+    return marked_count == total_numbers and total_numbers == 5
+
+
+def check_top_line(ticket_numbers, called_numbers):
+    """Check if top line is complete"""
+    return check_line_complete(ticket_numbers[0], called_numbers)
+
+
+def check_middle_line(ticket_numbers, called_numbers):
+    """Check if middle line is complete"""
+    return check_line_complete(ticket_numbers[1], called_numbers)
+
+
+def check_bottom_line(ticket_numbers, called_numbers):
+    """Check if bottom line is complete"""
+    return check_line_complete(ticket_numbers[2], called_numbers)
+
+
+def check_full_house(ticket_numbers, called_numbers):
+    """Check if all 15 numbers on the ticket are marked (Full House)"""
+    total_marked = 0
+    total_numbers = 0
+    
+    for row in ticket_numbers:
+        for num in row:
+            if num is not None:
+                total_numbers += 1
+                if num in called_numbers:
+                    total_marked += 1
+    
+    return total_marked == total_numbers and total_numbers == 15
+
+
+def detect_all_patterns(ticket_numbers, called_numbers):
+    """
+    Detect all winning patterns for a ticket.
+    Returns a dict of pattern_name: is_winner
+    """
+    called_set = set(called_numbers)
+    
+    return {
+        "Quick Five": check_quick_five(ticket_numbers, called_set),
+        "Four Corners": check_four_corners(ticket_numbers, called_set),
+        "Top Line": check_top_line(ticket_numbers, called_set),
+        "Middle Line": check_middle_line(ticket_numbers, called_set),
+        "Bottom Line": check_bottom_line(ticket_numbers, called_set),
+        "Full House": check_full_house(ticket_numbers, called_set)
+    }
+
+
+async def auto_detect_winners(db, game_id, called_numbers, existing_winners):
+    """
+    Automatically detect winners for all patterns.
+    Returns dict of newly detected winners.
+    """
+    if not called_numbers or len(called_numbers) < 5:
+        return {}  # Need at least 5 numbers for Quick Five
+    
+    called_set = set(called_numbers)
+    new_winners = {}
+    
+    # Get all confirmed booked tickets for this game
+    tickets = await db.tickets.find(
+        {"game_id": game_id, "is_booked": True, "booking_status": "confirmed"},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    if not tickets:
+        return {}
+    
+    # Patterns to check (in priority order)
+    patterns_to_check = [
+        "Quick Five",
+        "Four Corners", 
+        "Top Line",
+        "Middle Line",
+        "Bottom Line",
+        "1st House",  # First to get Full House
+        "2nd House",  # Second to get Full House
+        "Full House"
+    ]
+    
+    # Track Full House winners separately
+    full_house_winners = []
+    
+    for ticket in tickets:
+        user_id = ticket.get("user_id")
+        if not user_id:
+            continue
+        
+        ticket_numbers = ticket["numbers"]
+        patterns = detect_all_patterns(ticket_numbers, called_numbers)
+        
+        # Check each pattern
+        for pattern in patterns_to_check:
+            # Skip if winner already exists
+            if pattern in existing_winners:
+                continue
+            
+            # Special handling for House prizes
+            if pattern in ["1st House", "2nd House"]:
+                if patterns["Full House"]:
+                    full_house_winners.append({
+                        "user_id": user_id,
+                        "ticket_id": ticket["ticket_id"],
+                        "pattern": pattern
+                    })
+                continue
+            
+            # Regular pattern check
+            if patterns.get(pattern, False):
+                # Get user details
+                user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+                if user:
+                    new_winners[pattern] = {
+                        "user_id": user_id,
+                        "user_name": user.get("name", "Player"),
+                        "ticket_id": ticket["ticket_id"],
+                        "user_email": user.get("email")
+                    }
+                    logger.info(f"🎉 Auto-detected winner: {user['name']} - {pattern}")
+                    break  # First winner for this pattern
+    
+    # Handle 1st House and 2nd House
+    if full_house_winners:
+        # Sort by some criteria (you could add timestamp tracking)
+        for idx, winner_data in enumerate(full_house_winners[:2]):
+            pattern = "1st House" if idx == 0 else "2nd House"
+            if pattern not in existing_winners:
+                user = await db.users.find_one({"user_id": winner_data["user_id"]}, {"_id": 0})
+                if user:
+                    new_winners[pattern] = {
+                        "user_id": winner_data["user_id"],
+                        "user_name": user.get("name", "Player"),
+                        "ticket_id": winner_data["ticket_id"],
+                        "user_email": user.get("email")
+                    }
+                    logger.info(f"🎉 Auto-detected winner: {user['name']} - {pattern}")
+        
+        # Remaining full house winners get "Full House"
+        if "Full House" not in existing_winners and len(full_house_winners) > 2:
+            for winner_data in full_house_winners[2:]:
+                user = await db.users.find_one({"user_id": winner_data["user_id"]}, {"_id": 0})
+                if user:
+                    new_winners["Full House"] = {
+                        "user_id": winner_data["user_id"],
+                        "user_name": user.get("name", "Player"),
+                        "ticket_id": winner_data["ticket_id"],
+                        "user_email": user.get("email")
+                    }
+                    logger.info(f"🎉 Auto-detected winner: {user['name']} - Full House")
+                    break
+    
+    return new_winners
