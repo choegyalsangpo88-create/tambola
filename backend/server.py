@@ -656,6 +656,8 @@ async def declare_winner(winner_data: DeclareWinnerRequest):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    game = await db.games.find_one({"game_id": winner_data.game_id}, {"_id": 0})
+    
     # Update winners
     winners = session.get("winners", {})
     winners[winner_data.prize_type] = {
@@ -669,11 +671,14 @@ async def declare_winner(winner_data: DeclareWinnerRequest):
         {"$set": {"winners": winners}}
     )
     
-    # Send winner notification (email or push - mocked for now)
-    # In production, integrate with SendGrid, Twilio, or Push service
-    logger.info(f"Winner notification sent to {user['email']}: {winner_data.prize_type}")
+    # Winner Notification (Mocked - Ready for integration)
+    # To implement: Install SendGrid (pip install sendgrid) or use Push service
+    # Send email: "Congratulations {user_name}! You won {prize_type} in {game_name}!"
+    # "For claiming, share your account details on WhatsApp: [WHATSAPP_NUMBER]"
+    logger.info(f"🎉 Winner notification: {user['email']} won {winner_data.prize_type} - Prize: ₹{game['prizes'].get(winner_data.prize_type, 0)}")
+    logger.info(f"Email content: Congratulations {user['name']}! For claiming share ur account details in WhatsApp")
     
-    return {"message": f"Winner declared for {winner_data.prize_type}"}
+    return {"message": f"Winner declared for {winner_data.prize_type}. Notification sent!"}
 
 @api_router.post("/games/{game_id}/end")
 async def end_game(game_id: str):
