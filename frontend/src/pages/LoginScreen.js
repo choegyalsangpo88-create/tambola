@@ -31,47 +31,57 @@ export default function LoginScreen() {
           className="glass-card p-8 md:p-10 text-center"
           data-testid="login-card"
         >
-          {/* 3D Tambola Balls Logo - Two balls like the image */}
+          {/* 3D Tambola Balls Logo - Exactly like the image */}
           <div className="mb-6">
-            <div className="relative w-full h-32 mx-auto mb-4 flex items-center justify-center gap-4">
-              {/* Blue Ball with 6 */}
-              <div className="relative w-24 h-24">
+            <div className="relative w-full h-32 mx-auto mb-4 flex items-center justify-center gap-6">
+              {/* Blue Ball with white circle and number 6 */}
+              <div className="relative w-28 h-28">
                 {/* 3D Blue Ball */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 via-blue-600 to-blue-800 shadow-2xl" style={{
-                  boxShadow: '0 20px 60px rgba(59, 130, 246, 0.6), inset 0 -10px 30px rgba(0,0,0,0.4), inset 0 10px 30px rgba(255,255,255,0.3)'
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-300 via-blue-500 to-blue-700 shadow-2xl" style={{
+                  boxShadow: '0 25px 70px rgba(59, 130, 246, 0.7), inset 0 -12px 35px rgba(0,0,0,0.5), inset 0 12px 35px rgba(255,255,255,0.4)'
                 }}>
-                  {/* Shine effect */}
-                  <div className="absolute top-3 left-4 w-10 h-10 bg-white rounded-full opacity-50 blur-xl"></div>
-                  {/* Number 6 */}
+                  {/* Top shine effect */}
+                  <div className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full opacity-60 blur-2xl"></div>
+                  
+                  {/* White Circle in center */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl font-black text-white" style={{
-                      fontFamily: 'JetBrains Mono, monospace',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.6)'
-                    }}>6</span>
+                    <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center" style={{
+                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)'
+                    }}>
+                      {/* Number 6 in black */}
+                      <span className="text-4xl font-black text-black" style={{
+                        fontFamily: 'JetBrains Mono, monospace'
+                      }}>6</span>
+                    </div>
                   </div>
                 </div>
                 {/* Shadow */}
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-5 bg-black opacity-30 rounded-full blur-lg"></div>
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-black opacity-40 rounded-full blur-xl"></div>
               </div>
 
-              {/* Red Ball with 7 */}
-              <div className="relative w-24 h-24">
+              {/* Red Ball with white circle and number 7 */}
+              <div className="relative w-28 h-28">
                 {/* 3D Red Ball */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-800 shadow-2xl" style={{
-                  boxShadow: '0 20px 60px rgba(239, 68, 68, 0.6), inset 0 -10px 30px rgba(0,0,0,0.4), inset 0 10px 30px rgba(255,255,255,0.3)'
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-300 via-red-500 to-red-700 shadow-2xl" style={{
+                  boxShadow: '0 25px 70px rgba(239, 68, 68, 0.7), inset 0 -12px 35px rgba(0,0,0,0.5), inset 0 12px 35px rgba(255,255,255,0.4)'
                 }}>
-                  {/* Shine effect */}
-                  <div className="absolute top-3 left-4 w-10 h-10 bg-white rounded-full opacity-50 blur-xl"></div>
-                  {/* Number 7 */}
+                  {/* Top shine effect */}
+                  <div className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full opacity-60 blur-2xl"></div>
+                  
+                  {/* White Circle in center */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl font-black text-white" style={{
-                      fontFamily: 'JetBrains Mono, monospace',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.6)'
-                    }}>7</span>
+                    <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center" style={{
+                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)'
+                    }}>
+                      {/* Number 7 in black */}
+                      <span className="text-4xl font-black text-black" style={{
+                        fontFamily: 'JetBrains Mono, monospace'
+                      }}>7</span>
+                    </div>
                   </div>
                 </div>
                 {/* Shadow */}
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-5 bg-black opacity-30 rounded-full blur-lg"></div>
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-black opacity-40 rounded-full blur-xl"></div>
               </div>
             </div>
             
