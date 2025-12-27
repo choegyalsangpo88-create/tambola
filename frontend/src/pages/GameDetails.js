@@ -202,9 +202,9 @@ export default function GameDetails() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Left: Game Details */}
-          <div className="lg:col-span-2 glass-card p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          {/* Left: Game Details - 2/3 width */}
+          <div className="lg:col-span-3 glass-card p-6">
             <h2 className="text-2xl font-bold text-white mb-4">{game.name}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
@@ -239,16 +239,16 @@ export default function GameDetails() {
             </div>
           </div>
 
-          {/* Right: Dividends (Prizes) */}
-          <div className="glass-card p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-6 h-6 text-amber-500" />
-              <h3 className="text-xl font-bold text-white">Dividends</h3>
+          {/* Right: Dividends (Compact) - 1/3 width */}
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-bold text-white">Dividends</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {Object.entries(game.prizes).map(([prize, amount]) => (
-                <div key={prize} className="flex items-center justify-between py-2 border-b border-white/10">
-                  <span className="text-gray-300 text-sm">{prize}</span>
+                <div key={prize} className="flex items-center justify-between py-1.5 border-b border-white/5 text-xs">
+                  <span className="text-gray-300">{prize}</span>
                   <span className="text-amber-500 font-bold">₹{amount.toLocaleString()}</span>
                 </div>
               ))}
@@ -256,18 +256,36 @@ export default function GameDetails() {
           </div>
         </div>
 
-        {/* Filter Toggle */}
+        {/* Filter Buttons */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">All Full Sheets (100 Sheets × 6 Tickets)</h2>
-          <Button
-            variant="outline"
-            onClick={() => setFilterSelected(!filterSelected)}
-            className={`border-white/20 ${filterSelected ? 'bg-amber-500 text-black' : ''}`}
-            data-testid="filter-selected-btn"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            {filterSelected ? 'Show All Sheets' : 'Show Selected Only'}
-          </Button>
+          <h2 className="text-2xl font-bold text-white">Select Your Tickets</h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setFilterMode('all')}
+              className={`border-white/20 ${filterMode === 'all' ? 'bg-amber-500 text-black' : ''}`}
+              data-testid="filter-all-btn"
+            >
+              Show All
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setFilterMode('fullsheets')}
+              className={`border-white/20 ${filterMode === 'fullsheets' ? 'bg-amber-500 text-black' : ''}`}
+              data-testid="filter-fullsheets-btn"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Only Full Sheets
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setFilterMode('selected')}
+              className={`border-white/20 ${filterMode === 'selected' ? 'bg-amber-500 text-black' : ''}`}
+              data-testid="filter-selected-btn"
+            >
+              Selected Only
+            </Button>
+          </div>
         </div>
 
         {/* All Full Sheets */}
