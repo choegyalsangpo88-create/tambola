@@ -31,57 +31,43 @@ export default function LoginScreen() {
           className="glass-card p-8 md:p-10 text-center"
           data-testid="login-card"
         >
-          {/* 3D Tambola Balls Logo - Exactly like the image */}
+          {/* Ultra-Realistic 4K 3D Tambola Ball Logo */}
           <div className="mb-6">
-            <div className="relative w-full h-32 mx-auto mb-4 flex items-center justify-center gap-6">
-              {/* Blue Ball with white circle and number 6 */}
-              <div className="relative w-28 h-28">
-                {/* 3D Blue Ball */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-300 via-blue-500 to-blue-700 shadow-2xl" style={{
-                  boxShadow: '0 25px 70px rgba(59, 130, 246, 0.7), inset 0 -12px 35px rgba(0,0,0,0.5), inset 0 12px 35px rgba(255,255,255,0.4)'
+            <div className="relative w-full h-40 mx-auto mb-4 flex items-center justify-center">
+              {/* Single Blue Ball with 67 - 4K Quality */}
+              <div className="relative w-36 h-36">
+                {/* 3D Blue Ball - Ultra Realistic */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-200 via-blue-400 to-blue-800 shadow-2xl" style={{
+                  boxShadow: '0 30px 90px rgba(37, 99, 235, 0.8), inset 0 -15px 45px rgba(0,0,0,0.6), inset 0 15px 45px rgba(255,255,255,0.5), 0 0 60px rgba(59, 130, 246, 0.4)'
                 }}>
-                  {/* Top shine effect */}
-                  <div className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full opacity-60 blur-2xl"></div>
+                  {/* Top highlight - creating glass-like shine */}
+                  <div className="absolute top-6 left-8 w-16 h-16 bg-gradient-to-br from-white to-transparent rounded-full opacity-70 blur-2xl"></div>
                   
-                  {/* White Circle in center */}
+                  {/* Secondary highlight for depth */}
+                  <div className="absolute top-3 left-5 w-10 h-10 bg-white rounded-full opacity-50 blur-xl"></div>
+                  
+                  {/* White Circle Label in center - 4K crisp */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center" style={{
-                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)'
+                    <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center" style={{
+                      boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15), inset 0 -2px 6px rgba(0,0,0,0.1)'
                     }}>
-                      {/* Number 6 in black */}
-                      <span className="text-4xl font-black text-black" style={{
-                        fontFamily: 'JetBrains Mono, monospace'
-                      }}>6</span>
+                      {/* Number 67 in crisp black */}
+                      <span className="text-5xl font-black text-black tracking-tight" style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                      }}>67</span>
                     </div>
                   </div>
-                </div>
-                {/* Shadow */}
-                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-black opacity-40 rounded-full blur-xl"></div>
-              </div>
-
-              {/* Red Ball with white circle and number 7 */}
-              <div className="relative w-28 h-28">
-                {/* 3D Red Ball */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-300 via-red-500 to-red-700 shadow-2xl" style={{
-                  boxShadow: '0 25px 70px rgba(239, 68, 68, 0.7), inset 0 -12px 35px rgba(0,0,0,0.5), inset 0 12px 35px rgba(255,255,255,0.4)'
-                }}>
-                  {/* Top shine effect */}
-                  <div className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full opacity-60 blur-2xl"></div>
                   
-                  {/* White Circle in center */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center" style={{
-                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)'
-                    }}>
-                      {/* Number 7 in black */}
-                      <span className="text-4xl font-black text-black" style={{
-                        fontFamily: 'JetBrains Mono, monospace'
-                      }}>7</span>
-                    </div>
-                  </div>
+                  {/* Bottom shadow gradient for sphere depth */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
                 </div>
-                {/* Shadow */}
-                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-black opacity-40 rounded-full blur-xl"></div>
+                
+                {/* Realistic Ground Shadow */}
+                <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-8 bg-black opacity-50 rounded-full blur-2xl"></div>
+                
+                {/* Ambient glow around ball */}
+                <div className="absolute inset-0 rounded-full bg-blue-400 opacity-20 blur-3xl scale-110"></div>
               </div>
             </div>
             
