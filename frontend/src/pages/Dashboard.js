@@ -187,17 +187,17 @@ export default function Dashboard() {
             <span className="text-xs font-medium">My Tickets</span>
           </button>
           <button
-            data-testid="nav-profile"
+            data-testid="nav-past-results"
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'profile' ? 'text-amber-500' : 'text-gray-400 hover:text-white'
+              activeTab === 'results' ? 'text-amber-500' : 'text-gray-400 hover:text-white'
             }`}
             onClick={() => {
-              setActiveTab('profile');
-              handleNavigation('/profile');
+              setActiveTab('results');
+              handleNavigation('/past-results');
             }}
           >
-            <User className="w-6 h-6" />
-            <span className="text-xs font-medium">Profile</span>
+            <Trophy className="w-6 h-6" />
+            <span className="text-xs font-medium">Past Results</span>
           </button>
         </div>
       </div>
