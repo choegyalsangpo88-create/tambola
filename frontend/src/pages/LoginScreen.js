@@ -31,25 +31,48 @@ export default function LoginScreen() {
           className="glass-card p-8 md:p-10 text-center"
           data-testid="login-card"
         >
-          {/* 3D Tambola Ball Logo */}
+          {/* 3D Tambola Balls Logo - Two balls like the image */}
           <div className="mb-6">
-            <div className="relative w-32 h-32 mx-auto mb-4">
-              {/* 3D Ball */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400 via-amber-500 to-orange-600 shadow-2xl" style={{
-                boxShadow: '0 20px 60px rgba(251, 146, 60, 0.6), inset 0 -10px 30px rgba(0,0,0,0.3), inset 0 10px 30px rgba(255,255,255,0.2)'
-              }}>
-                {/* Shine effect */}
-                <div className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full opacity-40 blur-xl"></div>
-                {/* Number 67 */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-5xl font-black text-white" style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-                  }}>67</span>
+            <div className="relative w-full h-32 mx-auto mb-4 flex items-center justify-center gap-4">
+              {/* Blue Ball with 6 */}
+              <div className="relative w-24 h-24">
+                {/* 3D Blue Ball */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 via-blue-600 to-blue-800 shadow-2xl" style={{
+                  boxShadow: '0 20px 60px rgba(59, 130, 246, 0.6), inset 0 -10px 30px rgba(0,0,0,0.4), inset 0 10px 30px rgba(255,255,255,0.3)'
+                }}>
+                  {/* Shine effect */}
+                  <div className="absolute top-3 left-4 w-10 h-10 bg-white rounded-full opacity-50 blur-xl"></div>
+                  {/* Number 6 */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-4xl font-black text-white" style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.6)'
+                    }}>6</span>
+                  </div>
                 </div>
+                {/* Shadow */}
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-5 bg-black opacity-30 rounded-full blur-lg"></div>
               </div>
-              {/* Shadow */}
-              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-28 h-6 bg-black opacity-30 rounded-full blur-lg"></div>
+
+              {/* Red Ball with 7 */}
+              <div className="relative w-24 h-24">
+                {/* 3D Red Ball */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-800 shadow-2xl" style={{
+                  boxShadow: '0 20px 60px rgba(239, 68, 68, 0.6), inset 0 -10px 30px rgba(0,0,0,0.4), inset 0 10px 30px rgba(255,255,255,0.3)'
+                }}>
+                  {/* Shine effect */}
+                  <div className="absolute top-3 left-4 w-10 h-10 bg-white rounded-full opacity-50 blur-xl"></div>
+                  {/* Number 7 */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-4xl font-black text-white" style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.6)'
+                    }}>7</span>
+                  </div>
+                </div>
+                {/* Shadow */}
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-5 bg-black opacity-30 rounded-full blur-lg"></div>
+              </div>
             </div>
             
             {/* TAMBOLA Text - Modern Premium Font */}
