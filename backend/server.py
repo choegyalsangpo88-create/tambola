@@ -624,7 +624,7 @@ async def call_number(game_id: str):
     # Generate next number (1-90)
     available_numbers = [n for n in range(1, 91) if n not in called_numbers]
     if not available_numbers:
-        return {"message": "All numbers called"}
+        return {" message": "All numbers called"}
     
     next_number = random.choice(available_numbers)
     
@@ -637,7 +637,49 @@ async def call_number(game_id: str):
         }
     )
     
-    return {"number": next_number, "called_numbers": called_numbers + [next_number]}
+    # Auto-detect winners after calling number
+    from winner_detection import auto_detect_winners
+    from notifications import send_winner_email, send_winner_sms
+    
+    existing_winners = session.get("winners", {})
+    new_winners = await auto_detect_winners(db, game_id, called_numbers + [next_number], existing_winners)
+    
+    # Update winners and send notifications
+    if new_winners:
+        game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+        all_winners = {**existing_winners, **new_winners}
+        
+        await db.game_sessions.update_one(
+            {"game_id": game_id},
+            {"$set": {"winners": all_winners}}
+        )
+        
+        # Send notifications to new winners
+        for prize_type, winner_info in new_winners.items():
+            prize_amount = game["prizes"].get(prize_type, 0)
+            
+            # Send email
+            send_winner_email(
+                winner_info.get("user_email", ""),
+                winner_info["user_name"],
+                prize_type,
+                prize_amount,
+                game["name"]
+            )
+            
+            # Send SMS (if phone number available)
+            user = await db.users.find_one({"user_id": winner_info["user_id"]}, {"_id": 0})
+            if user and user.get("phone"):
+                send_winner_sms(
+                    user["phone"],
+                    winner_info["user_name"],
+                    prize_type,
+                    prize_amount
+                )
+            
+            logger.info(f"🎉 Winner notified: {winner_info['user_name']} - {prize_type} - ₹{prize_amount}")
+    
+    return {"number": next_number, "called_numbers": called_numbers + [next_number], "new_winners": list(new_winners.keys())}
 
 @api_router.get("/games/{game_id}/session")
 async def get_game_session(game_id: str):
