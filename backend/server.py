@@ -669,6 +669,10 @@ async def declare_winner(winner_data: DeclareWinnerRequest):
         {"$set": {"winners": winners}}
     )
     
+    # Send winner notification (email or push - mocked for now)
+    # In production, integrate with SendGrid, Twilio, or Push service
+    logger.info(f"Winner notification sent to {user['email']}: {winner_data.prize_type}")
+    
     return {"message": f"Winner declared for {winner_data.prize_type}"}
 
 @api_router.post("/games/{game_id}/end")
