@@ -183,7 +183,7 @@ export default function GameDetails() {
   const displayedSheets = filterMode === 'selected'
     ? fullSheets.filter(sheet => isFullSheetSelected(sheet.tickets))
     : filterMode === 'fullsheets'
-    ? fullSheets.filter(sheet => sheet.availableCount === 6)
+    ? fullSheets.filter(sheet => sheet.isFullyAvailable) // Show only sheets with all 6 tickets available
     : fullSheets;
 
   if (!game) {
