@@ -347,29 +347,29 @@ export default function LiveGame() {
             )}
           </div>
 
-          {/* Right Sidebar */}
+          {/* Right Sidebar - 1/4 width */}
           <div className="space-y-6">
-            {/* Dividends (Prizes) */}
-            <div className="glass-card p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-6 h-6 text-amber-500" />
-                <h3 className="text-xl font-bold text-white">Dividends</h3>
+            {/* Dividends (Prizes) - Compact */}
+            <div className="glass-card p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                <h3 className="text-lg font-bold text-white">Dividends</h3>
               </div>
-              <div className="space-y-3" data-testid="dividends-list">
+              <div className="space-y-1" data-testid="dividends-list">
                 {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                   const winner = session.winners?.[prize];
                   return (
-                    <div key={prize} className={`p-3 rounded-lg border ${
+                    <div key={prize} className={`p-2 rounded-lg border text-xs ${
                       winner 
                         ? 'bg-green-500/10 border-green-500/30' 
                         : 'bg-amber-500/5 border-amber-500/20'
                     }`}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-bold text-white">{prize}</span>
-                        <span className="text-sm font-bold text-amber-500">₹{amount.toLocaleString()}</span>
+                        <span className="font-bold text-white">{prize}</span>
+                        <span className="font-bold text-amber-500">₹{amount.toLocaleString()}</span>
                       </div>
                       {winner && (
-                        <div className="mt-2 pt-2 border-t border-green-500/30">
+                        <div className="mt-1 pt-1 border-t border-green-500/30">
                           <p className="text-xs text-green-400 font-medium" data-testid={`winner-${prize}`}>
                             🏆 {winner.user_name}
                           </p>
@@ -383,30 +383,30 @@ export default function LiveGame() {
             </div>
 
             {/* Top 5 Players About to Win */}
-            <div className="glass-card p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
-                <h3 className="text-xl font-bold text-white">Top 5 Players</h3>
+            <div className="glass-card p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-lg font-bold text-white">Top 5 Players</h3>
               </div>
               <div className="space-y-2" data-testid="top-players-list">
                 {top5Players.length > 0 ? (
                   top5Players.map((player, index) => (
                     <div key={player.userId} className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                       <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 flex items-center justify-center bg-emerald-500 text-white text-xs font-bold rounded-full">
+                        <span className="w-5 h-5 flex items-center justify-center bg-emerald-500 text-white text-xs font-bold rounded-full">
                           #{index + 1}
                         </span>
-                        <span className="text-sm text-white font-medium">
+                        <span className="text-xs text-white font-medium">
                           Player {player.userId.slice(-4)}
                         </span>
                       </div>
                       <span className="text-xs text-emerald-400 font-bold">
-                        {player.totalMarked} marked
+                        {player.totalMarked}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-400 text-sm">Calculating rankings...</p>
+                  <p className="text-gray-400 text-xs">Calculating...</p>
                 )}
               </div>
             </div>
