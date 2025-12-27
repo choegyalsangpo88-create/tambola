@@ -167,8 +167,10 @@ export default function GameDetails() {
     }
   };
 
-  const displayedSheets = filterSelected
+  const displayedSheets = filterMode === 'selected'
     ? fullSheets.filter(sheet => isFullSheetSelected(sheet.tickets))
+    : filterMode === 'fullsheets'
+    ? fullSheets.filter(sheet => sheet.availableCount === 6)
     : fullSheets;
 
   if (!game) {
