@@ -98,6 +98,7 @@ class CreateGameRequest(BaseModel):
     date: str
     time: str
     price: float
+    total_tickets: int = 600
     prizes: Dict[str, float]
 
 class BookTicketsRequest(BaseModel):
