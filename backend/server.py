@@ -250,6 +250,8 @@ async def create_game(game_data: CreateGameRequest):
     
     prize_pool = sum(game_data.prizes.values())
     
+    total_tickets = game_data.dict().get('total_tickets', 600)
+    
     game = {
         "game_id": game_id,
         "name": game_data.name,
@@ -259,13 +261,42 @@ async def create_game(game_data: CreateGameRequest):
         "prize_pool": prize_pool,
         "prizes": game_data.prizes,
         "status": "upcoming",
-        "ticket_count": 600,
-        "available_tickets": 600,
+        "ticket_count": total_tickets,
+        "available_tickets": total_tickets,
         "created_at": datetime.now(timezone.utc)
     }
     
     await db.games.insert_one(game)
     return Game(**game)
+
+@api_router.put("/games/{game_id}", response_model=Game)
+async def update_game(game_id: str, game_data: CreateGameRequest):
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Only allow editing upcoming games
+    if game["status"] != "upcoming":
+        raise HTTPException(status_code=400, detail="Can only edit upcoming games")
+    
+    prize_pool = sum(game_data.prizes.values())
+    
+    update_data = {
+        "name": game_data.name,
+        "date": game_data.date,
+        "time": game_data.time,
+        "price": game_data.price,
+        "prize_pool": prize_pool,
+        "prizes": game_data.prizes
+    }
+    
+    await db.games.update_one(
+        {"game_id": game_id},
+        {"$set": update_data}
+    )
+    
+    updated_game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    return Game(**updated_game)
 
 # ============ TICKET ROUTES ============
 
