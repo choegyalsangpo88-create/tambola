@@ -141,6 +141,27 @@ export default function GameDetails() {
     );
   };
 
+  const selectFullSheet = (sheetTickets) => {
+    const sheetTicketIds = sheetTickets.map(t => t.ticket_id);
+    const allSelected = sheetTicketIds.every(id => selectedTickets.includes(id));
+    
+    if (allSelected) {
+      // Deselect all tickets from this sheet
+      setSelectedTickets(prev => prev.filter(id => !sheetTicketIds.includes(id)));
+      toast.info('Full Sheet deselected');
+    } else {
+      // Select all tickets from this sheet
+      const newSelection = [...new Set([...selectedTickets, ...sheetTicketIds])];
+      setSelectedTickets(newSelection);
+      toast.success('🎉 Full Sheet selected! Bonus eligible: ₹1,000');
+    }
+  };
+
+  const isFullSheetSelected = (sheetTickets) => {
+    const sheetTicketIds = sheetTickets.map(t => t.ticket_id);
+    return sheetTicketIds.every(id => selectedTickets.includes(id));
+  };
+
   const handleBookViaWhatsApp = async () => {
     if (selectedTickets.length === 0) {
       toast.error('Please select at least one ticket');
