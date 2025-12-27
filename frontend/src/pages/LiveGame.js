@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { getCallName } from '@/utils/tambolaCallNames';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -14,16 +15,20 @@ export default function LiveGame() {
   const [game, setGame] = useState(null);
   const [session, setSession] = useState(null);
   const [myTickets, setMyTickets] = useState([]);
+  const [allBookedTickets, setAllBookedTickets] = useState([]);
   const [markedNumbers, setMarkedNumbers] = useState(new Set());
+  const [top5Players, setTop5Players] = useState([]);
   const pollInterval = useRef(null);
 
   useEffect(() => {
     fetchGameData();
     fetchMyTickets();
+    fetchAllBookedTickets();
 
     // Poll for updates every 3 seconds
     pollInterval.current = setInterval(() => {
       fetchSession();
+      calculateTop5Players();
     }, 3000);
 
     return () => {
@@ -75,6 +80,54 @@ export default function LiveGame() {
     }
   };
 
+  const fetchAllBookedTickets = async () => {
+    try {
+      const ticketsResponse = await axios.get(`${API}/games/${gameId}/tickets?page=1&limit=600`);
+      const bookedTickets = ticketsResponse.data.tickets.filter(t => t.is_booked && t.booking_status === 'confirmed');
+      setAllBookedTickets(bookedTickets);
+    } catch (error) {
+      console.error('Failed to fetch booked tickets:', error);
+    }
+  };
+
+  const calculateTop5Players = () => {
+    if (!session || !allBookedTickets.length) return;
+
+    const calledSet = new Set(session.called_numbers);
+    const playerProgress = {};
+
+    allBookedTickets.forEach(ticket => {
+      const userId = ticket.user_id;
+      if (!userId) return;
+
+      let markedCount = 0;
+      ticket.numbers.forEach(row => {
+        row.forEach(num => {
+          if (num && calledSet.has(num)) {
+            markedCount++;
+          }
+        });
+      });
+
+      if (!playerProgress[userId]) {
+        playerProgress[userId] = {
+          userId,
+          totalMarked: 0,
+          ticketsCount: 0
+        };
+      }
+      playerProgress[userId].totalMarked += markedCount;
+      playerProgress[userId].ticketsCount += 1;
+    });
+
+    // Sort by total marked numbers
+    const sortedPlayers = Object.values(playerProgress)
+      .sort((a, b) => b.totalMarked - a.totalMarked)
+      .slice(0, 5);
+
+    setTop5Players(sortedPlayers);
+  };
+
   if (!game || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c]">
@@ -113,27 +166,64 @@ export default function LiveGame() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Game Area */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Current Number */}
+            {/* Current Number - 3D Ball */}
             <div className="glass-card p-8 text-center" data-testid="current-number-display">
-              <p className="text-amber-500 text-sm font-bold mb-2">CURRENT NUMBER</p>
-              <div className="number-call-animation">
-                <p
-                  className="text-6xl md:text-8xl font-black text-white number-font"
-                  style={{
-                    textShadow: '0 0 15px rgba(234, 179, 8, 0.5)'
-                  }}
-                  data-testid="current-number"
-                >
-                  {session.current_number || '--'}
+              <p className="text-amber-500 text-sm font-bold mb-4">CURRENT CALL</p>
+              
+              {/* 3D Tambola Ball */}
+              <div className="relative w-48 h-48 mx-auto mb-6">
+                {/* 3D Ball */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400 via-amber-500 to-orange-600 shadow-2xl" style={{
+                  boxShadow: '0 30px 80px rgba(251, 146, 60, 0.8), inset 0 -15px 40px rgba(0,0,0,0.3), inset 0 15px 40px rgba(255,255,255,0.2)'
+                }}>
+                  {/* Shine effect */}
+                  <div className="absolute top-8 left-12 w-20 h-20 bg-white rounded-full opacity-40 blur-2xl"></div>
+                  {/* Current Number */}
+                  <div className="absolute inset-0 flex items-center justify-center number-call-animation">
+                    <span className="text-7xl font-black text-white number-font" style={{
+                      textShadow: '3px 3px 6px rgba(0,0,0,0.6)'
+                    }} data-testid="current-number">
+                      {session.current_number || '--'}
+                    </span>
+                  </div>
+                </div>
+                {/* Shadow */}
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-40 h-8 bg-black opacity-40 rounded-full blur-2xl"></div>
+              </div>
+              
+              {/* Call Name */}
+              {session.current_number && (
+                <p className="text-2xl text-gray-300 font-medium">
+                  {getCallName(session.current_number).split(' - ')[1] || ''}
                 </p>
+              )}
+            </div>
+
+            {/* Called Numbers - Just below current call */}
+            <div className="glass-card p-6" data-testid="called-numbers-section">
+              <h3 className="text-lg font-bold text-white mb-4">Called Numbers ({session.called_numbers.length}/90)</h3>
+              <div className="flex flex-wrap gap-2">
+                {session.called_numbers && session.called_numbers.length > 0 ? (
+                  session.called_numbers.map((num) => (
+                    <div
+                      key={num}
+                      className="w-12 h-12 flex items-center justify-center bg-amber-500 text-black font-bold rounded-lg number-font"
+                      data-testid={`called-number-${num}`}
+                    >
+                      {num}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No numbers called yet</p>
+                )}
               </div>
             </div>
 
-            {/* My Tickets */}
-            {myTickets.length > 0 ? (
+            {/* My Tickets - Scrollable */}
+            {myTickets.length > 0 && (
               <div data-testid="my-tickets-section">
                 <h3 className="text-xl font-bold text-white mb-4">My Tickets</h3>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                   {myTickets.map((ticket) => (
                     <div key={ticket.ticket_id} className="glass-card p-6" data-testid={`live-ticket-${ticket.ticket_id}`}>
                       <p className="text-xs font-bold text-amber-500 mb-3">{ticket.ticket_number}</p>
@@ -159,51 +249,71 @@ export default function LiveGame() {
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="glass-card p-8 text-center">
-                <p className="text-gray-400">You don't have any confirmed tickets for this game</p>
-              </div>
             )}
+          </div>
 
-            {/* Called Numbers */}
-            <div className="glass-card p-6" data-testid="called-numbers-section">
-              <h3 className="text-lg font-bold text-white mb-4">Called Numbers</h3>
-              <div className="flex flex-wrap gap-2">
-                {session.called_numbers && session.called_numbers.length > 0 ? (
-                  session.called_numbers.map((num) => (
-                    <div
-                      key={num}
-                      className="w-12 h-12 flex items-center justify-center bg-amber-500 text-black font-bold rounded-lg number-font"
-                      data-testid={`called-number-${num}`}
-                    >
-                      {num}
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Dividends (Prizes) */}
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="w-6 h-6 text-amber-500" />
+                <h3 className="text-xl font-bold text-white">Dividends</h3>
+              </div>
+              <div className="space-y-3" data-testid="dividends-list">
+                {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
+                  const winner = session.winners?.[prize];
+                  return (
+                    <div key={prize} className={`p-3 rounded-lg border ${
+                      winner 
+                        ? 'bg-green-500/10 border-green-500/30' 
+                        : 'bg-amber-500/5 border-amber-500/20'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-bold text-white">{prize}</span>
+                        <span className="text-sm font-bold text-amber-500">₹{amount.toLocaleString()}</span>
+                      </div>
+                      {winner && (
+                        <div className="mt-2 pt-2 border-t border-green-500/30">
+                          <p className="text-xs text-green-400 font-medium" data-testid={`winner-${prize}`}>
+                            🏆 {winner.user_name}
+                          </p>
+                          <p className="text-xs text-gray-500">{winner.ticket_id}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Top 5 Players About to Win */}
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-6 h-6 text-emerald-500" />
+                <h3 className="text-xl font-bold text-white">Top 5 Players</h3>
+              </div>
+              <div className="space-y-2" data-testid="top-players-list">
+                {top5Players.length > 0 ? (
+                  top5Players.map((player, index) => (
+                    <div key={player.userId} className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center bg-emerald-500 text-white text-xs font-bold rounded-full">
+                          #{index + 1}
+                        </span>
+                        <span className="text-sm text-white font-medium">
+                          Player {player.userId.slice(-4)}
+                        </span>
+                      </div>
+                      <span className="text-xs text-emerald-400 font-bold">
+                        {player.totalMarked} marked
+                      </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-400">No numbers called yet</p>
+                  <p className="text-gray-400 text-sm">Calculating rankings...</p>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Winners Sidebar */}
-          <div className="glass-card p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-6 h-6 text-amber-500" />
-              <h3 className="text-xl font-bold text-white">Winners</h3>
-            </div>
-            <div className="space-y-3" data-testid="winners-list">
-              {session.winners && Object.keys(session.winners).length > 0 ? (
-                Object.entries(session.winners).map(([prize, winner]) => (
-                  <div key={prize} className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
-                    <p className="text-sm font-bold text-amber-500">{prize}</p>
-                    <p className="text-white font-medium" data-testid={`winner-${prize}`}>{winner.user_name}</p>
-                    <p className="text-xs text-gray-400">{winner.ticket_id}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 text-sm">No winners yet</p>
-              )}
             </div>
           </div>
         </div>
