@@ -7,6 +7,7 @@ import GameDetails from './pages/GameDetails';
 import LiveGame from './pages/LiveGame';
 import MyTickets from './pages/MyTickets';
 import Profile from './pages/Profile';
+import PastResults from './pages/PastResults';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -29,6 +30,7 @@ function AppRouter() {
         <Route path="/live/:gameId" element={<ProtectedRoute><LiveGame /></ProtectedRoute>} />
         <Route path="/my-tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/past-results" element={<ProtectedRoute><PastResults /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
