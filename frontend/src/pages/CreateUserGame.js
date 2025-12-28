@@ -183,17 +183,50 @@ export default function CreateUserGame() {
               <p className="text-xs text-gray-500 mt-1">Recommend: 30-60 tickets for family games</p>
             </div>
 
-            {/* Prizes Description */}
+            {/* Dividends Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                <Trophy className="inline w-4 h-4 mr-1" /> Prizes Description
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                <Trophy className="inline w-4 h-4 mr-1" /> Select Prizes (Click to enable/disable)
               </label>
-              <Textarea
-                placeholder="e.g., First Line: ₹100, Full House: ₹500, Early 5: Gift Hamper"
-                value={formData.prizes_description}
-                onChange={(e) => setFormData({ ...formData, prizes_description: e.target.value })}
-                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 min-h-[100px]"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {Object.entries(dividends).map(([name, data]) => (
+                  <div
+                    key={name}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                      data.enabled 
+                        ? 'bg-amber-500/20 border-amber-500/50' 
+                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                    }`}
+                    onClick={() => toggleDividend(name)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox 
+                          checked={data.enabled} 
+                          onCheckedChange={() => toggleDividend(name)}
+                          className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                        />
+                        <span className={`font-medium ${data.enabled ? 'text-amber-400' : 'text-gray-300'}`}>
+                          {name}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">{data.description}</p>
+                    {data.enabled && (
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-gray-400 text-sm">₹</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={data.amount}
+                          onChange={(e) => updateDividendAmount(name, e.target.value)}
+                          className="h-8 bg-white/10 border-white/20 text-white w-24 text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Submit Button */}
