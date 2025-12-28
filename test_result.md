@@ -203,9 +203,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Google Auth Redirect Flow"
-    - "Create Your Own Game Feature"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
