@@ -9,6 +9,11 @@ import MyTickets from './pages/MyTickets';
 import Profile from './pages/Profile';
 import PastResults from './pages/PastResults';
 import AdminPanel from './pages/AdminPanel';
+import CreateUserGame from './pages/CreateUserGame';
+import MyUserGames from './pages/MyUserGames';
+import UserGameDetails from './pages/UserGameDetails';
+import JoinUserGame from './pages/JoinUserGame';
+import UserGamePlay from './pages/UserGamePlay';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -32,6 +37,13 @@ function AppRouter() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/past-results" element={<ProtectedRoute><PastResults /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+        {/* User Game Routes */}
+        <Route path="/create-game" element={<ProtectedRoute><CreateUserGame /></ProtectedRoute>} />
+        <Route path="/my-games" element={<ProtectedRoute><MyUserGames /></ProtectedRoute>} />
+        <Route path="/my-games/:userGameId" element={<ProtectedRoute><UserGameDetails /></ProtectedRoute>} />
+        <Route path="/user-game-play/:userGameId" element={<ProtectedRoute><UserGamePlay /></ProtectedRoute>} />
+        {/* Public Join Route - No auth required */}
+        <Route path="/join/:shareCode" element={<JoinUserGame />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <Toaster position="top-right" />
