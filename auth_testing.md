@@ -28,11 +28,11 @@ print('User ID: ' + userId);
 ## Step 2: Test Backend API
 ```bash
 # Test auth endpoint
-curl -X GET "https://tambola-play-2.preview.emergentagent.com/api/auth/me" \
+curl -X GET "https://lucky-numbers-214.preview.emergentagent.com/api/auth/me" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 
 # Test games endpoint
-curl -X GET "https://tambola-play-2.preview.emergentagent.com/api/games" \
+curl -X GET "https://lucky-numbers-214.preview.emergentagent.com/api/games" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 ```
 
@@ -48,7 +48,7 @@ await page.context.add_cookies([{
     "secure": true,
     "sameSite": "None"
 }]);
-await page.goto("https://tambola-play-2.preview.emergentagent.com");
+await page.goto("https://lucky-numbers-214.preview.emergentagent.com");
 ```
 
 ## Quick Debug
