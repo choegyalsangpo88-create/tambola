@@ -818,6 +818,343 @@ async def update_profile(
     updated_user = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
     return User(**updated_user)
 
+# ============ USER GAMES ROUTES (Create Your Own Game) ============
+
+def generate_share_code():
+    """Generate a short unique share code"""
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # Excluding confusing chars
+    return ''.join(random.choices(chars, k=6))
+
+def generate_user_game_tickets(max_tickets: int):
+    """Generate tickets for a user game - simplified version"""
+    tickets = []
+    num_sheets = (max_tickets + 5) // 6  # Round up to full sheets
+    ticket_counter = 1
+    
+    for sheet_num in range(1, num_sheets + 1):
+        if ticket_counter > max_tickets:
+            break
+        full_sheet = generate_full_sheet()
+        sheet_id = f"FS{sheet_num:03d}"
+        
+        for ticket_num_in_sheet, ticket_numbers in enumerate(full_sheet, 1):
+            if ticket_counter > max_tickets:
+                break
+            ticket = {
+                "ticket_id": f"UGT{ticket_counter:03d}",
+                "ticket_number": f"T{ticket_counter:03d}",
+                "full_sheet_id": sheet_id,
+                "ticket_position_in_sheet": ticket_num_in_sheet,
+                "numbers": ticket_numbers,
+                "assigned_to": None
+            }
+            tickets.append(ticket)
+            ticket_counter += 1
+    
+    return tickets
+
+@api_router.post("/user-games")
+async def create_user_game(
+    game_data: CreateUserGameRequest,
+    user: User = Depends(get_current_user)
+):
+    """Create a new user game for family/party"""
+    user_game_id = f"ug_{uuid.uuid4().hex[:8]}"
+    share_code = generate_share_code()
+    
+    # Ensure share code is unique
+    while await db.user_games.find_one({"share_code": share_code}):
+        share_code = generate_share_code()
+    
+    # Generate tickets
+    tickets = generate_user_game_tickets(game_data.max_tickets)
+    
+    user_game = {
+        "user_game_id": user_game_id,
+        "host_user_id": user.user_id,
+        "host_name": user.name,
+        "name": game_data.name,
+        "date": game_data.date,
+        "time": game_data.time,
+        "max_tickets": game_data.max_tickets,
+        "prizes_description": game_data.prizes_description,
+        "share_code": share_code,
+        "status": "upcoming",
+        "created_at": datetime.now(timezone.utc),
+        "players": [],
+        "tickets": tickets,
+        "called_numbers": [],
+        "current_number": None,
+        "winners": {}
+    }
+    
+    await db.user_games.insert_one(user_game)
+    
+    # Remove tickets from response for lighter payload
+    user_game.pop("tickets", None)
+    user_game.pop("_id", None)
+    
+    return user_game
+
+@api_router.get("/user-games/my")
+async def get_my_user_games(user: User = Depends(get_current_user)):
+    """Get all games created by current user"""
+    games = await db.user_games.find(
+        {"host_user_id": user.user_id},
+        {"_id": 0, "tickets": 0}
+    ).to_list(100)
+    return games
+
+@api_router.get("/user-games/code/{share_code}")
+async def get_user_game_by_code(share_code: str):
+    """Get game details by share code (public endpoint for joining)"""
+    game = await db.user_games.find_one(
+        {"share_code": share_code.upper()},
+        {"_id": 0, "tickets": 0}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return game
+
+@api_router.get("/user-games/{user_game_id}")
+async def get_user_game(user_game_id: str):
+    """Get full game details including tickets"""
+    game = await db.user_games.find_one(
+        {"user_game_id": user_game_id},
+        {"_id": 0}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return game
+
+@api_router.put("/user-games/{user_game_id}")
+async def update_user_game(
+    user_game_id: str,
+    game_data: UpdateUserGameRequest,
+    user: User = Depends(get_current_user)
+):
+    """Update a user game (host only)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can edit")
+    
+    if game["status"] != "upcoming":
+        raise HTTPException(status_code=400, detail="Can only edit upcoming games")
+    
+    update_data = {k: v for k, v in game_data.model_dump().items() if v is not None}
+    
+    if update_data:
+        await db.user_games.update_one(
+            {"user_game_id": user_game_id},
+            {"$set": update_data}
+        )
+    
+    updated = await db.user_games.find_one(
+        {"user_game_id": user_game_id},
+        {"_id": 0, "tickets": 0}
+    )
+    return updated
+
+@api_router.delete("/user-games/{user_game_id}")
+async def delete_user_game(
+    user_game_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Delete a user game (host only)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can delete")
+    
+    await db.user_games.delete_one({"user_game_id": user_game_id})
+    return {"message": "Game deleted successfully"}
+
+@api_router.post("/user-games/{user_game_id}/join")
+async def join_user_game(
+    user_game_id: str,
+    join_data: JoinUserGameRequest
+):
+    """Join a user game (public - just needs name)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["status"] != "upcoming":
+        raise HTTPException(status_code=400, detail="Cannot join game that has started")
+    
+    # Find available tickets
+    tickets = game.get("tickets", [])
+    available_tickets = [t for t in tickets if not t.get("assigned_to")]
+    
+    if len(available_tickets) < join_data.ticket_count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only {len(available_tickets)} tickets available"
+        )
+    
+    # Assign tickets to player
+    assigned_ticket_ids = []
+    for i in range(join_data.ticket_count):
+        ticket_id = available_tickets[i]["ticket_id"]
+        assigned_ticket_ids.append(ticket_id)
+        # Update ticket in the array
+        for t in tickets:
+            if t["ticket_id"] == ticket_id:
+                t["assigned_to"] = join_data.player_name
+                break
+    
+    # Add player to players list
+    player_entry = {
+        "name": join_data.player_name,
+        "tickets": assigned_ticket_ids,
+        "joined_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.user_games.update_one(
+        {"user_game_id": user_game_id},
+        {
+            "$push": {"players": player_entry},
+            "$set": {"tickets": tickets}
+        }
+    )
+    
+    # Get the assigned tickets to return
+    player_tickets = [t for t in tickets if t["ticket_id"] in assigned_ticket_ids]
+    
+    return {
+        "message": f"Welcome {join_data.player_name}!",
+        "player_name": join_data.player_name,
+        "tickets": player_tickets
+    }
+
+@api_router.post("/user-games/code/{share_code}/join")
+async def join_user_game_by_code(
+    share_code: str,
+    join_data: JoinUserGameRequest
+):
+    """Join a user game by share code"""
+    game = await db.user_games.find_one({"share_code": share_code.upper()}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    return await join_user_game(game["user_game_id"], join_data)
+
+@api_router.get("/user-games/{user_game_id}/players")
+async def get_user_game_players(user_game_id: str):
+    """Get list of players in a user game"""
+    game = await db.user_games.find_one(
+        {"user_game_id": user_game_id},
+        {"_id": 0, "players": 1, "tickets": 1}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Enrich players with their ticket details
+    tickets = {t["ticket_id"]: t for t in game.get("tickets", [])}
+    players = []
+    for player in game.get("players", []):
+        player_tickets = [tickets[tid] for tid in player["tickets"] if tid in tickets]
+        players.append({
+            "name": player["name"],
+            "ticket_count": len(player["tickets"]),
+            "tickets": player_tickets,
+            "joined_at": player.get("joined_at")
+        })
+    
+    return {"players": players, "total": len(players)}
+
+@api_router.post("/user-games/{user_game_id}/start")
+async def start_user_game(
+    user_game_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Start a user game (host only)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can start")
+    
+    await db.user_games.update_one(
+        {"user_game_id": user_game_id},
+        {"$set": {"status": "live", "started_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Game started!"}
+
+@api_router.post("/user-games/{user_game_id}/call-number")
+async def call_user_game_number(
+    user_game_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Call next number in user game (host only)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can call numbers")
+    
+    if game["status"] != "live":
+        raise HTTPException(status_code=400, detail="Game is not live")
+    
+    called_numbers = game.get("called_numbers", [])
+    available = [n for n in range(1, 91) if n not in called_numbers]
+    
+    if not available:
+        return {"message": "All numbers called", "called_numbers": called_numbers}
+    
+    next_number = random.choice(available)
+    called_numbers.append(next_number)
+    
+    await db.user_games.update_one(
+        {"user_game_id": user_game_id},
+        {"$set": {"called_numbers": called_numbers, "current_number": next_number}}
+    )
+    
+    return {
+        "number": next_number,
+        "called_numbers": called_numbers,
+        "remaining": len(available) - 1
+    }
+
+@api_router.get("/user-games/{user_game_id}/session")
+async def get_user_game_session(user_game_id: str):
+    """Get current game session state"""
+    game = await db.user_games.find_one(
+        {"user_game_id": user_game_id},
+        {"_id": 0, "called_numbers": 1, "current_number": 1, "status": 1, "winners": 1, "name": 1}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return game
+
+@api_router.post("/user-games/{user_game_id}/end")
+async def end_user_game(
+    user_game_id: str,
+    user: User = Depends(get_current_user)
+):
+    """End a user game (host only)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can end")
+    
+    await db.user_games.update_one(
+        {"user_game_id": user_game_id},
+        {"$set": {"status": "completed", "ended_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Game ended!"}
+
 app.include_router(api_router)
 
 app.add_middleware(
