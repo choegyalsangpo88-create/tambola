@@ -464,7 +464,8 @@ class TambolaAPITester:
             ("Bookings", booking_success),
             ("Admin", admin_success),
             ("Live Game", live_success),
-            ("Profile", profile_success)
+            ("Profile", profile_success),
+            ("User Games", user_games_success)
         ]
         
         print("\n📋 Test Suite Results:")
