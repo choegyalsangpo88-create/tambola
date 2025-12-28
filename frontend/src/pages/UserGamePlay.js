@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Square, Volume2, VolumeX, Users, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
-import tambolaCallNames from '../utils/tambolaCallNames';
+import { getCallName } from '../utils/tambolaCallNames';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
