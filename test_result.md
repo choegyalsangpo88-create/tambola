@@ -130,7 +130,7 @@ backend:
         comment: "Games listing, creation, and updates work"
 
   - task: "User Games API - Create Your Own Game"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
@@ -139,7 +139,7 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "New feature - needs implementation"
+        comment: "Implemented full backend API with endpoints: POST /user-games, GET /user-games/my, GET /user-games/{id}, PUT /user-games/{id}, DELETE /user-games/{id}, POST /user-games/{id}/join, GET /user-games/code/{code}, POST /user-games/{id}/start, POST /user-games/{id}/call-number, POST /user-games/{id}/end"
 
 frontend:
   - task: "Google Auth Redirect Flow"
@@ -167,10 +167,10 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Dashboard displays games correctly"
+        comment: "Dashboard displays games correctly. Added Create Your Own Game CTA and My Games tab in bottom nav"
 
   - task: "Create Your Own Game Feature"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/frontend/src/pages/CreateUserGame.js"
     stuck_count: 0
@@ -179,7 +179,7 @@ frontend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "New feature - needs implementation with WhatsApp sharing, QR code, simple booking"
+        comment: "Implemented full feature with: CreateUserGame.js (form), MyUserGames.js (list), UserGameDetails.js (share page with WhatsApp & QR), JoinUserGame.js (public join page), UserGamePlay.js (live game host controls)"
 
 metadata:
   created_by: "main_agent"
