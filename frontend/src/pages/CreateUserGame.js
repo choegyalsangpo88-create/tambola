@@ -201,11 +201,19 @@ export default function CreateUserGame() {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Checkbox 
-                          checked={data.enabled} 
-                          onCheckedChange={() => toggleDividend(name)}
-                          className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
-                        />
+                        <div 
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                            data.enabled 
+                              ? 'bg-amber-500 border-amber-500' 
+                              : 'border-gray-500'
+                          }`}
+                        >
+                          {data.enabled && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
                         <span className={`font-medium ${data.enabled ? 'text-amber-400' : 'text-gray-300'}`}>
                           {name}
                         </span>
