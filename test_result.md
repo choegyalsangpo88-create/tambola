@@ -197,4 +197,4 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Fixed Google Auth redirect issue by clearing URL hash before navigation. Now implementing Create Your Own Game feature with WhatsApp sharing, QR code download, and simplified booking (name only)."
+    message: "Fixed Google Auth redirect issue by clearing URL hash before navigation. Implemented full Create Your Own Game feature with: 1) Backend APIs for user games CRUD, join, start, call numbers, end. 2) Frontend pages: CreateUserGame.js, MyUserGames.js, UserGameDetails.js (with WhatsApp share & QR code), JoinUserGame.js (public join with name only), UserGamePlay.js (host live game controls). Please test: a) Google Auth login flow, b) Create game form, c) WhatsApp share button, d) QR code display/download, e) Join game by share code with name, f) Live game number calling"
