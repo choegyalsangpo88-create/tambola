@@ -118,6 +118,40 @@ class UpdateProfileRequest(BaseModel):
     name: Optional[str] = None
     avatar: Optional[str] = None
 
+# User Game Models (for Create Your Own Game feature)
+class UserGame(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    user_game_id: str
+    host_user_id: str
+    host_name: str
+    name: str
+    date: str
+    time: str
+    max_tickets: int = 90
+    prizes_description: str = ""
+    share_code: str  # Short unique code for sharing
+    status: str = "upcoming"  # upcoming, live, completed
+    created_at: datetime
+    players: List[Dict[str, Any]] = Field(default_factory=list)  # [{name, tickets: []}]
+
+class CreateUserGameRequest(BaseModel):
+    name: str
+    date: str
+    time: str
+    max_tickets: int = 90
+    prizes_description: str = ""
+
+class UpdateUserGameRequest(BaseModel):
+    name: Optional[str] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
+    max_tickets: Optional[int] = None
+    prizes_description: Optional[str] = None
+
+class JoinUserGameRequest(BaseModel):
+    player_name: str
+    ticket_count: int = 1
+
 # ============ AUTH HELPER ============
 
 async def get_current_user(request: Request) -> User:
