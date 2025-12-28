@@ -101,3 +101,100 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: Build a full-stack Tambola (Housie) game with Google Auth, user dashboard, live game, admin panel, and now add "Create Your Own Tambola Game" feature for family/party games with shareable links and QR codes.
+
+backend:
+  - task: "Google Auth Session Exchange"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Backend auth endpoint works - exchanges session_id for session_token"
+
+  - task: "Games CRUD API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Games listing, creation, and updates work"
+
+  - task: "User Games API - Create Your Own Game"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New feature - needs implementation"
+
+frontend:
+  - task: "Google Auth Redirect Flow"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/AuthCallback.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported stuck on callback page after login"
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed by clearing URL hash before navigation to prevent re-triggering AuthCallback"
+
+  - task: "Dashboard with Live & Upcoming Games"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Dashboard.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Dashboard displays games correctly"
+
+  - task: "Create Your Own Game Feature"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/pages/CreateUserGame.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New feature - needs implementation with WhatsApp sharing, QR code, simple booking"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Google Auth Redirect Flow"
+    - "Create Your Own Game Feature"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Fixed Google Auth redirect issue by clearing URL hash before navigation. Now implementing Create Your Own Game feature with WhatsApp sharing, QR code download, and simplified booking (name only)."
