@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { Home, Ticket, User, Trophy, Calendar, Users, Award } from 'lucide-react';
+import { Home, Ticket, User, Trophy, Calendar, Users, Award, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
