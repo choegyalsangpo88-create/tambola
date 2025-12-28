@@ -232,7 +232,7 @@ export default function UserGamePlay() {
         {/* Call Name */}
         {(currentBall || session?.current_number) && (
           <p className="text-center text-amber-400 font-semibold mb-6 text-lg">
-            {tambolaCallNames[currentBall || session?.current_number]}
+            {getCallName(currentBall || session?.current_number)}
           </p>
         )}
 
