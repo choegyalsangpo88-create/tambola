@@ -14,6 +14,8 @@ class TambolaAPITester:
         self.game_id = None
         self.booking_id = None
         self.ticket_ids = []
+        self.user_game_id = None
+        self.share_code = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
