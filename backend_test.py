@@ -304,6 +304,130 @@ class TambolaAPITester:
         
         return success
 
+    def test_user_games_endpoints(self):
+        """Test user games (Create Your Own Game) endpoints"""
+        print("\n" + "="*50)
+        print("TESTING USER GAMES ENDPOINTS")
+        print("="*50)
+        
+        # Test create user game
+        user_game_data = {
+            "name": f"Family Game {datetime.now().strftime('%H%M%S')}",
+            "date": "2025-02-01",
+            "time": "19:00",
+            "max_tickets": 30,
+            "prizes_description": "1st Prize: ₹500, 2nd Prize: ₹300, 3rd Prize: ₹200"
+        }
+        
+        success, created_user_game = self.run_test(
+            "Create User Game",
+            "POST",
+            "user-games",
+            200,
+            data=user_game_data
+        )
+        
+        if success and created_user_game:
+            self.user_game_id = created_user_game.get('user_game_id')
+            self.share_code = created_user_game.get('share_code')
+            print(f"   Created User Game ID: {self.user_game_id}")
+            print(f"   Share Code: {self.share_code}")
+            
+            # Test get my user games
+            success, my_user_games = self.run_test(
+                "Get My User Games",
+                "GET",
+                "user-games/my",
+                200
+            )
+            
+            # Test get user game by ID
+            success, user_game_details = self.run_test(
+                "Get User Game Details",
+                "GET",
+                f"user-games/{self.user_game_id}",
+                200
+            )
+            
+            # Test get user game by share code (public)
+            success, game_by_code = self.run_test(
+                "Get User Game by Share Code",
+                "GET",
+                f"user-games/code/{self.share_code}",
+                200,
+                headers={}  # No auth needed for public endpoint
+            )
+            
+            # Test join game by share code (public)
+            join_data = {
+                "player_name": "Test Player",
+                "ticket_count": 2
+            }
+            
+            success, join_result = self.run_test(
+                "Join User Game by Share Code",
+                "POST",
+                f"user-games/code/{self.share_code}/join",
+                200,
+                data=join_data,
+                headers={}  # No auth needed for public endpoint
+            )
+            
+            if success and join_result:
+                print(f"   Player joined: {join_result.get('player_name')}")
+                print(f"   Tickets assigned: {len(join_result.get('tickets', []))}")
+            
+            # Test get players list
+            success, players_data = self.run_test(
+                "Get User Game Players",
+                "GET",
+                f"user-games/{self.user_game_id}/players",
+                200
+            )
+            
+            if success and players_data:
+                print(f"   Total players: {players_data.get('total', 0)}")
+            
+            # Test start user game
+            success, start_result = self.run_test(
+                "Start User Game",
+                "POST",
+                f"user-games/{self.user_game_id}/start",
+                200
+            )
+            
+            if success:
+                # Test call number in user game
+                success, call_result = self.run_test(
+                    "Call Number in User Game",
+                    "POST",
+                    f"user-games/{self.user_game_id}/call-number",
+                    200
+                )
+                
+                if success and call_result:
+                    print(f"   Called number: {call_result.get('number')}")
+                    print(f"   Remaining numbers: {call_result.get('remaining')}")
+                
+                # Test get user game session
+                success, session_data = self.run_test(
+                    "Get User Game Session",
+                    "GET",
+                    f"user-games/{self.user_game_id}/session",
+                    200
+                )
+                
+                # Test end user game
+                success, end_result = self.run_test(
+                    "End User Game",
+                    "POST",
+                    f"user-games/{self.user_game_id}/end",
+                    200
+                )
+            
+            return True
+        return False
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Tambola API Tests")
