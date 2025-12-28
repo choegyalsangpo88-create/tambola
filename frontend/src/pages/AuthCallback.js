@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -33,12 +33,18 @@ export default function AuthCallback() {
         );
 
         const user = response.data.user;
+        
+        // Clear the hash BEFORE navigating to prevent re-triggering AuthCallback
+        window.history.replaceState(null, '', window.location.pathname);
+        
         toast.success('Logged in successfully!');
 
         // Navigate to dashboard with user data
         navigate('/', { state: { user }, replace: true });
       } catch (error) {
         console.error('Auth error:', error);
+        // Clear hash on error too
+        window.history.replaceState(null, '', window.location.pathname);
         toast.error('Authentication failed');
         navigate('/login', { replace: true });
       }
