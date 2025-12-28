@@ -3,12 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Users, Calendar, Clock, Trophy, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Default dividends for user games (family/party style)
+const DEFAULT_DIVIDENDS = {
+  'Quick Five': { enabled: false, amount: 100, description: 'First to mark 5 numbers' },
+  'Top Line': { enabled: true, amount: 200, description: 'Complete first row' },
+  'Middle Line': { enabled: true, amount: 200, description: 'Complete middle row' },
+  'Bottom Line': { enabled: true, amount: 200, description: 'Complete last row' },
+  'Four Corners': { enabled: false, amount: 150, description: 'All 4 corner numbers' },
+  'Full House': { enabled: true, amount: 500, description: 'Complete all numbers' },
+  '2nd Full House': { enabled: false, amount: 300, description: 'Second to complete all' },
+  '3rd Full House': { enabled: false, amount: 200, description: 'Third to complete all' },
+};
 
 export default function CreateUserGame() {
   const navigate = useNavigate();
@@ -18,8 +30,30 @@ export default function CreateUserGame() {
     date: '',
     time: '',
     max_tickets: 30,
-    prizes_description: ''
   });
+  const [dividends, setDividends] = useState({ ...DEFAULT_DIVIDENDS });
+
+  const toggleDividend = (name) => {
+    setDividends(prev => ({
+      ...prev,
+      [name]: { ...prev[name], enabled: !prev[name].enabled }
+    }));
+  };
+
+  const updateDividendAmount = (name, amount) => {
+    setDividends(prev => ({
+      ...prev,
+      [name]: { ...prev[name], amount: parseInt(amount) || 0 }
+    }));
+  };
+
+  const getEnabledPrizesDescription = () => {
+    const enabled = Object.entries(dividends)
+      .filter(([_, data]) => data.enabled)
+      .map(([name, data]) => `${name}: ₹${data.amount}`)
+      .join('\n');
+    return enabled || 'No prizes selected';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,11 +63,21 @@ export default function CreateUserGame() {
       return;
     }
 
+    // Check if at least one dividend is enabled
+    const hasEnabledDividend = Object.values(dividends).some(d => d.enabled);
+    if (!hasEnabledDividend) {
+      toast.error('Please select at least one prize');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await axios.post(
         `${API}/user-games`,
-        formData,
+        {
+          ...formData,
+          prizes_description: getEnabledPrizesDescription()
+        },
         { withCredentials: true }
       );
       
