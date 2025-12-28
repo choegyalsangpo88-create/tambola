@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Users, Calendar, Clock, Trophy, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 
