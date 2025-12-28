@@ -188,17 +188,30 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-around">
           <button
             data-testid="nav-home"
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
               activeTab === 'home' ? 'text-amber-500' : 'text-gray-400 hover:text-white'
             }`}
             onClick={() => setActiveTab('home')}
           >
-            <Home className="w-6 h-6" />
+            <Home className="w-5 h-5" />
             <span className="text-xs font-medium">Home</span>
           </button>
           <button
+            data-testid="nav-my-games"
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+              activeTab === 'games' ? 'text-amber-500' : 'text-gray-400 hover:text-white'
+            }`}
+            onClick={() => {
+              setActiveTab('games');
+              handleNavigation('/my-games');
+            }}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-xs font-medium">My Games</span>
+          </button>
+          <button
             data-testid="nav-my-tickets"
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
               activeTab === 'tickets' ? 'text-amber-500' : 'text-gray-400 hover:text-white'
             }`}
             onClick={() => {
@@ -206,12 +219,12 @@ export default function Dashboard() {
               handleNavigation('/my-tickets');
             }}
           >
-            <Ticket className="w-6 h-6" />
-            <span className="text-xs font-medium">My Tickets</span>
+            <Ticket className="w-5 h-5" />
+            <span className="text-xs font-medium">Tickets</span>
           </button>
           <button
             data-testid="nav-past-results"
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
               activeTab === 'results' ? 'text-amber-500' : 'text-gray-400 hover:text-white'
             }`}
             onClick={() => {
@@ -219,8 +232,8 @@ export default function Dashboard() {
               handleNavigation('/past-results');
             }}
           >
-            <Trophy className="w-6 h-6" />
-            <span className="text-xs font-medium">Past Results</span>
+            <Trophy className="w-5 h-5" />
+            <span className="text-xs font-medium">Results</span>
           </button>
         </div>
       </div>
