@@ -447,6 +447,7 @@ class TambolaAPITester:
         admin_success = self.test_admin_endpoints()
         live_success = self.test_live_game_endpoints()
         profile_success = self.test_profile_endpoints()
+        user_games_success = self.test_user_games_endpoints()
         
         # Print final results
         print("\n" + "="*60)
