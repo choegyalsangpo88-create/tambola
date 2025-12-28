@@ -72,6 +72,29 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Create Your Own Game CTA */}
+        <div className="mb-8">
+          <div 
+            className="glass-card p-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 hover-lift cursor-pointer"
+            onClick={() => navigate('/create-game')}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center">
+                  <Users className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Create Your Own Tambola</h3>
+                  <p className="text-sm text-gray-400">Host a game for family & friends - No signup needed for players!</p>
+                </div>
+              </div>
+              <Button className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 hidden md:flex">
+                <Plus className="w-4 h-4 mr-2" /> Create Game
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Live Games */}
         {liveGames.length > 0 && (
           <div className="mb-10" data-testid="live-games-section">
