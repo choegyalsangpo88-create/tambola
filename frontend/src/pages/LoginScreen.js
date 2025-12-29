@@ -246,7 +246,7 @@ export default function LoginScreen() {
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Enter OTP</h2>
         <p className="text-gray-400 text-sm">
-          OTP sent to WhatsApp on +91 {phone}
+          OTP sent to WhatsApp on {selectedCountry.code} {phone}
         </p>
       </div>
 
