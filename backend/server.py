@@ -450,6 +450,37 @@ async def create_game(game_data: CreateGameRequest):
     }
     
     await db.games.insert_one(game)
+    
+    # Auto-generate tickets for the game using full sheet rule (1-6, 7-12, 13-18, ...)
+    tickets = []
+    ticket_counter = 1
+    num_sheets = (total_tickets + 5) // 6  # Round up to full sheets
+    
+    for sheet_num in range(1, num_sheets + 1):
+        if ticket_counter > total_tickets:
+            break
+        full_sheet = generate_full_sheet()
+        sheet_id = f"FS{sheet_num:03d}"
+        
+        for ticket_num_in_sheet, ticket_numbers in enumerate(full_sheet, 1):
+            if ticket_counter > total_tickets:
+                break
+            ticket = {
+                "ticket_id": f"{game_id}_T{ticket_counter:03d}",
+                "game_id": game_id,
+                "ticket_number": f"T{ticket_counter:03d}",
+                "full_sheet_id": sheet_id,
+                "ticket_position_in_sheet": ticket_num_in_sheet,
+                "numbers": ticket_numbers,
+                "is_booked": False,
+                "booking_status": "available"
+            }
+            tickets.append(ticket)
+            ticket_counter += 1
+    
+    if tickets:
+        await db.tickets.insert_many(tickets)
+    
     return Game(**game)
 
 @api_router.put("/games/{game_id}", response_model=Game)
