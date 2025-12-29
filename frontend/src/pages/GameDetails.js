@@ -221,14 +221,14 @@ export default function GameDetails() {
         </div>
       </div>
 
-      {/* Top Section - Game Details & Dividends (Compact - fits in top 1/3) */}
+      {/* Top Section - Game Details & Dividends in ONE card (Compact - fits in top 1/3) */}
       <div className="max-w-7xl mx-auto px-3 py-3">
         <div className="glass-card p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col md:flex-row">
             {/* Left: Game Info */}
-            <div className="flex-1">
+            <div className="flex-1 md:pr-4 md:border-r md:border-white/10">
               <h2 className="text-lg font-bold text-white mb-3">{game.name}</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
                     <Calendar className="w-3 h-3" />
@@ -247,7 +247,7 @@ export default function GameDetails() {
                 <div>
                   <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
                     <Ticket className="w-3 h-3" />
-                    <span>Price</span>
+                    <span>Ticket Price</span>
                   </div>
                   <p className="text-lg font-bold text-white">₹{game.price}</p>
                 </div>
@@ -261,13 +261,16 @@ export default function GameDetails() {
               </div>
             </div>
 
+            {/* Vertical Divider for mobile */}
+            <div className="border-t border-white/10 my-3 md:hidden" />
+
             {/* Right: Dividends (Compact) */}
-            <div className="lg:w-64 lg:border-l lg:border-white/10 lg:pl-4">
+            <div className="md:w-56 md:pl-4">
               <div className="flex items-center gap-1 mb-2">
                 <Trophy className="w-4 h-4 text-amber-500" />
                 <h3 className="text-sm font-bold text-white">Dividends</h3>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-0.5">
+              <div className="space-y-0.5">
                 {Object.entries(game.prizes).map(([prize, amount]) => (
                   <div key={prize} className="flex items-center justify-between py-0.5 text-xs">
                     <span className="text-gray-400">{prize}</span>
