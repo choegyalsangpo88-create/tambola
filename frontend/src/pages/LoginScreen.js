@@ -44,14 +44,15 @@ export default function LoginScreen() {
   };
 
   const handleSendOTP = async () => {
-    if (!phone || phone.length < 10) {
+    if (!phone || phone.length < 7) {
       toast.error('Please enter a valid phone number');
       return;
     }
 
     setIsLoading(true);
     try {
-      await axios.post(`${API}/auth/send-otp`, { phone });
+      const fullPhone = selectedCountry.code + phone;
+      await axios.post(`${API}/auth/send-otp`, { phone: fullPhone });
       toast.success('OTP sent to your WhatsApp!');
       setLoginMethod('otp');
     } catch (error) {
