@@ -204,15 +204,18 @@ metadata:
 
   - task: "Redesigned GameDetails Page"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/GameDetails.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Redesigned GameDetails page with compact top section, yellow divider, small 'Select Your Tickets' text, wide tickets with minimal gaps, Full Sheets filter, Select All button for available sheets, and removed 'Selected Only' button. Ready for testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Redesigned GameDetails page working perfectly! All requirements verified: 1) Compact top section with game info (date/time, prize pool, price, available tickets) and dividends on right side ✅, 2) Yellow divider line separating sections ✅, 3) Small 'Select Your Tickets' text (text-sm) ✅, 4) Wide tickets with minimal gaps (gap-1.5) ✅, 5) 6 tickets per row on desktop, 3 on mobile ✅, 6) Full Sheets filter working correctly - shows only sheets with all 6 tickets available, displays 'No full sheets available' message when none exist ✅, 7) Select All button appears only for fully available sheets and correctly selects all 6 tickets ✅, 8) 'Selected Only' button successfully removed ✅, 9) Mobile responsiveness working ✅. All layout, functionality, and UI requirements met perfectly."
 
 test_plan:
   current_focus:
