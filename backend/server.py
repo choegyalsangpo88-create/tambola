@@ -152,6 +152,15 @@ class JoinUserGameRequest(BaseModel):
     player_name: str
     ticket_count: int = 1
 
+# WhatsApp OTP Models
+class SendOTPRequest(BaseModel):
+    phone: str
+
+class VerifyOTPRequest(BaseModel):
+    phone: str
+    otp: str
+    name: Optional[str] = None  # Required for new users
+
 # ============ AUTH HELPER ============
 
 async def get_current_user(request: Request) -> User:
