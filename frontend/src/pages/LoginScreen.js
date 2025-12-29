@@ -367,6 +367,20 @@ export default function LoginScreen() {
                   </div>
                 </div>
                 
+                {/* SIXTY SEVEN Text - Shiny Modern Style */}
+                <p className="text-2xl md:text-3xl font-black tracking-[0.3em] mb-2" style={{
+                  fontFamily: 'Outfit, sans-serif',
+                  background: 'linear-gradient(135deg, #fff 0%, #a8d8ff 25%, #fff 50%, #60b8ff 75%, #fff 100%)',
+                  backgroundSize: '200% 200%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  animation: 'shimmer 3s ease-in-out infinite',
+                  textShadow: '0 0 30px rgba(96, 184, 255, 0.5)',
+                  filter: 'drop-shadow(0 0 10px rgba(96, 184, 255, 0.3))'
+                }}>
+                  SIXTY SEVEN
+                </p>
+                
                 {/* TAMBOLA Text - Modern Premium Font */}
                 <h1 className="text-5xl md:text-6xl font-black mb-3" style={{
                   fontFamily: 'Outfit, sans-serif',
