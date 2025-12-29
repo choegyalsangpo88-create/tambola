@@ -168,23 +168,54 @@ export default function LoginScreen() {
             <Phone className="inline w-4 h-4 mr-1" /> Phone Number
           </label>
           <div className="flex gap-2">
-            <div className="flex items-center px-3 bg-white/5 border border-white/10 rounded-lg text-gray-400">
-              +91
+            {/* Country Code Picker */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCountryPicker(!showCountryPicker)}
+                className="flex items-center gap-1 px-3 h-12 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors"
+              >
+                <span className="text-lg">{selectedCountry.flag}</span>
+                <span className="text-sm">{selectedCountry.code}</span>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </button>
+              
+              {showCountryPicker && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-[#1a1a1e] border border-white/10 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+                  {COUNTRY_CODES.map((country) => (
+                    <button
+                      key={country.code}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCountry(country);
+                        setShowCountryPicker(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 transition-colors ${
+                        selectedCountry.code === country.code ? 'bg-white/5' : ''
+                      }`}
+                    >
+                      <span className="text-lg">{country.flag}</span>
+                      <span className="text-white text-sm">{country.name}</span>
+                      <span className="text-gray-400 text-sm ml-auto">{country.code}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+            
             <Input
               type="tel"
               placeholder="Enter your phone number"
               value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
               className="flex-1 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 text-lg"
-              maxLength={10}
             />
           </div>
         </div>
 
         <Button
           onClick={handleSendOTP}
-          disabled={isLoading || phone.length < 10}
+          disabled={isLoading || phone.length < 7}
           className="w-full h-14 text-lg font-bold rounded-full bg-green-500 hover:bg-green-600 text-white"
         >
           {isLoading ? (
