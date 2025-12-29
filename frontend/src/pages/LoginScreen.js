@@ -75,9 +75,10 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
+      const fullPhone = selectedCountry.code + phone;
       const response = await axios.post(
         `${API}/auth/verify-otp`,
-        { phone, otp, name: name.trim() || undefined },
+        { phone: fullPhone, otp, name: name.trim() || undefined },
         { withCredentials: true }
       );
 
