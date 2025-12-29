@@ -8,39 +8,46 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function TambolaTicket({ ticket, isSelected, onToggle, isCompact }) {
+// Wide compact ticket component
+function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
+  const isBooked = ticket.is_booked || bookedBy;
+  
   return (
     <div
-      className={`p-3 rounded-xl cursor-pointer transition-all ${
-        isSelected
-          ? 'bg-amber-500/20 scale-105 shadow-xl shadow-amber-500/30'
-          : 'bg-[#1a1a1f] hover:bg-[#222228] hover:scale-105'
+      className={`relative rounded-lg cursor-pointer transition-all ${
+        isBooked && !isSelected
+          ? 'opacity-40 cursor-not-allowed'
+          : isSelected
+          ? 'ring-2 ring-amber-500 shadow-lg shadow-amber-500/20'
+          : 'hover:ring-1 hover:ring-white/30'
       }`}
-      data-testid={`ticket-${ticket.ticket_id}`}
-      onClick={() => onToggle(ticket.ticket_id)}
+      onClick={() => !isBooked && onToggle(ticket.ticket_id)}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className={`text-sm font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500'}`}>
+      {/* Ticket number and booked by - positioned just above ticket */}
+      <div className="flex items-center justify-between px-1 mb-0.5">
+        <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
           {ticket.ticket_number}
         </span>
-        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-          isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/30'
-        }`}>
-          {isSelected && <span className="text-black font-bold text-sm">✓</span>}
-        </div>
+        {bookedBy && (
+          <span className="text-[9px] text-gray-500 truncate max-w-[60px]">{bookedBy}</span>
+        )}
+        {isSelected && (
+          <span className="text-[10px] text-amber-400">✓</span>
+        )}
       </div>
-      <div className="bg-white p-2 rounded-lg">
-        <div className="grid grid-cols-9 gap-0.5">
+      
+      {/* Ticket grid - wide and clear */}
+      <div className={`bg-white rounded-md overflow-hidden ${isSelected ? 'ring-1 ring-amber-400' : ''}`}>
+        <div className="grid grid-cols-9">
           {ticket.numbers.map((row, rowIndex) => (
             row.map((num, colIndex) => (
               <div
                 key={`${rowIndex}-${colIndex}`}
-                className={`aspect-square flex items-center justify-center text-center font-bold ${
+                className={`aspect-[1.2/1] flex items-center justify-center text-[9px] sm:text-[10px] font-bold border-r border-b border-gray-200 last:border-r-0 ${
                   num === null 
-                    ? 'bg-gray-100' 
-                    : 'bg-white text-black border border-gray-300'
+                    ? 'bg-gray-50' 
+                    : 'bg-white text-gray-900'
                 }`}
-                style={{ fontSize: '0.65rem' }}
               >
                 {num || ''}
               </div>
@@ -58,7 +65,7 @@ export default function GameDetails() {
   const [game, setGame] = useState(null);
   const [fullSheets, setFullSheets] = useState([]);
   const [selectedTickets, setSelectedTickets] = useState([]);
-  const [filterMode, setFilterMode] = useState('all'); // 'all', 'selected', 'fullsheets'
+  const [filterMode, setFilterMode] = useState('all'); // 'all', 'fullsheets'
   const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
@@ -78,13 +85,12 @@ export default function GameDetails() {
 
   const fetchAllTickets = async () => {
     try {
-      // Fetch ALL tickets (not just available_only)
       const response = await axios.get(
         `${API}/games/${gameId}/tickets?page=1&limit=1000`
       );
       const allTickets = response.data.tickets;
       
-      // Group tickets by Full Sheet ID (FS001, FS002, etc.)
+      // Group tickets by Full Sheet ID
       const sheetsMap = {};
       allTickets.forEach(ticket => {
         const sheetId = ticket.full_sheet_id;
@@ -104,7 +110,7 @@ export default function GameDetails() {
           tickets: sortedTickets,
           isComplete: tickets.length === 6,
           availableCount: availableTickets.length,
-          isFullyAvailable: availableTickets.length === 6 // All 6 tickets available
+          isFullyAvailable: availableTickets.length === 6
         };
       }).sort((a, b) => {
         const numA = parseInt(a.sheetId.replace('FS', ''));
@@ -128,7 +134,8 @@ export default function GameDetails() {
   };
 
   const selectFullSheet = (sheetTickets) => {
-    const sheetTicketIds = sheetTickets.map(t => t.ticket_id);
+    const availableTickets = sheetTickets.filter(t => !t.is_booked);
+    const sheetTicketIds = availableTickets.map(t => t.ticket_id);
     const allSelected = sheetTicketIds.every(id => selectedTickets.includes(id));
     
     if (allSelected) {
@@ -142,8 +149,9 @@ export default function GameDetails() {
   };
 
   const isFullSheetSelected = (sheetTickets) => {
-    const sheetTicketIds = sheetTickets.map(t => t.ticket_id);
-    return sheetTicketIds.length === 6 && sheetTicketIds.every(id => selectedTickets.includes(id));
+    const availableTickets = sheetTickets.filter(t => !t.is_booked);
+    if (availableTickets.length !== 6) return false;
+    return availableTickets.every(t => selectedTickets.includes(t.ticket_id));
   };
 
   const handleBookViaWhatsApp = async () => {
@@ -180,10 +188,9 @@ export default function GameDetails() {
     }
   };
 
-  const displayedSheets = filterMode === 'selected'
-    ? fullSheets.filter(sheet => isFullSheetSelected(sheet.tickets))
-    : filterMode === 'fullsheets'
-    ? fullSheets.filter(sheet => sheet.isFullyAvailable) // Show only sheets with all 6 tickets available
+  // Filter sheets - show only fully available sheets when fullsheets filter is active
+  const displayedSheets = filterMode === 'fullsheets'
+    ? fullSheets.filter(sheet => sheet.isFullyAvailable)
     : fullSheets;
 
   if (!game) {
@@ -195,185 +202,201 @@ export default function GameDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] pb-20">
+    <div className="min-h-screen bg-[#0a0a0c] pb-24">
       {/* Header */}
       <div className="bg-[#121216] border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 py-3 flex items-center gap-3">
           <Button
             data-testid="back-button"
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
+            className="h-8 w-8"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+          <h1 className="text-lg font-bold text-white truncate" style={{ fontFamily: 'Outfit, sans-serif' }}>
             {game.name}
           </h1>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {/* Left: Game Details - 2/3 width */}
-          <div className="lg:col-span-3 glass-card p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">{game.name}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>Date & Time</span>
+      {/* Top Section - Game Details & Dividends (Compact - fits in top 1/3) */}
+      <div className="max-w-7xl mx-auto px-3 py-3">
+        <div className="glass-card p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Left: Game Info */}
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-white mb-3">{game.name}</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
+                    <Calendar className="w-3 h-3" />
+                    <span>Date & Time</span>
+                  </div>
+                  <p className="text-white font-semibold text-sm">{game.date}</p>
+                  <p className="text-amber-500 text-xs">{game.time}</p>
                 </div>
-                <p className="text-white font-bold">{game.date}</p>
-                <p className="text-amber-500 text-sm">{game.time}</p>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                  <Award className="w-4 h-4" />
-                  <span>Prize Pool</span>
+                <div>
+                  <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
+                    <Award className="w-3 h-3" />
+                    <span>Prize Pool</span>
+                  </div>
+                  <p className="text-xl font-bold text-amber-500">₹{game.prize_pool.toLocaleString()}</p>
                 </div>
-                <p className="text-2xl font-bold text-amber-500">₹{game.prize_pool.toLocaleString()}</p>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                  <Ticket className="w-4 h-4" />
-                  <span>Price</span>
+                <div>
+                  <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
+                    <Ticket className="w-3 h-3" />
+                    <span>Price</span>
+                  </div>
+                  <p className="text-lg font-bold text-white">₹{game.price}</p>
                 </div>
-                <p className="text-xl font-bold text-white">₹{game.price}</p>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                  <Users className="w-4 h-4" />
-                  <span>Available</span>
+                <div>
+                  <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
+                    <Users className="w-3 h-3" />
+                    <span>Available</span>
+                  </div>
+                  <p className="text-lg font-bold text-white">{game.available_tickets}</p>
                 </div>
-                <p className="text-xl font-bold text-white">{game.available_tickets}</p>
               </div>
             </div>
-          </div>
 
-          {/* Right: Dividends (Compact) - 1/3 width */}
-          <div className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <h3 className="text-lg font-bold text-white">Dividends</h3>
-            </div>
-            <div className="space-y-1">
-              {Object.entries(game.prizes).map(([prize, amount]) => (
-                <div key={prize} className="flex items-center justify-between py-1.5 border-b border-white/5 text-xs">
-                  <span className="text-gray-300">{prize}</span>
-                  <span className="text-amber-500 font-bold">₹{amount.toLocaleString()}</span>
-                </div>
-              ))}
+            {/* Right: Dividends (Compact) */}
+            <div className="lg:w-64 lg:border-l lg:border-white/10 lg:pl-4">
+              <div className="flex items-center gap-1 mb-2">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm font-bold text-white">Dividends</h3>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-0.5">
+                {Object.entries(game.prizes).map(([prize, amount]) => (
+                  <div key={prize} className="flex items-center justify-between py-0.5 text-xs">
+                    <span className="text-gray-400">{prize}</span>
+                    <span className="text-amber-500 font-semibold">₹{amount.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Filter Buttons */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Select Your Tickets</h2>
+      {/* Divider */}
+      <div className="border-t border-amber-500/30 mx-3" />
+
+      {/* Tickets Section */}
+      <div className="max-w-7xl mx-auto px-3 py-3">
+        {/* Filter Bar */}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-400">Select Your Tickets</h2>
           <div className="flex gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setFilterMode('all')}
-              className={`border-white/20 ${filterMode === 'all' ? 'bg-amber-500 text-black' : ''}`}
+              className={`h-7 px-3 text-xs border-white/20 ${filterMode === 'all' ? 'bg-amber-500 text-black border-amber-500' : 'text-gray-300'}`}
               data-testid="filter-all-btn"
             >
-              Show All
+              All
             </Button>
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setFilterMode('fullsheets')}
-              className={`border-white/20 ${filterMode === 'fullsheets' ? 'bg-amber-500 text-black' : ''}`}
+              className={`h-7 px-3 text-xs border-white/20 ${filterMode === 'fullsheets' ? 'bg-amber-500 text-black border-amber-500' : 'text-gray-300'}`}
               data-testid="filter-fullsheets-btn"
             >
-              <Filter className="w-4 h-4 mr-2" />
-              Only Full Sheets
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setFilterMode('selected')}
-              className={`border-white/20 ${filterMode === 'selected' ? 'bg-amber-500 text-black' : ''}`}
-              data-testid="filter-selected-btn"
-            >
-              Selected Only
+              <Filter className="w-3 h-3 mr-1" />
+              Full Sheets
             </Button>
           </div>
         </div>
 
-        {/* All Full Sheets */}
-        <div className="space-y-8 mb-24">
+        {/* No results message for fullsheets filter */}
+        {filterMode === 'fullsheets' && displayedSheets.length === 0 && (
+          <div className="glass-card p-8 text-center">
+            <p className="text-gray-400">No full sheets available (all 6 tickets must be unbooked)</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterMode('all')}
+              className="mt-4 border-amber-500/50 text-amber-400"
+            >
+              Show All Tickets
+            </Button>
+          </div>
+        )}
+
+        {/* Full Sheets Grid */}
+        <div className="space-y-4">
           {displayedSheets.map((sheet, sheetIndex) => {
             const isSelected = isFullSheetSelected(sheet.tickets);
             const isFullyAvailable = sheet.availableCount === 6;
             
-            // Assign unique border color to each sheet
+            // Border colors for different sheets
             const borderColors = [
-              'border-blue-500',
-              'border-purple-500',
-              'border-pink-500',
-              'border-red-500',
-              'border-orange-500',
-              'border-yellow-500',
-              'border-green-500',
-              'border-teal-500',
-              'border-cyan-500',
-              'border-indigo-500'
+              'border-l-blue-500',
+              'border-l-purple-500',
+              'border-l-pink-500',
+              'border-l-red-500',
+              'border-l-orange-500',
+              'border-l-yellow-500',
+              'border-l-green-500',
+              'border-l-teal-500',
+              'border-l-cyan-500',
+              'border-l-indigo-500'
             ];
             const borderColor = isSelected 
-              ? 'border-amber-500' 
+              ? 'border-l-amber-500' 
               : borderColors[sheetIndex % borderColors.length];
             
             return (
               <div
                 key={sheet.sheetId}
-                className={`glass-card p-6 border-4 transition-all ${borderColor} ${
-                  isSelected ? 'bg-amber-500/10' : ''
-                } ${!isFullyAvailable ? 'opacity-50' : ''}`}
+                className={`glass-card p-3 border-l-4 ${borderColor} ${
+                  isSelected ? 'bg-amber-500/5' : ''
+                }`}
                 data-testid={`full-sheet-${sheet.sheetId}`}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-2xl font-bold text-white mb-1">
-                      {sheet.sheetId}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {sheet.tickets[0]?.ticket_number} - {sheet.tickets[5]?.ticket_number}
-                    </p>
-                  </div>
+                {/* Sheet Header - Compact */}
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <span className={`px-4 py-2 text-sm font-bold rounded-full ${
-                      isFullyAvailable
-                        ? 'bg-green-500/20 text-green-400 border-2 border-green-500'
-                        : 'bg-red-500/20 text-red-400 border-2 border-red-500'
-                    }`}>
-                      {sheet.availableCount}/6 Available
+                    <span className="text-sm font-bold text-white">{sheet.sheetId}</span>
+                    <span className="text-xs text-gray-500">
+                      {sheet.tickets[0]?.ticket_number} - {sheet.tickets[5]?.ticket_number}
                     </span>
-                    {isFullyAvailable && (
-                      <Button
-                        onClick={() => selectFullSheet(sheet.tickets)}
-                        className={`rounded-full font-bold px-6 h-10 ${
-                          isSelected
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700'
-                        }`}
-                        data-testid={`select-sheet-${sheet.sheetId}`}
-                      >
-                        {isSelected ? '✓ Selected' : 'Select Full Sheet'}
-                      </Button>
-                    )}
+                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                      isFullyAvailable
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      {sheet.availableCount}/6
+                    </span>
                   </div>
+                  {isFullyAvailable && (
+                    <Button
+                      onClick={() => selectFullSheet(sheet.tickets)}
+                      size="sm"
+                      className={`h-7 px-3 text-xs rounded-full font-semibold ${
+                        isSelected
+                          ? 'bg-amber-500 text-black'
+                          : 'bg-white/10 text-white hover:bg-white/20'
+                      }`}
+                      data-testid={`select-sheet-${sheet.sheetId}`}
+                    >
+                      {isSelected ? '✓ Selected' : 'Select All'}
+                    </Button>
+                  )}
                 </div>
 
-                {/* Tickets Grid - 6 tickets in one row on desktop */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                {/* Tickets Grid - 6 in a row on desktop, 3 on mobile - reduced gap */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                   {sheet.tickets.map((ticket) => (
                     <TambolaTicket
                       key={ticket.ticket_id}
                       ticket={ticket}
                       isSelected={selectedTickets.includes(ticket.ticket_id)}
                       onToggle={toggleTicket}
-                      isCompact={false}
+                      bookedBy={ticket.is_booked ? ticket.booked_by_name : null}
                     />
                   ))}
                 </div>
@@ -381,40 +404,41 @@ export default function GameDetails() {
             );
           })}
         </div>
+      </div>
 
-        {/* Fixed Bottom Book Button */}
-        {selectedTickets.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t-4 border-amber-500 py-4 px-4 z-50">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div>
-                <p className="text-white font-bold text-lg">
-                  {selectedTickets.length} Tickets Selected
-                </p>
-                <p className="text-amber-500 text-sm">
-                  Total: ₹{(selectedTickets.length * game.price).toLocaleString()}
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedTickets([])}
-                  className="border-white/20 px-6 h-12"
-                >
-                  Clear All
-                </Button>
-                <Button
-                  onClick={handleBookViaWhatsApp}
-                  disabled={isBooking}
-                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 font-bold px-8 h-12 text-lg"
-                  data-testid="book-via-whatsapp-btn"
-                >
-                  {isBooking ? 'Processing...' : '📱 Book via WhatsApp'}
-                </Button>
-              </div>
+      {/* Fixed Bottom Book Button */}
+      {selectedTickets.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t border-amber-500 py-3 px-3 z-50">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div>
+              <p className="text-white font-bold">
+                {selectedTickets.length} Ticket{selectedTickets.length > 1 ? 's' : ''}
+              </p>
+              <p className="text-amber-500 text-sm font-semibold">
+                ₹{(selectedTickets.length * game.price).toLocaleString()}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedTickets([])}
+                className="border-white/20 h-10 px-4"
+              >
+                Clear
+              </Button>
+              <Button
+                onClick={handleBookViaWhatsApp}
+                disabled={isBooking}
+                className="bg-green-500 hover:bg-green-600 font-bold h-10 px-6"
+                data-testid="book-via-whatsapp-btn"
+              >
+                {isBooking ? '...' : '📱 Book Now'}
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
