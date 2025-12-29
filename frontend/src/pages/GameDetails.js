@@ -327,24 +327,42 @@ export default function GameDetails() {
         )}
 
         {/* Full Sheets Grid */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {displayedSheets.map((sheet, sheetIndex) => {
             const isSelected = isFullSheetSelected(sheet.tickets);
             const isFullyAvailable = sheet.availableCount === 6;
             
-            // Border colors for different sheets
+            // Alternating background colors for visual differentiation
+            const bgColors = [
+              'bg-blue-500/5',
+              'bg-purple-500/5',
+              'bg-pink-500/5',
+              'bg-emerald-500/5',
+              'bg-orange-500/5',
+              'bg-cyan-500/5',
+              'bg-indigo-500/5',
+              'bg-rose-500/5',
+              'bg-teal-500/5',
+              'bg-amber-500/5'
+            ];
+            
+            // Border colors for left accent
             const borderColors = [
               'border-l-blue-500',
               'border-l-purple-500',
               'border-l-pink-500',
-              'border-l-red-500',
+              'border-l-emerald-500',
               'border-l-orange-500',
-              'border-l-yellow-500',
-              'border-l-green-500',
-              'border-l-teal-500',
               'border-l-cyan-500',
-              'border-l-indigo-500'
+              'border-l-indigo-500',
+              'border-l-rose-500',
+              'border-l-teal-500',
+              'border-l-amber-400'
             ];
+            
+            const bgColor = isSelected 
+              ? 'bg-amber-500/10' 
+              : bgColors[sheetIndex % bgColors.length];
             const borderColor = isSelected 
               ? 'border-l-amber-500' 
               : borderColors[sheetIndex % borderColors.length];
@@ -352,9 +370,7 @@ export default function GameDetails() {
             return (
               <div
                 key={sheet.sheetId}
-                className={`glass-card p-3 border-l-4 ${borderColor} ${
-                  isSelected ? 'bg-amber-500/5' : ''
-                }`}
+                className={`rounded-lg p-3 border-l-4 ${borderColor} ${bgColor} border border-white/5`}
                 data-testid={`full-sheet-${sheet.sheetId}`}
               >
                 {/* Sheet Header - Compact */}
