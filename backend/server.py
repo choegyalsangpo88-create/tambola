@@ -273,6 +273,145 @@ async def logout(request: Request, response: Response):
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out"}
 
+# ============ WHATSAPP OTP AUTH ============
+
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+def format_phone(phone: str) -> str:
+    """Format phone number to E.164 format"""
+    phone = phone.strip().replace(" ", "").replace("-", "")
+    if not phone.startswith("+"):
+        # Assume Indian number if no country code
+        if phone.startswith("0"):
+            phone = phone[1:]
+        phone = "+91" + phone
+    return phone
+
+@api_router.post("/auth/send-otp")
+async def send_otp(request: SendOTPRequest):
+    """Send OTP via WhatsApp"""
+    from notifications import send_whatsapp_message
+    
+    phone = format_phone(request.phone)
+    otp = generate_otp()
+    
+    # Store OTP in database with expiry
+    await db.otp_codes.delete_many({"phone": phone})  # Remove old OTPs
+    await db.otp_codes.insert_one({
+        "phone": phone,
+        "otp": otp,
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10),
+        "verified": False
+    })
+    
+    # Send OTP via WhatsApp
+    message = f"""🔐 *Tambola Login OTP*
+
+Your OTP is: *{otp}*
+
+This code expires in 10 minutes.
+Do not share this code with anyone.
+
+If you didn't request this, please ignore."""
+    
+    result = send_whatsapp_message(phone, message)
+    
+    if result:
+        return {"success": True, "message": "OTP sent to your WhatsApp"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send OTP. Please try again.")
+
+@api_router.post("/auth/verify-otp")
+async def verify_otp(request: VerifyOTPRequest, response: Response):
+    """Verify OTP and login/register user"""
+    phone = format_phone(request.phone)
+    
+    # Find OTP record
+    otp_record = await db.otp_codes.find_one({
+        "phone": phone,
+        "otp": request.otp,
+        "verified": False
+    }, {"_id": 0})
+    
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    
+    # Check expiry
+    expires_at = otp_record["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="OTP expired. Please request a new one.")
+    
+    # Mark OTP as verified
+    await db.otp_codes.update_one(
+        {"phone": phone, "otp": request.otp},
+        {"$set": {"verified": True}}
+    )
+    
+    # Check if user exists
+    user_doc = await db.users.find_one({"phone": phone}, {"_id": 0})
+    
+    if not user_doc:
+        # New user - need name
+        if not request.name:
+            return {
+                "success": True,
+                "new_user": True,
+                "message": "OTP verified. Please provide your name to complete registration."
+            }
+        
+        # Create new user
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        user_data = {
+            "user_id": user_id,
+            "email": f"{phone.replace('+', '')}@phone.user",  # Placeholder email
+            "name": request.name,
+            "phone": phone,
+            "avatar": "avatar1",
+            "auth_method": "whatsapp",
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.users.insert_one(user_data)
+        user_doc = user_data
+    
+    # Create session
+    session_token = uuid.uuid4().hex + uuid.uuid4().hex
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    await db.user_sessions.insert_one({
+        "user_id": user_doc["user_id"],
+        "session_token": session_token,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7*24*60*60
+    )
+    
+    # Clean up OTP
+    await db.otp_codes.delete_many({"phone": phone})
+    
+    return {
+        "success": True,
+        "new_user": False,
+        "user": User(**user_doc).model_dump()
+    }
+
 # ============ GAME ROUTES ============
 
 @api_router.get("/games", response_model=List[Game])
