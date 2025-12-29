@@ -33,6 +33,8 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
   const [isNewUser, setIsNewUser] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
