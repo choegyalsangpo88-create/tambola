@@ -305,14 +305,54 @@ export default function LiveGame() {
               </div>
             </div>
 
-            {/* My Tickets */}
+            {/* My Tickets with Zoom Control */}
             {myTickets.length > 0 && (
               <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-                <h3 className="text-xs font-bold text-white mb-2">My Tickets ({myTickets.length})</h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold text-white">My Tickets ({myTickets.length})</h3>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))}
+                      disabled={ticketZoom <= 1}
+                      className="h-6 w-6 text-white hover:bg-white/10"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </Button>
+                    <span className="text-[10px] text-gray-400 w-8 text-center">
+                      {ticketZoom === 1 ? 'S' : ticketZoom === 2 ? 'M' : 'L'}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))}
+                      disabled={ticketZoom >= 3}
+                      className="h-6 w-6 text-white hover:bg-white/10"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Tickets Grid - responsive based on zoom level */}
+                <div className={`grid gap-2 ${
+                  ticketZoom === 1 ? 'grid-cols-4' : 
+                  ticketZoom === 2 ? 'grid-cols-2' : 
+                  'grid-cols-1'
+                }`}>
                   {myTickets.map((ticket) => (
-                    <div key={ticket.ticket_id} className="bg-amber-50 rounded-lg p-1.5">
-                      <p className="text-[8px] font-bold text-amber-700 mb-1">{ticket.ticket_number}</p>
+                    <div 
+                      key={ticket.ticket_id} 
+                      className={`bg-amber-50 rounded-lg transition-all duration-300 ${
+                        ticketZoom === 1 ? 'p-1' : ticketZoom === 2 ? 'p-1.5' : 'p-3'
+                      }`}
+                    >
+                      <p className={`font-bold text-amber-700 mb-1 ${
+                        ticketZoom === 1 ? 'text-[6px]' : ticketZoom === 2 ? 'text-[8px]' : 'text-xs'
+                      }`}>
+                        {ticket.ticket_number}
+                      </p>
                       <div className="grid grid-cols-9 gap-px">
                         {ticket.numbers.map((row, rowIndex) => (
                           row.map((num, colIndex) => {
@@ -320,7 +360,13 @@ export default function LiveGame() {
                             return (
                               <div
                                 key={`${rowIndex}-${colIndex}`}
-                                className={`aspect-square flex items-center justify-center text-[7px] font-bold rounded-sm ${
+                                className={`flex items-center justify-center font-bold rounded-sm transition-all ${
+                                  ticketZoom === 1 
+                                    ? 'aspect-square text-[5px]' 
+                                    : ticketZoom === 2 
+                                    ? 'aspect-square text-[7px]' 
+                                    : 'aspect-[1.2/1] text-sm py-1'
+                                } ${
                                   num === null
                                     ? 'bg-amber-100'
                                     : isMarked
