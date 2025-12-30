@@ -364,6 +364,68 @@ async def logout(request: Request, response: Response):
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out"}
 
+# ============ ADMIN AUTH ROUTES ============
+
+@api_router.post("/admin/login")
+async def admin_login(login_data: AdminLoginRequest, response: Response):
+    """Admin login with username and password"""
+    admin_username = os.environ.get("ADMIN_USERNAME")
+    admin_password_hash = os.environ.get("ADMIN_PASSWORD_HASH")
+    
+    if not admin_username or not admin_password_hash:
+        raise HTTPException(status_code=500, detail="Admin not configured")
+    
+    # Verify credentials
+    if login_data.username != admin_username:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Hash provided password and compare
+    provided_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+    if provided_hash != admin_password_hash:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create admin session
+    session_token = f"admin_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+    
+    # Store session
+    await db.admin_sessions.insert_one({
+        "session_token": session_token,
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": expires_at
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="admin_session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=24*60*60  # 24 hours
+    )
+    
+    return {"success": True, "message": "Admin logged in", "token": session_token}
+
+@api_router.post("/admin/logout")
+async def admin_logout(request: Request, response: Response):
+    """Admin logout"""
+    admin_token = request.cookies.get("admin_session_token")
+    if admin_token:
+        await db.admin_sessions.delete_one({"session_token": admin_token})
+    response.delete_cookie("admin_session_token", path="/")
+    return {"message": "Admin logged out"}
+
+@api_router.get("/admin/verify")
+async def verify_admin_session(request: Request):
+    """Verify admin session is valid"""
+    try:
+        await verify_admin(request)
+        return {"valid": True}
+    except HTTPException:
+        return {"valid": False}
+
 # ============ WHATSAPP OTP AUTH ============
 
 def generate_otp():
