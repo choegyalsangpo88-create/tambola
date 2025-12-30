@@ -1,15 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Play, Check, Info, Edit, TrendingUp, Trash2, X, Volume2, Settings, Users, Ticket, Clock, Ban } from 'lucide-react';
+import { ArrowLeft, Plus, Play, Check, Info, Edit, TrendingUp, Trash2, X, Volume2, Settings, Users, Ticket, Clock, Ban, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Create axios instance with admin auth
+const adminAxios = axios.create();
+adminAxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token) {
+    config.headers['Authorization'] = `Admin ${token}`;
+  }
+  config.withCredentials = true;
+  return config;
+});
+
+// Handle 401 errors - redirect to login
+adminAxios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('admin_token');
+      window.location.href = '/control-ceo';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Default dividends template
 const DEFAULT_DIVIDENDS = {
