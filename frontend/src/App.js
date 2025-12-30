@@ -8,6 +8,7 @@ import LiveGame from './pages/LiveGame';
 import MyTickets from './pages/MyTickets';
 import Profile from './pages/Profile';
 import PastResults from './pages/PastResults';
+import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import CreateUserGame from './pages/CreateUserGame';
 import MyUserGames from './pages/MyUserGames';
@@ -36,7 +37,9 @@ function AppRouter() {
         <Route path="/my-tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/past-results" element={<ProtectedRoute><PastResults /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+        {/* Admin Routes - Secret URL */}
+        <Route path="/control-ceo" element={<AdminLogin />} />
+        <Route path="/admin-panel" element={<AdminPanel />} />
         {/* User Game Routes */}
         <Route path="/create-game" element={<ProtectedRoute><CreateUserGame /></ProtectedRoute>} />
         <Route path="/my-games" element={<ProtectedRoute><MyUserGames /></ProtectedRoute>} />
