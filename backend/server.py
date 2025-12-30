@@ -1247,7 +1247,7 @@ async def reset_prefix_lines():
 
 @api_router.post("/tts/generate")
 async def generate_tts(text: str, include_prefix: bool = True):
-    """Generate TTS audio for a number call"""
+    """Generate TTS audio for a number call - Currently using fallback due to API key requirements"""
     try:
         settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
         if not settings:
@@ -1261,35 +1261,53 @@ async def generate_tts(text: str, include_prefix: bool = True):
         if not settings.get("enabled"):
             return {"enabled": False, "audio": None}
         
-        # Add random prefix line
+        # Add random prefix line for the text display
         full_text = text
         if include_prefix and settings.get("prefix_lines"):
             prefix = random.choice(settings["prefix_lines"])
             full_text = f"{prefix} {text}"
         
-        # Generate TTS
-        api_key = os.environ.get("EMERGENT_LLM_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="TTS API key not configured")
+        # TTS generation - requires OpenAI API key from user
+        # For now, return the text for browser-based speech synthesis
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY")
         
-        client = OpenAI(api_key=api_key)
+        if api_key and api_key.startswith("sk-") and not api_key.startswith("sk-emergent"):
+            try:
+                client = OpenAI(api_key=api_key)
+                
+                response = client.audio.speech.create(
+                    model="tts-1",
+                    voice=settings.get("voice", "nova"),
+                    input=full_text,
+                    speed=settings.get("speed", 1.0)
+                )
+                
+                # Convert to base64
+                audio_bytes = response.content
+                audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                
+                return {
+                    "enabled": True,
+                    "audio": audio_base64,
+                    "text": full_text,
+                    "format": "mp3",
+                    "use_browser_tts": False
+                }
+            except Exception as e:
+                logger.warning(f"OpenAI TTS failed, using browser fallback: {str(e)}")
         
-        response = client.audio.speech.create(
-            model="tts-1",
-            voice=settings.get("voice", "nova"),
-            input=full_text,
-            speed=settings.get("speed", 1.0)
-        )
-        
-        # Convert to base64
-        audio_bytes = response.content
-        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-        
+        # Fallback: Return text for browser-based speech synthesis
         return {
             "enabled": True,
-            "audio": audio_base64,
+            "audio": None,
             "text": full_text,
-            "format": "mp3"
+            "format": None,
+            "use_browser_tts": True,
+            "voice_settings": {
+                "voice": settings.get("voice", "nova"),
+                "speed": settings.get("speed", 1.0),
+                "gender": settings.get("gender", "female")
+            }
         }
     except Exception as e:
         logger.error(f"TTS generation failed: {str(e)}")
