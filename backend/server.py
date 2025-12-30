@@ -255,6 +255,39 @@ async def get_current_user(request: Request) -> User:
     
     return User(**user_doc)
 
+# ============ ADMIN AUTH HELPER ============
+
+async def verify_admin(request: Request):
+    """Verify admin session token"""
+    # Check cookie first
+    admin_token = request.cookies.get("admin_session_token")
+    
+    # Fallback to Authorization header
+    if not admin_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Admin "):
+            admin_token = auth_header.split(" ")[1]
+    
+    if not admin_token:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+    
+    # Verify admin session
+    session_doc = await db.admin_sessions.find_one({"session_token": admin_token}, {"_id": 0})
+    if not session_doc:
+        raise HTTPException(status_code=401, detail="Invalid admin session")
+    
+    # Check expiry
+    expires_at = session_doc["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        await db.admin_sessions.delete_one({"session_token": admin_token})
+        raise HTTPException(status_code=401, detail="Admin session expired")
+    
+    return True
+
 # ============ AUTH ROUTES ============
 
 @api_router.post("/auth/session")
