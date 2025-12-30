@@ -141,6 +141,7 @@ export default function LiveGame() {
 
     allBookedTickets.forEach(ticket => {
       const oderId = ticket.user_id || ticket.booked_by_name;
+      const userId = ticket.user_id || ticket.booked_by_name;
       if (!userId) return;
 
       let markedCount = 0;
@@ -151,7 +152,7 @@ export default function LiveGame() {
       });
 
       if (!playerProgress[userId]) {
-        playerProgress[userId] = { name: ticket.booked_by_name || `Player ${userId.slice(-4)}`, totalMarked: 0 };
+        playerProgress[userId] = { name: ticket.booked_by_name || `Player ${String(userId).slice(-4)}`, totalMarked: 0 };
       }
       playerProgress[userId].totalMarked += markedCount;
     });
