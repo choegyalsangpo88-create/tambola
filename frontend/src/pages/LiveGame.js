@@ -280,24 +280,27 @@ export default function LiveGame() {
               </span>
             </div>
 
-            {/* Called Numbers - Small Balls Grid */}
+            {/* Called Numbers - Last 10 in One Line */}
             <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 mb-3">
-              <div className="grid grid-cols-10 gap-1">
-                {Array.from({ length: 90 }, (_, i) => i + 1).map((num) => {
-                  const isCalled = session.called_numbers?.includes(num);
-                  return (
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] text-gray-400">Last Called</span>
+                <span className="text-[10px] text-amber-400">{session.called_numbers?.length || 0}/90</span>
+              </div>
+              <div className="flex gap-1.5 overflow-x-auto">
+                {session.called_numbers && session.called_numbers.length > 0 ? (
+                  [...session.called_numbers].reverse().slice(0, 10).map((num, index) => (
                     <div
                       key={num}
-                      className={`aspect-square rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
-                        isCalled
-                          ? `bg-gradient-to-br ${getBallColor(num)} text-white shadow-md`
-                          : 'bg-white/10 text-gray-500'
-                      } ${num === session.current_number ? 'ring-2 ring-white scale-125 z-10' : ''}`}
+                      className={`w-8 h-8 flex-shrink-0 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[10px] font-bold text-white shadow-md ${
+                        index === 0 ? 'ring-2 ring-white scale-110' : ''
+                      }`}
                     >
                       {num}
                     </div>
-                  );
-                })}
+                  ))
+                ) : (
+                  <p className="text-[10px] text-gray-400">No numbers called yet</p>
+                )}
               </div>
             </div>
 
