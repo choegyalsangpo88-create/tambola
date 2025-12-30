@@ -205,25 +205,26 @@ export default function LiveGame() {
             <p className="text-[9px] text-center text-amber-400 mt-1">{session.called_numbers?.length || 0}/90</p>
           </div>
 
-          {/* RIGHT: Dividends (Horizontal Full List) */}
-          <div className="flex-1 overflow-x-auto">
-            <div className="flex gap-1.5">
-              {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
-                const winner = session.winners?.[prize];
-                return (
-                  <div key={prize} className={`flex-shrink-0 px-2 py-1.5 rounded-lg border ${
-                    winner ? 'bg-green-500/20 border-green-500/40' : 'bg-black/30 border-white/10'
-                  }`}>
-                    <div className="flex items-center gap-1">
-                      {winner && <span className="text-[10px]">🏆</span>}
-                      <div>
-                        <p className="text-[9px] text-gray-300 whitespace-nowrap">{prize}</p>
-                        <p className="text-[10px] font-bold text-amber-400">₹{amount}</p>
-                      </div>
+          {/* RIGHT: Dividends (Single Card with List) */}
+          <div className="flex-1">
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+              <div className="flex items-center gap-1 mb-1.5">
+                <Trophy className="w-3 h-3 text-amber-500" />
+                <span className="text-[9px] font-bold text-white">PRIZES</span>
+              </div>
+              <div className="flex gap-2 overflow-x-auto">
+                {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
+                  const winner = session.winners?.[prize];
+                  return (
+                    <div key={prize} className="flex-shrink-0 flex items-center gap-1.5">
+                      {winner && <span className="text-[9px]">🏆</span>}
+                      <span className={`text-[9px] ${winner ? 'text-green-400' : 'text-gray-400'}`}>{prize}</span>
+                      <span className="text-[10px] font-bold text-amber-400">₹{amount}</span>
+                      <span className="text-gray-600">|</span>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
