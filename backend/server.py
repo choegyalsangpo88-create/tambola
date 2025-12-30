@@ -1434,9 +1434,21 @@ async def declare_winner(winner_data: DeclareWinnerRequest):
 async def end_game(game_id: str):
     await db.games.update_one(
         {"game_id": game_id},
-        {"$set": {"status": "completed"}}
+        {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
     )
     return {"message": "Game ended"}
+
+@api_router.get("/games/completed")
+async def get_completed_games():
+    """Get completed games for results section"""
+    games = await db.games.find({"status": "completed"}, {"_id": 0}).sort("completed_at", -1).to_list(100)
+    
+    # Enrich with winner info
+    for game in games:
+        session = await db.game_sessions.find_one({"game_id": game["game_id"]}, {"_id": 0, "winners": 1})
+        game["winners"] = session.get("winners", {}) if session else {}
+    
+    return games
 
 # ============ PROFILE ROUTES ============
 
