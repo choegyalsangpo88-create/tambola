@@ -1155,7 +1155,7 @@ async def get_my_booking_requests(user: User = Depends(get_current_user)):
     return requests
 
 @api_router.get("/admin/booking-requests")
-async def get_all_booking_requests(status: Optional[str] = None):
+async def get_all_booking_requests(request: Request, status: Optional[str] = None, _: bool = Depends(verify_admin)):
     """Get all booking requests (admin)"""
     query = {} if not status else {"status": status}
     requests = await db.booking_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
@@ -1168,7 +1168,7 @@ async def get_all_booking_requests(status: Optional[str] = None):
     return requests
 
 @api_router.put("/admin/booking-requests/{request_id}/approve")
-async def approve_booking_request(request_id: str, data: ApproveRejectRequest = None):
+async def approve_booking_request(request_id: str, request: Request, data: ApproveRejectRequest = None, _: bool = Depends(verify_admin)):
     """Approve a booking request"""
     req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
     if not req:
