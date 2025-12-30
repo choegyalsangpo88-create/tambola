@@ -95,7 +95,8 @@ export default function LiveGame() {
         setPreviousWinners(session.winners);
       }
       if (session.current_number && session.current_number !== previousWinners.lastNumber) {
-        playNumberSound();
+        // Play TTS announcement for new number
+        playTTSAnnouncement(session.current_number);
         setPreviousWinners(prev => ({ ...prev, lastNumber: session.current_number }));
       }
     }
