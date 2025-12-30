@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [liveGames, setLiveGames] = useState([]);
   const [upcomingGames, setUpcomingGames] = useState([]);
   const [activeTab, setActiveTab] = useState('home');
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
