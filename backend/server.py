@@ -609,6 +609,27 @@ async def get_recent_completed_games():
     
     return games
 
+@api_router.get("/games/completed")
+async def get_completed_games():
+    """Get archived completed games (older than 5 minutes) for results section"""
+    five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+    
+    # Get games completed more than 5 minutes ago
+    games = await db.games.find({
+        "status": "completed",
+        "$or": [
+            {"completed_at": {"$lt": five_mins_ago.isoformat()}},
+            {"completed_at": {"$exists": False}}  # Handle old games without completed_at
+        ]
+    }, {"_id": 0}).sort("completed_at", -1).to_list(100)
+    
+    # Enrich with winner info
+    for game in games:
+        session = await db.game_sessions.find_one({"game_id": game["game_id"]}, {"_id": 0, "winners": 1})
+        game["winners"] = session.get("winners", {}) if session else {}
+    
+    return games
+
 @api_router.get("/games/{game_id}", response_model=Game)
 async def get_game(game_id: str):
     game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
