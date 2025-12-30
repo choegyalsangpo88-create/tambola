@@ -568,9 +568,45 @@ async def verify_otp(request: VerifyOTPRequest, response: Response):
 # ============ GAME ROUTES ============
 
 @api_router.get("/games", response_model=List[Game])
-async def get_games(status: Optional[str] = None):
-    query = {} if not status else {"status": status}
+async def get_games(status: Optional[str] = None, include_recent_completed: bool = False):
+    """
+    Get games. By default excludes completed games older than 5 minutes.
+    - status: Filter by specific status (upcoming, live, completed)
+    - include_recent_completed: If True, includes games completed within last 5 mins
+    """
+    if status:
+        query = {"status": status}
+    else:
+        # Default: Get upcoming and live games, plus recently completed (within 5 mins)
+        five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+        query = {
+            "$or": [
+                {"status": {"$in": ["upcoming", "live"]}},
+                {
+                    "status": "completed",
+                    "completed_at": {"$gte": five_mins_ago.isoformat()}
+                }
+            ]
+        }
+    
     games = await db.games.find(query, {"_id": 0}).to_list(100)
+    return games
+
+@api_router.get("/games/recent-completed")
+async def get_recent_completed_games():
+    """Get games completed within the last 5 minutes (for showing in live section with 'Just Ended' badge)"""
+    five_mins_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+    
+    games = await db.games.find({
+        "status": "completed",
+        "completed_at": {"$gte": five_mins_ago.isoformat()}
+    }, {"_id": 0}).sort("completed_at", -1).to_list(20)
+    
+    # Enrich with winner info
+    for game in games:
+        session = await db.game_sessions.find_one({"game_id": game["game_id"]}, {"_id": 0, "winners": 1})
+        game["winners"] = session.get("winners", {}) if session else {}
+    
     return games
 
 @api_router.get("/games/{game_id}", response_model=Game)
