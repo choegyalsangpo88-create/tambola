@@ -22,8 +22,10 @@ export default function LiveGame() {
   const [previousWinners, setPreviousWinners] = useState({});
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ticketZoom, setTicketZoom] = useState(2);
+  const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
+  const ttsAudioRef = useRef(null);
 
   const celebrateWinner = (prizeType) => {
     confetti({
@@ -39,6 +41,35 @@ export default function LiveGame() {
     if (soundEnabled && audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {});
+    }
+  };
+
+  // Play TTS for number announcement
+  const playTTSAnnouncement = async (number) => {
+    if (!soundEnabled || number === lastPlayedNumber) return;
+    
+    try {
+      const callName = getCallName(number);
+      const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=true`);
+      
+      if (response.data.enabled && response.data.audio) {
+        // Stop any currently playing audio
+        if (ttsAudioRef.current) {
+          ttsAudioRef.current.pause();
+        }
+        
+        // Create and play audio
+        const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
+        ttsAudioRef.current = audio;
+        await audio.play();
+        setLastPlayedNumber(number);
+      } else {
+        // Fallback to beep sound
+        playNumberSound();
+      }
+    } catch (error) {
+      console.error('TTS failed:', error);
+      playNumberSound();
     }
   };
 
