@@ -269,6 +269,34 @@ frontend:
   - task: "Redesigned GameDetails Page"
     implemented: true
     working: true
+    file: "/app/frontend/src/pages/GameDetails.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Redesigned GameDetails page with compact top section, yellow divider, small 'Select Your Tickets' text, wide tickets with minimal gaps, Full Sheets filter, Select All button for available sheets, and removed 'Selected Only' button. Ready for testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Redesigned GameDetails page working perfectly! All requirements verified: 1) Compact top section with game info (date/time, prize pool, price, available tickets) and dividends on right side ✅, 2) Yellow divider line separating sections ✅, 3) Small 'Select Your Tickets' text (text-sm) ✅, 4) Wide tickets with minimal gaps (gap-1.5) ✅, 5) 6 tickets per row on desktop, 3 on mobile ✅, 6) Full Sheets filter working correctly - shows only sheets with all 6 tickets available, displays 'No full sheets available' message when none exist ✅, 7) Select All button appears only for fully available sheets and correctly selects all 6 tickets ✅, 8) 'Selected Only' button successfully removed ✅, 9) Mobile responsiveness working ✅. All layout, functionality, and UI requirements met perfectly."
+
+  - task: "Dashboard UI Updates - Compact Buttons & Join Modal"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW TASK: Testing Dashboard UI updates - Added 'Create Game' and 'Join Game' buttons that are compact (h-12). Join Game button opens a modal to enter 6-digit game code. Please test: a) Dashboard loads after Google Auth login, b) Both buttons appear smaller/compact, c) 'Join Game' button opens modal correctly, d) Modal has input field for game code, e) Entering code and clicking 'Join Game' navigates to join page."
+      - working: true
+        agent: "testing"
+        comment: "✅ DASHBOARD UI UPDATES TESTING COMPLETE: All requirements successfully verified! 1) Dashboard loads correctly after authentication ✅, 2) Create Game button is compact (h-12) and visible ✅, 3) Join Game button is compact (h-12) and visible ✅, 4) Join Game modal opens correctly with proper title ✅, 5) Modal has input field for 6-digit game code with proper formatting ✅, 6) Input field accepts and displays codes correctly (tested with ABC123) ✅, 7) Join Game submit button enables with valid code ✅, 8) Modal can be closed by clicking outside ✅, 9) Complete join flow works - navigates to join page (/join/TEST99) ✅, 10) Mobile responsiveness works perfectly ✅, 11) Modal functionality works correctly on mobile ✅. All UI updates are production-ready and working as specified."
+    implemented: true
+    working: true
     file: "/app/frontend/src/pages/Dashboard.js"
     stuck_count: 0
     priority: "high"
