@@ -476,10 +476,19 @@ export default function AdminPanel() {
             Admin Panel
           </h1>
           {pendingRequests.length > 0 && (
-            <span className="ml-auto px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse">
+            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse">
               {pendingRequests.length} Pending
             </span>
           )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleLogout}
+            className="ml-auto text-gray-400 hover:text-white hover:bg-white/10"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </div>
 
