@@ -1272,7 +1272,7 @@ VOICE_MAP = {
 }
 
 @api_router.get("/admin/caller-settings")
-async def get_caller_settings():
+async def get_caller_settings(request: Request, _: bool = Depends(verify_admin)):
     """Get global caller voice settings"""
     settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
     
@@ -1292,7 +1292,7 @@ async def get_caller_settings():
     return settings
 
 @api_router.put("/admin/caller-settings")
-async def update_caller_settings(data: UpdateCallerSettingsRequest):
+async def update_caller_settings(data: UpdateCallerSettingsRequest, request: Request, _: bool = Depends(verify_admin)):
     """Update global caller voice settings"""
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     
@@ -1309,10 +1309,12 @@ async def update_caller_settings(data: UpdateCallerSettingsRequest):
             upsert=True
         )
     
-    return await get_caller_settings()
+    # Fetch and return updated settings
+    settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
+    return settings
 
 @api_router.post("/admin/caller-settings/prefix-lines")
-async def add_prefix_line(line: str):
+async def add_prefix_line(line: str, request: Request, _: bool = Depends(verify_admin)):
     """Add a custom prefix line"""
     await db.caller_settings.update_one(
         {"settings_id": "global"},
@@ -1322,7 +1324,7 @@ async def add_prefix_line(line: str):
     return {"message": "Prefix line added"}
 
 @api_router.delete("/admin/caller-settings/prefix-lines/{index}")
-async def delete_prefix_line(index: int):
+async def delete_prefix_line(index: int, request: Request, _: bool = Depends(verify_admin)):
     """Delete a prefix line by index"""
     settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
     if not settings or "prefix_lines" not in settings:
@@ -1341,7 +1343,7 @@ async def delete_prefix_line(index: int):
     return {"message": "Prefix line deleted"}
 
 @api_router.post("/admin/caller-settings/reset-prefix-lines")
-async def reset_prefix_lines():
+async def reset_prefix_lines(request: Request, _: bool = Depends(verify_admin)):
     """Reset prefix lines to defaults"""
     await db.caller_settings.update_one(
         {"settings_id": "global"},
