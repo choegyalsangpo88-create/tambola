@@ -798,7 +798,7 @@ export default function AdminPanel() {
                       <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
                         {callerSettings.prefix_lines?.map((line, index) => (
                           <div key={index} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
-                            <span className="text-white text-sm flex-1">"{line}"</span>
+                            <span className="text-white text-sm flex-1">&ldquo;{line}&rdquo;</span>
                             <Button onClick={() => handleDeletePrefixLine(index)} variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:bg-red-500/10">
                               <X className="w-4 h-4" />
                             </Button>
