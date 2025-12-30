@@ -162,6 +162,18 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: All admin panel features working perfectly! Comprehensive testing (23/23 tests passed, 100% success rate): Caller voice settings (GET/PUT settings, add/delete/reset prefix lines) ✅, Game management (auto-ticket generation, admin tickets retrieval, game deletion with cleanup) ✅, Ticket management (update holder names, cancel tickets) ✅, Booking requests workflow (create/approve/reject requests) ✅, TTS endpoint (returns use_browser_tts: true with proper formatting) ✅. All endpoints responding correctly with proper authentication, data validation, and error handling. Admin panel is production-ready."
 
+  - task: "Auto-Archive Feature for Completed Games"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ AUTO-ARCHIVE FEATURE TESTING COMPLETE: All functionality working perfectly! Fixed critical route ordering issue (moved /games/completed before /games/{game_id} to prevent route conflict). Comprehensive testing results (11/11 tests passed, 100% success rate): 1) GET /api/games - Default list correctly excludes completed games older than 5 minutes ✅, 2) GET /api/games/recent-completed - Returns games completed within last 5 minutes with winners object ✅, 3) GET /api/games/completed - Returns archived games older than 5 minutes with winners object ✅, 4) POST /api/games/{game_id}/end - Sets completed_at timestamp correctly ✅, 5) Created test game, started it, ended it, and verified: appears in recent-completed ✅, appears in default games list ✅, does NOT appear in archived (too recent) ✅, timestamp accuracy verified ✅. Auto-archive logic working correctly: games move from 'Just Ended' section to 'Past Results' archive after 5 minutes. All endpoints return proper response formats with required fields. Feature is production-ready."
+
 frontend:
   - task: "Google Auth Redirect Flow"
     implemented: true
