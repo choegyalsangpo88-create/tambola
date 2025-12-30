@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 import httpx
 import random
 import base64
+import hashlib
 from openai import OpenAI
 
 ROOT_DIR = Path(__file__).parent
