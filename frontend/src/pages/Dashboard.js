@@ -48,6 +48,16 @@ export default function Dashboard() {
     navigate(path);
   };
 
+  const handleJoinGame = () => {
+    if (!joinCode.trim()) {
+      toast.error('Please enter a game code');
+      return;
+    }
+    navigate(`/join/${joinCode.trim().toUpperCase()}`);
+    setShowJoinModal(false);
+    setJoinCode('');
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0c]">
       {/* Header */}
