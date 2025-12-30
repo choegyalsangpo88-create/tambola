@@ -140,8 +140,7 @@ export default function LiveGame() {
     const playerProgress = {};
 
     allBookedTickets.forEach(ticket => {
-      const oderId = ticket.user_id || ticket.booked_by_name;
-      const oderId = ticket.user_id || ticket.booked_by_name;
+      const userId = ticket.user_id || ticket.booked_by_name;
       if (!userId) return;
 
       let markedCount = 0;
