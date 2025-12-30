@@ -118,6 +118,50 @@ class UpdateProfileRequest(BaseModel):
     name: Optional[str] = None
     avatar: Optional[str] = None
 
+# Booking Request Models (for approval workflow)
+class BookingRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    request_id: str
+    user_id: str
+    user_name: str
+    user_email: str
+    user_phone: Optional[str] = None
+    game_id: str
+    ticket_ids: List[str]
+    total_amount: float
+    status: str = "pending"  # pending, approved, rejected
+    created_at: datetime
+    admin_notes: Optional[str] = None
+
+class TicketRequestInput(BaseModel):
+    game_id: str
+    ticket_ids: List[str]
+
+class ApproveRejectRequest(BaseModel):
+    admin_notes: Optional[str] = None
+
+class EditTicketHolderRequest(BaseModel):
+    holder_name: str
+
+# Caller Voice Settings Model
+class CallerVoiceSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    settings_id: str = "global"
+    voice: str = "nova"  # alloy, ash, coral, echo, fable, nova, onyx, sage, shimmer
+    gender: str = "female"  # male, female
+    speed: float = 1.0  # 0.5 = slow, 1.0 = normal, 1.5 = fast
+    accent: str = "indian"  # indian, british, american, neutral
+    prefix_lines: List[str] = []  # Custom funny lines before number calling
+    enabled: bool = True
+
+class UpdateCallerSettingsRequest(BaseModel):
+    voice: Optional[str] = None
+    gender: Optional[str] = None
+    speed: Optional[float] = None
+    accent: Optional[str] = None
+    prefix_lines: Optional[List[str]] = None
+    enabled: Optional[bool] = None
+
 # User Game Models (for Create Your Own Game feature)
 class UserGame(BaseModel):
     model_config = ConfigDict(extra="ignore")
