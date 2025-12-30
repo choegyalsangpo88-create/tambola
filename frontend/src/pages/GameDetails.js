@@ -176,6 +176,10 @@ export default function GameDetails() {
 
     setIsBooking(true);
     try {
+      // Get user info
+      const userResponse = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      const user = userResponse.data;
+
       const response = await axios.post(
         `${API}/bookings`,
         {
@@ -186,8 +190,34 @@ export default function GameDetails() {
       );
 
       const booking = response.data;
-      const message = `Hi! I want to book ${selectedTickets.length} tickets for ${game.name}\n\nTotal Amount: ₹${booking.total_amount}\nBooking ID: ${booking.booking_id}`;
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      // Get selected ticket numbers for the message
+      const selectedTicketNumbers = tickets
+        .filter(t => selectedTickets.includes(t.ticket_id))
+        .map(t => t.ticket_number)
+        .join(', ');
+
+      // Build detailed WhatsApp message
+      const message = `🎫 *NEW TICKET BOOKING*
+
+👤 *Player:* ${user.name || 'Guest'}
+📧 *Email:* ${user.email || 'N/A'}
+📱 *Phone:* ${user.phone || 'N/A'}
+
+🎮 *Game:* ${game.name}
+📅 *Date:* ${game.date} at ${game.time}
+
+🎟️ *Tickets:* ${selectedTicketNumbers}
+📊 *Quantity:* ${selectedTickets.length} ticket(s)
+💰 *Total Amount:* ₹${booking.total_amount}
+
+🆔 *Booking ID:* ${booking.booking_id}
+
+Please confirm this booking. 🙏`;
+
+      // WhatsApp Business Number
+      const whatsappNumber = '916909166157';
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       
       toast.success('Booking created! Opening WhatsApp...');
       window.open(whatsappUrl, '_blank');
