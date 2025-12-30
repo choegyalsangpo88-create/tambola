@@ -84,29 +84,58 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Create Your Own Game CTA */}
-        <div className="mb-8">
-          <div 
-            className="glass-card p-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 hover-lift cursor-pointer"
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        {/* Create & Join Game Buttons - Compact */}
+        <div className="flex gap-3 mb-6">
+          <Button
             onClick={() => navigate('/create-game')}
+            className="flex-1 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 font-semibold"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center">
-                  <Users className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Create Your Own Tambola</h3>
-                  <p className="text-sm text-gray-400">Host a game for family & friends - No signup needed for players!</p>
-                </div>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Game
+          </Button>
+          <Button
+            onClick={() => setShowJoinModal(true)}
+            variant="outline"
+            className="flex-1 h-12 rounded-xl border-2 border-amber-500/50 text-amber-400 hover:bg-amber-500/10 font-semibold"
+          >
+            <QrCode className="w-4 h-4 mr-2" />
+            Join Game
+          </Button>
+        </div>
+
+        {/* Join Game Modal */}
+        {showJoinModal && (
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowJoinModal(false)}>
+            <div className="bg-[#1a1a1e] rounded-2xl p-6 w-full max-w-sm border border-white/10" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white">Join Game</h3>
+                <Button variant="ghost" size="icon" onClick={() => setShowJoinModal(false)} className="h-8 w-8 text-gray-400">
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
-              <Button className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 hidden md:flex">
-                <Plus className="w-4 h-4 mr-2" /> Create Game
+              <p className="text-sm text-gray-400 mb-4">Enter the 6-digit game code shared by the host</p>
+              <Input
+                type="text"
+                placeholder="Enter game code (e.g., ABC123)"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
+                className="h-14 text-center text-2xl tracking-[0.3em] bg-white/5 border-white/10 text-white placeholder:text-gray-500 placeholder:text-sm placeholder:tracking-normal mb-4"
+                maxLength={6}
+              />
+              <Button
+                onClick={handleJoinGame}
+                disabled={joinCode.length < 4}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 font-bold"
+              >
+                Join Game
               </Button>
+              <p className="text-xs text-gray-500 text-center mt-3">
+                Or scan the QR code shared by the host
+              </p>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Live Games */}
         {liveGames.length > 0 && (
