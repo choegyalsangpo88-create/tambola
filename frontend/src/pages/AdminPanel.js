@@ -65,13 +65,7 @@ export default function AdminPanel() {
     dividends: { ...DEFAULT_DIVIDENDS }
   });
 
-  useEffect(() => {
-    fetchGames();
-    fetchBookings();
-    fetchBookingRequests();
-    fetchCallerSettings();
-  }, []);
-
+  // Fetch functions
   const fetchGames = async () => {
     try {
       const response = await axios.get(`${API}/games`);
@@ -117,6 +111,13 @@ export default function AdminPanel() {
       toast.error('Failed to load tickets');
     }
   };
+
+  useEffect(() => {
+    fetchGames();
+    fetchBookings();
+    fetchBookingRequests();
+    fetchCallerSettings();
+  }, []);
 
   const handleCreateGame = async (e) => {
     e.preventDefault();
