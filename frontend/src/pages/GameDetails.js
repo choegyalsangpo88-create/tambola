@@ -508,7 +508,7 @@ Please confirm this booking. 🙏`;
               }`}
               data-testid="book-via-whatsapp-btn"
             >
-              {isBooking ? '...' : '📱 Book Now'}
+              {isBooking ? 'Booking...' : '💬 Book via WhatsApp'}
             </Button>
           </div>
         </div>
