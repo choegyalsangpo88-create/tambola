@@ -216,7 +216,7 @@ export default function GameDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] pb-24">
+    <div className="min-h-screen bg-[#0a0a0c] pb-32 overflow-y-auto">
       {/* Header */}
       <div className="bg-[#121216] border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 py-3 flex items-center gap-3">
