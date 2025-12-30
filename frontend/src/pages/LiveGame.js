@@ -217,7 +217,12 @@ export default function LiveGame() {
                 </div>
                 <div className="absolute top-2 left-4 w-5 h-5 bg-white/40 rounded-full blur-md" />
               </div>
-              <p className="text-[10px] text-amber-400 font-semibold">{session.called_numbers?.length || 0}/90 Numbers</p>
+              {session.current_number && (
+                <p className="text-[9px] text-white font-medium text-center mt-1 max-w-[120px] leading-tight">
+                  {getCallName(session.current_number).replace(`Number ${session.current_number} - `, '')}
+                </p>
+              )}
+              <p className="text-[10px] text-amber-400 font-semibold mt-1">{session.called_numbers?.length || 0}/90 Numbers</p>
             </div>
 
             {/* Top Players */}
