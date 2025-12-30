@@ -165,6 +165,17 @@ class UpdateCallerSettingsRequest(BaseModel):
     prefix_lines: Optional[List[str]] = None
     enabled: Optional[bool] = None
 
+# Admin Login Models
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+class AdminSession(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    session_token: str
+    created_at: datetime
+    expires_at: datetime
+
 # User Game Models (for Create Your Own Game feature)
 class UserGame(BaseModel):
     model_config = ConfigDict(extra="ignore")
