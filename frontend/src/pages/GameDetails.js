@@ -67,10 +67,15 @@ export default function GameDetails() {
   const [selectedTickets, setSelectedTickets] = useState([]);
   const [filterMode, setFilterMode] = useState('all'); // 'all', 'fullsheets'
   const [isBooking, setIsBooking] = useState(false);
+  const [tickets, setTickets] = useState([]);
 
   useEffect(() => {
     fetchGame();
     fetchAllTickets();
+    
+    // Refresh tickets every 30 seconds to avoid booking stale data
+    const interval = setInterval(fetchAllTickets, 30000);
+    return () => clearInterval(interval);
   }, [gameId]);
 
   const fetchGame = async () => {
