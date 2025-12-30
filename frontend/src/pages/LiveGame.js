@@ -169,58 +169,74 @@ export default function LiveGame() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 py-2 space-y-2">
         
-        {/* Row 1: Players | Ball | Dividends */}
-        <div className="flex items-center gap-2">
-          {/* LEFT: Top 5 Players (Small) */}
-          <div className="w-16 flex-shrink-0">
-            <div className="space-y-1">
-              {topPlayers.length > 0 ? (
-                topPlayers.slice(0, 5).map((player, index) => (
-                  <div key={index} className={`px-1 py-0.5 rounded text-center text-[8px] ${
-                    index === 0 ? 'bg-amber-500/40 text-amber-200' :
-                    index === 1 ? 'bg-gray-500/30 text-gray-200' :
-                    index === 2 ? 'bg-orange-600/30 text-orange-200' :
-                    'bg-white/10 text-gray-300'
-                  }`}>
-                    <div className="font-bold truncate">{player.name.slice(0, 6)}</div>
+        {/* Row 1: Left (Ball + Players) | Right (Dividends List) */}
+        <div className="flex gap-2">
+          {/* LEFT: Ball + Top Players */}
+          <div className="flex-1 space-y-2">
+            {/* Ball */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10 flex flex-col items-center">
+              <div className="relative mb-1">
+                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-xl`}
+                  style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.4), inset 0 -5px 15px rgba(0,0,0,0.3), inset 0 5px 15px rgba(255,255,255,0.3)' }}>
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-inner">
+                    <span className="text-2xl font-black text-gray-900">{session.current_number || '?'}</span>
                   </div>
-                ))
-              ) : (
-                <p className="text-[8px] text-gray-500 text-center">...</p>
-              )}
-            </div>
-          </div>
-
-          {/* CENTER: Ball (Small) */}
-          <div className="flex-shrink-0">
-            <div className="relative">
-              <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-xl`}
-                style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.4), inset 0 -5px 15px rgba(0,0,0,0.3), inset 0 5px 15px rgba(255,255,255,0.3)' }}>
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-inner">
-                  <span className="text-xl font-black text-gray-900">{session.current_number || '?'}</span>
                 </div>
+                <div className="absolute top-2 left-4 w-5 h-5 bg-white/40 rounded-full blur-md" />
               </div>
-              <div className="absolute top-1 left-3 w-4 h-4 bg-white/40 rounded-full blur-md" />
+              <p className="text-[10px] text-amber-400 font-semibold">{session.called_numbers?.length || 0}/90 Numbers</p>
             </div>
-            <p className="text-[9px] text-center text-amber-400 mt-1">{session.called_numbers?.length || 0}/90</p>
+
+            {/* Top Players */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+              <h3 className="text-[10px] font-bold text-amber-400 mb-1.5 text-center">TOP PLAYERS</h3>
+              <div className="space-y-1">
+                {topPlayers.length > 0 ? (
+                  topPlayers.slice(0, 5).map((player, index) => (
+                    <div key={index} className={`flex items-center justify-between px-2 py-1 rounded ${
+                      index === 0 ? 'bg-amber-500/30' :
+                      index === 1 ? 'bg-gray-500/20' :
+                      index === 2 ? 'bg-orange-600/20' :
+                      'bg-white/5'
+                    }`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-bold ${
+                          index === 0 ? 'text-amber-400' :
+                          index === 1 ? 'text-gray-300' :
+                          index === 2 ? 'text-orange-400' :
+                          'text-gray-400'
+                        }`}>{index + 1}.</span>
+                        <span className="text-[10px] text-white truncate max-w-[60px]">{player.name}</span>
+                      </div>
+                      <span className="text-[9px] text-amber-400 font-semibold">{player.totalMarked} pts</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[9px] text-gray-500 text-center py-2">Waiting for players...</p>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT: Dividends (Single Card with List) */}
-          <div className="flex-1">
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-              <div className="flex items-center gap-1 mb-1.5">
+          {/* RIGHT: Dividends List */}
+          <div className="w-36 flex-shrink-0">
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 h-full">
+              <div className="flex items-center gap-1 mb-2">
                 <Trophy className="w-3 h-3 text-amber-500" />
-                <span className="text-[9px] font-bold text-white">PRIZES</span>
+                <span className="text-[10px] font-bold text-white">DIVIDENDS</span>
               </div>
-              <div className="flex gap-2 overflow-x-auto">
+              <div className="space-y-1">
                 {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                   const winner = session.winners?.[prize];
                   return (
-                    <div key={prize} className="flex-shrink-0 flex items-center gap-1.5">
-                      {winner && <span className="text-[9px]">🏆</span>}
-                      <span className={`text-[9px] ${winner ? 'text-green-400' : 'text-gray-400'}`}>{prize}</span>
+                    <div key={prize} className={`flex items-center justify-between px-1.5 py-1 rounded ${
+                      winner ? 'bg-green-500/20' : 'bg-white/5'
+                    }`}>
+                      <div className="flex items-center gap-1">
+                        {winner && <span className="text-[8px]">🏆</span>}
+                        <span className={`text-[9px] ${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
+                      </div>
                       <span className="text-[10px] font-bold text-amber-400">₹{amount}</span>
-                      <span className="text-gray-600">|</span>
                     </div>
                   );
                 })}
