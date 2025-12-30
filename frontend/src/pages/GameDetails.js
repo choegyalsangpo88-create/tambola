@@ -226,7 +226,15 @@ Please confirm this booking. 🙏`;
       navigate('/my-tickets');
     } catch (error) {
       console.error('Booking failed:', error);
-      toast.error('Failed to create booking');
+      const errorMsg = error.response?.data?.detail || 'Failed to create booking';
+      toast.error(errorMsg);
+      
+      // If tickets are already booked, refresh the ticket list
+      if (errorMsg.includes('already booked')) {
+        toast.info('Refreshing tickets...');
+        setSelectedTickets([]);
+        fetchAllTickets();
+      }
     } finally {
       setIsBooking(false);
     }
