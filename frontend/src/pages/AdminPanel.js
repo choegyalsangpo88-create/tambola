@@ -77,6 +77,8 @@ export default function AdminPanel() {
   const [ticketFilter, setTicketFilter] = useState('all');
   const [callerSettings, setCallerSettings] = useState(null);
   const [newPrefixLine, setNewPrefixLine] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Create/Edit Game Form
   const [gameForm, setGameForm] = useState({
@@ -88,46 +90,73 @@ export default function AdminPanel() {
     dividends: { ...DEFAULT_DIVIDENDS }
   });
 
+  // Check admin authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('admin_token');
+        if (!token) {
+          navigate('/control-ceo');
+          return;
+        }
+        
+        const response = await adminAxios.get(`${API}/admin/verify`);
+        if (response.data.valid) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('admin_token');
+          navigate('/control-ceo');
+        }
+      } catch (error) {
+        localStorage.removeItem('admin_token');
+        navigate('/control-ceo');
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
   // Fetch functions
-  const fetchGames = async () => {
+  const fetchGames = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/games`);
       setGames(response.data);
     } catch (error) {
       console.error('Failed to fetch games:', error);
     }
-  };
+  }, []);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/admin/bookings`);
+      const response = await adminAxios.get(`${API}/admin/bookings`);
       setBookings(response.data);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
     }
-  };
+  }, []);
 
-  const fetchBookingRequests = async () => {
+  const fetchBookingRequests = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/admin/booking-requests`);
+      const response = await adminAxios.get(`${API}/admin/booking-requests`);
       setBookingRequests(response.data);
     } catch (error) {
       console.error('Failed to fetch booking requests:', error);
     }
-  };
+  }, []);
 
-  const fetchCallerSettings = async () => {
+  const fetchCallerSettings = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/admin/caller-settings`);
+      const response = await adminAxios.get(`${API}/admin/caller-settings`);
       setCallerSettings(response.data);
     } catch (error) {
       console.error('Failed to fetch caller settings:', error);
     }
-  };
+  }, []);
 
   const fetchGameTickets = async (gameId) => {
     try {
-      const response = await axios.get(`${API}/admin/games/${gameId}/tickets`);
+      const response = await adminAxios.get(`${API}/admin/games/${gameId}/tickets`);
       setGameTickets(response.data.tickets);
     } catch (error) {
       console.error('Failed to fetch game tickets:', error);
@@ -136,11 +165,35 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
-    fetchGames();
-    fetchBookings();
-    fetchBookingRequests();
-    fetchCallerSettings();
-  }, []);
+    if (isAuthenticated) {
+      fetchGames();
+      fetchBookings();
+      fetchBookingRequests();
+      fetchCallerSettings();
+    }
+  }, [isAuthenticated, fetchGames, fetchBookings, fetchBookingRequests, fetchCallerSettings]);
+
+  const handleLogout = async () => {
+    try {
+      await adminAxios.post(`${API}/admin/logout`);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    localStorage.removeItem('admin_token');
+    navigate('/control-ceo');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleCreateGame = async (e) => {
     e.preventDefault();
