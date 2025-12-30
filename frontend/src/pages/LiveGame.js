@@ -110,15 +110,15 @@ export default function LiveGame() {
     const playerProgress = {};
     allBookedTickets.forEach(ticket => {
       const oderId = ticket.user_id || ticket.booked_by_name;
-      if (!userId) return;
+      if (!oderId) return;
       let markedCount = 0;
       ticket.numbers.forEach(row => {
         row.forEach(num => { if (num && calledSet.has(num)) markedCount++; });
       });
-      if (!playerProgress[userId]) {
-        playerProgress[userId] = { name: ticket.booked_by_name || `Player ${String(userId).slice(-4)}`, totalMarked: 0 };
+      if (!playerProgress[oderId]) {
+        playerProgress[oderId] = { name: ticket.booked_by_name || `Player ${String(oderId).slice(-4)}`, totalMarked: 0 };
       }
-      playerProgress[userId].totalMarked += markedCount;
+      playerProgress[oderId].totalMarked += markedCount;
     });
     setTopPlayers(Object.values(playerProgress).sort((a, b) => b.totalMarked - a.totalMarked).slice(0, 5));
   };
