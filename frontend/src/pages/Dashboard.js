@@ -179,6 +179,45 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Recently Completed Games (within 5 mins) */}
+        {recentlyCompleted.length > 0 && (
+          <div className="mb-10" data-testid="recently-completed-section">
+            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <Clock className="inline w-7 h-7 text-emerald-500 mr-2" />
+              Just Ended
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {recentlyCompleted.map((game) => (
+                <div
+                  key={game.game_id}
+                  className="glass-card p-6 min-w-[300px] hover-lift cursor-pointer border-2 border-emerald-500/30"
+                  data-testid={`completed-game-${game.game_id}`}
+                  onClick={() => navigate(`/live/${game.game_id}`)}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white">{game.name}</h3>
+                    <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                      ENDED
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm mb-2">
+                    Prize Pool: ₹{game.prize_pool.toLocaleString()}
+                  </p>
+                  <p className="text-emerald-400 text-xs mb-4">
+                    Results available • Moving to archive soon
+                  </p>
+                  <Button
+                    data-testid={`view-results-${game.game_id}`}
+                    className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 font-bold"
+                  >
+                    View Results
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Upcoming Games */}
         <div data-testid="upcoming-games-section">
           <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6" style={{ fontFamily: 'Outfit, sans-serif' }}>
