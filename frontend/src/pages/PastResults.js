@@ -19,26 +19,9 @@ export default function PastResults() {
 
   const fetchPastResults = async () => {
     try {
-      // Fetch completed games with winners
-      const response = await axios.get(`${API}/games?status=completed`);
-      const completedGames = response.data.slice(0, 20); // Max 20 results
-      
-      // Fetch sessions for each game to get winners
-      const resultsWithWinners = await Promise.all(
-        completedGames.map(async (game) => {
-          try {
-            const sessionResponse = await axios.get(`${API}/games/${game.game_id}/session`);
-            return {
-              ...game,
-              winners: sessionResponse.data.winners || {}
-            };
-          } catch (error) {
-            return { ...game, winners: {} };
-          }
-        })
-      );
-      
-      setResults(resultsWithWinners);
+      // Fetch archived completed games (older than 5 mins) with winners
+      const response = await axios.get(`${API}/games/completed`);
+      setResults(response.data);
     } catch (error) {
       console.error('Failed to fetch past results:', error);
       toast.error('Failed to load past results');
