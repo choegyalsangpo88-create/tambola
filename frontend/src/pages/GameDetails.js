@@ -91,9 +91,21 @@ export default function GameDetails() {
       const allTickets = response.data.tickets;
       
       // Group tickets by Full Sheet ID
+      // If full_sheet_id doesn't exist, calculate it based on ticket number (1-6 = FS001, 7-12 = FS002, etc.)
       const sheetsMap = {};
       allTickets.forEach(ticket => {
-        const sheetId = ticket.full_sheet_id;
+        let sheetId = ticket.full_sheet_id;
+        
+        // If no full_sheet_id, calculate based on ticket number
+        if (!sheetId) {
+          const ticketNum = parseInt(ticket.ticket_number.replace(/\D/g, '')) || 0;
+          const sheetNum = Math.ceil(ticketNum / 6);
+          sheetId = `FS${String(sheetNum).padStart(3, '0')}`;
+          // Also calculate position in sheet
+          ticket.ticket_position_in_sheet = ((ticketNum - 1) % 6) + 1;
+          ticket.full_sheet_id = sheetId;
+        }
+        
         if (!sheetsMap[sheetId]) {
           sheetsMap[sheetId] = [];
         }
@@ -102,7 +114,9 @@ export default function GameDetails() {
       
       // Convert to array and sort
       const sheetsArray = Object.entries(sheetsMap).map(([sheetId, tickets]) => {
-        const sortedTickets = tickets.sort((a, b) => a.ticket_position_in_sheet - b.ticket_position_in_sheet);
+        const sortedTickets = tickets.sort((a, b) => 
+          (a.ticket_position_in_sheet || 0) - (b.ticket_position_in_sheet || 0)
+        );
         const availableTickets = sortedTickets.filter(t => !t.is_booked);
         
         return {
@@ -110,7 +124,7 @@ export default function GameDetails() {
           tickets: sortedTickets,
           isComplete: tickets.length === 6,
           availableCount: availableTickets.length,
-          isFullyAvailable: availableTickets.length === 6
+          isFullyAvailable: tickets.length === 6 && availableTickets.length === 6
         };
       }).sort((a, b) => {
         const numA = parseInt(a.sheetId.replace('FS', ''));
