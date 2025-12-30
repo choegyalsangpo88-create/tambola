@@ -1222,7 +1222,7 @@ async def approve_booking_request(request_id: str, request: Request, data: Appro
     return {"message": "Booking approved", "booking_id": booking_id}
 
 @api_router.put("/admin/booking-requests/{request_id}/reject")
-async def reject_booking_request(request_id: str, data: ApproveRejectRequest = None):
+async def reject_booking_request(request_id: str, request: Request, data: ApproveRejectRequest = None, _: bool = Depends(verify_admin)):
     """Reject a booking request"""
     req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
     if not req:
