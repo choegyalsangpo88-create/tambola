@@ -435,41 +435,54 @@ export default function GameDetails() {
             );
           })}
         </div>
+
+        {/* Spacer for fixed bottom bar */}
+        <div className="h-20" />
       </div>
 
-      {/* Fixed Bottom Book Button */}
-      {selectedTickets.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t border-amber-500 py-3 px-3 z-50">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div>
-              <p className="text-white font-bold">
-                {selectedTickets.length} Ticket{selectedTickets.length > 1 ? 's' : ''}
-              </p>
-              <p className="text-amber-500 text-sm font-semibold">
-                ₹{(selectedTickets.length * game.price).toLocaleString()}
-              </p>
-            </div>
-            <div className="flex gap-2">
+      {/* Fixed Bottom Book Button - Always visible */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t border-white/10 py-3 px-3 z-50 safe-area-pb">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <p className="text-white font-bold">
+              {selectedTickets.length > 0 
+                ? `${selectedTickets.length} Ticket${selectedTickets.length > 1 ? 's' : ''} Selected`
+                : 'Select Tickets'
+              }
+            </p>
+            <p className="text-amber-500 text-sm font-semibold">
+              {selectedTickets.length > 0 
+                ? `₹${(selectedTickets.length * game.price).toLocaleString()}`
+                : `₹${game.price} per ticket`
+              }
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {selectedTickets.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedTickets([])}
-                className="border-white/20 h-10 px-4"
+                className="border-white/20 h-10 px-4 text-white"
               >
                 Clear
               </Button>
-              <Button
-                onClick={handleBookViaWhatsApp}
-                disabled={isBooking}
-                className="bg-green-500 hover:bg-green-600 font-bold h-10 px-6"
-                data-testid="book-via-whatsapp-btn"
-              >
-                {isBooking ? '...' : '📱 Book Now'}
-              </Button>
-            </div>
+            )}
+            <Button
+              onClick={handleBookViaWhatsApp}
+              disabled={isBooking || selectedTickets.length === 0}
+              className={`font-bold h-10 px-6 ${
+                selectedTickets.length > 0 
+                  ? 'bg-green-500 hover:bg-green-600' 
+                  : 'bg-gray-600 cursor-not-allowed'
+              }`}
+              data-testid="book-via-whatsapp-btn"
+            >
+              {isBooking ? '...' : '📱 Book Now'}
+            </Button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
