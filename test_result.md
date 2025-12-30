@@ -147,6 +147,21 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: All User Games API endpoints working perfectly! Successfully tested complete flow: 1) Create user game with share code generation, 2) Get my games list, 3) Get game details by ID, 4) Public join by share code (no auth required), 5) Get players list, 6) Start game (host only), 7) Call numbers during live game, 8) Get game session state, 9) End game. All authentication checks working correctly. Share codes generated properly. Ticket assignment working. Live game number calling functional."
 
+  - task: "Admin Panel Features - Enhanced Game Management"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented comprehensive admin panel features: 1) Caller voice settings (GET/PUT /admin/caller-settings, POST/DELETE prefix lines, reset), 2) Enhanced game management (auto-ticket generation, DELETE /admin/games/{id}), 3) Ticket management (PUT /admin/tickets/{id}/holder, POST /admin/tickets/{id}/cancel), 4) Booking approval workflow (GET/PUT /admin/booking-requests), 5) TTS endpoint (POST /tts/generate with browser fallback)"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: All admin panel features working perfectly! Comprehensive testing (23/23 tests passed, 100% success rate): Caller voice settings (GET/PUT settings, add/delete/reset prefix lines) ✅, Game management (auto-ticket generation, admin tickets retrieval, game deletion with cleanup) ✅, Ticket management (update holder names, cancel tickets) ✅, Booking requests workflow (create/approve/reject requests) ✅, TTS endpoint (returns use_browser_tts: true with proper formatting) ✅. All endpoints responding correctly with proper authentication, data validation, and error handling. Admin panel is production-ready."
+
 frontend:
   - task: "Google Auth Redirect Flow"
     implemented: true
