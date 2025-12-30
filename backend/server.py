@@ -1008,7 +1008,7 @@ async def delete_game(game_id: str, request: Request, _: bool = Depends(verify_a
     return {"message": f"Game {game_id} and all associated data deleted"}
 
 @api_router.get("/admin/games/{game_id}/tickets")
-async def get_game_tickets_admin(game_id: str, status: Optional[str] = None):
+async def get_game_tickets_admin(game_id: str, request: Request, status: Optional[str] = None, _: bool = Depends(verify_admin)):
     """Get all tickets for a game with booking info (admin)"""
     query = {"game_id": game_id}
     if status:
@@ -1028,7 +1028,7 @@ async def get_game_tickets_admin(game_id: str, status: Optional[str] = None):
     return {"tickets": tickets, "total": len(tickets)}
 
 @api_router.put("/admin/tickets/{ticket_id}/holder")
-async def update_ticket_holder_name(ticket_id: str, data: EditTicketHolderRequest):
+async def update_ticket_holder_name(ticket_id: str, data: EditTicketHolderRequest, request: Request, _: bool = Depends(verify_admin)):
     """Edit the holder name for a booked ticket"""
     ticket = await db.tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
     if not ticket:
@@ -1045,7 +1045,7 @@ async def update_ticket_holder_name(ticket_id: str, data: EditTicketHolderReques
     return {"message": f"Ticket holder updated to {data.holder_name}"}
 
 @api_router.post("/admin/tickets/{ticket_id}/cancel")
-async def cancel_ticket(ticket_id: str):
+async def cancel_ticket(ticket_id: str, request: Request, _: bool = Depends(verify_admin)):
     """Cancel a booked ticket and return it to available pool"""
     ticket = await db.tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
     if not ticket:
