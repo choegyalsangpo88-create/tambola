@@ -95,6 +95,9 @@ export default function GameDetails() {
       );
       const allTickets = response.data.tickets;
       
+      // Store flat ticket list for message building
+      setTickets(allTickets);
+      
       // Group tickets by Full Sheet ID
       // If full_sheet_id doesn't exist, calculate it based on ticket number (1-6 = FS001, 7-12 = FS002, etc.)
       const sheetsMap = {};
@@ -118,8 +121,8 @@ export default function GameDetails() {
       });
       
       // Convert to array and sort
-      const sheetsArray = Object.entries(sheetsMap).map(([sheetId, tickets]) => {
-        const sortedTickets = tickets.sort((a, b) => 
+      const sheetsArray = Object.entries(sheetsMap).map(([sheetId, sheetTickets]) => {
+        const sortedTickets = sheetTickets.sort((a, b) => 
           (a.ticket_position_in_sheet || 0) - (b.ticket_position_in_sheet || 0)
         );
         const availableTickets = sortedTickets.filter(t => !t.is_booked);
@@ -127,9 +130,9 @@ export default function GameDetails() {
         return {
           sheetId,
           tickets: sortedTickets,
-          isComplete: tickets.length === 6,
+          isComplete: sheetTickets.length === 6,
           availableCount: availableTickets.length,
-          isFullyAvailable: tickets.length === 6 && availableTickets.length === 6
+          isFullyAvailable: sheetTickets.length === 6 && availableTickets.length === 6
         };
       }).sort((a, b) => {
         const numA = parseInt(a.sheetId.replace('FS', ''));
@@ -138,6 +141,20 @@ export default function GameDetails() {
       });
       
       setFullSheets(sheetsArray);
+      
+      // Clear selection if any selected tickets are now booked
+      if (selectedTickets.length > 0) {
+        const stillAvailable = selectedTickets.filter(ticketId => {
+          const ticket = allTickets.find(t => t.ticket_id === ticketId);
+          return ticket && !ticket.is_booked;
+        });
+        if (stillAvailable.length !== selectedTickets.length) {
+          setSelectedTickets(stillAvailable);
+          if (stillAvailable.length < selectedTickets.length) {
+            toast.info('Some selected tickets were booked by others');
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch tickets:', error);
       toast.error('Failed to load tickets');
