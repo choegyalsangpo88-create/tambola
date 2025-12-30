@@ -21,6 +21,7 @@ export default function LiveGame() {
   const [topPlayers, setTopPlayers] = useState([]);
   const [previousWinners, setPreviousWinners] = useState({});
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [ticketZoom, setTicketZoom] = useState(2); // 1 = small (4 per row), 2 = medium (2 per row), 3 = large (1 per row)
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
 
