@@ -52,16 +52,41 @@ export default function LiveGame() {
       const callName = getCallName(number);
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=true`);
       
-      if (response.data.enabled && response.data.audio) {
-        // Stop any currently playing audio
-        if (ttsAudioRef.current) {
-          ttsAudioRef.current.pause();
+      if (response.data.enabled) {
+        if (response.data.audio && !response.data.use_browser_tts) {
+          // Use API-generated audio
+          if (ttsAudioRef.current) {
+            ttsAudioRef.current.pause();
+          }
+          const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
+          ttsAudioRef.current = audio;
+          await audio.play();
+        } else if (response.data.use_browser_tts && response.data.text) {
+          // Use browser's built-in speech synthesis
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop any ongoing speech
+            const utterance = new SpeechSynthesisUtterance(response.data.text);
+            
+            // Set voice properties based on settings
+            const voiceSettings = response.data.voice_settings || {};
+            utterance.rate = voiceSettings.speed || 1.0;
+            utterance.pitch = 1.0;
+            
+            // Try to select appropriate voice
+            const voices = window.speechSynthesis.getVoices();
+            const preferredGender = voiceSettings.gender === 'male' ? 'male' : 'female';
+            const indianVoice = voices.find(v => v.lang.includes('en-IN'));
+            const genderVoice = voices.find(v => v.name.toLowerCase().includes(preferredGender));
+            
+            if (indianVoice) {
+              utterance.voice = indianVoice;
+            } else if (genderVoice) {
+              utterance.voice = genderVoice;
+            }
+            
+            window.speechSynthesis.speak(utterance);
+          }
         }
-        
-        // Create and play audio
-        const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
-        ttsAudioRef.current = audio;
-        await audio.play();
         setLastPlayedNumber(number);
       } else {
         // Fallback to beep sound
