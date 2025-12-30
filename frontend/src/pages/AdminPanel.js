@@ -255,7 +255,7 @@ export default function AdminPanel() {
   const handleDeleteGame = async () => {
     if (!selectedGame) return;
     try {
-      await axios.delete(`${API}/admin/games/${selectedGame.game_id}`);
+      await adminAxios.delete(`${API}/admin/games/${selectedGame.game_id}`);
       toast.success('Game deleted successfully');
       setShowDeleteModal(false);
       setSelectedGame(null);
@@ -314,7 +314,7 @@ export default function AdminPanel() {
 
   const handleConfirmBooking = async (bookingId) => {
     try {
-      await axios.put(`${API}/admin/bookings/${bookingId}/confirm`);
+      await adminAxios.put(`${API}/admin/bookings/${bookingId}/confirm`);
       toast.success('Booking confirmed');
       fetchBookings();
       fetchGames();
@@ -326,7 +326,7 @@ export default function AdminPanel() {
 
   const handleApproveRequest = async (requestId) => {
     try {
-      await axios.put(`${API}/admin/booking-requests/${requestId}/approve`);
+      await adminAxios.put(`${API}/admin/booking-requests/${requestId}/approve`);
       toast.success('Booking request approved!');
       fetchBookingRequests();
       fetchBookings();
@@ -339,7 +339,7 @@ export default function AdminPanel() {
 
   const handleRejectRequest = async (requestId) => {
     try {
-      await axios.put(`${API}/admin/booking-requests/${requestId}/reject`);
+      await adminAxios.put(`${API}/admin/booking-requests/${requestId}/reject`);
       toast.success('Booking request rejected');
       fetchBookingRequests();
     } catch (error) {
@@ -351,7 +351,7 @@ export default function AdminPanel() {
   const handleCancelTicket = async (ticketId) => {
     if (!window.confirm('Are you sure you want to cancel this ticket?')) return;
     try {
-      await axios.post(`${API}/admin/tickets/${ticketId}/cancel`);
+      await adminAxios.post(`${API}/admin/tickets/${ticketId}/cancel`);
       toast.success('Ticket cancelled');
       if (selectedGame) fetchGameTickets(selectedGame.game_id);
       fetchGames();
@@ -363,7 +363,7 @@ export default function AdminPanel() {
 
   const handleUpdateTicketHolder = async (ticketId, newName) => {
     try {
-      await axios.put(`${API}/admin/tickets/${ticketId}/holder`, { holder_name: newName });
+      await adminAxios.put(`${API}/admin/tickets/${ticketId}/holder`, { holder_name: newName });
       toast.success('Holder name updated');
       if (selectedGame) fetchGameTickets(selectedGame.game_id);
     } catch (error) {
@@ -374,7 +374,7 @@ export default function AdminPanel() {
 
   const handleUpdateCallerSettings = async (updates) => {
     try {
-      const response = await axios.put(`${API}/admin/caller-settings`, updates);
+      const response = await adminAxios.put(`${API}/admin/caller-settings`, updates);
       setCallerSettings(response.data);
       toast.success('Caller settings updated');
     } catch (error) {
@@ -386,7 +386,7 @@ export default function AdminPanel() {
   const handleAddPrefixLine = async () => {
     if (!newPrefixLine.trim()) return;
     try {
-      await axios.post(`${API}/admin/caller-settings/prefix-lines?line=${encodeURIComponent(newPrefixLine)}`);
+      await adminAxios.post(`${API}/admin/caller-settings/prefix-lines?line=${encodeURIComponent(newPrefixLine)}`);
       setNewPrefixLine('');
       fetchCallerSettings();
       toast.success('Prefix line added');
@@ -397,7 +397,7 @@ export default function AdminPanel() {
 
   const handleDeletePrefixLine = async (index) => {
     try {
-      await axios.delete(`${API}/admin/caller-settings/prefix-lines/${index}`);
+      await adminAxios.delete(`${API}/admin/caller-settings/prefix-lines/${index}`);
       fetchCallerSettings();
       toast.success('Prefix line deleted');
     } catch (error) {
@@ -407,7 +407,7 @@ export default function AdminPanel() {
 
   const handleResetPrefixLines = async () => {
     try {
-      await axios.post(`${API}/admin/caller-settings/reset-prefix-lines`);
+      await adminAxios.post(`${API}/admin/caller-settings/reset-prefix-lines`);
       fetchCallerSettings();
       toast.success('Prefix lines reset to defaults');
     } catch (error) {
