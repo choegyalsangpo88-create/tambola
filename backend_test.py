@@ -428,6 +428,121 @@ class TambolaAPITester:
             return True
         return False
 
+    def test_auto_archive_feature(self):
+        """Test Auto-Archive feature for completed games"""
+        print("\n" + "="*50)
+        print("TESTING AUTO-ARCHIVE FEATURE")
+        print("="*50)
+        
+        # Test 1: Get initial game list (should exclude old completed games)
+        success, initial_games = self.run_test(
+            "Get Default Game List (excludes old completed)",
+            "GET",
+            "games",
+            200
+        )
+        
+        if success:
+            print(f"   Initial games count: {len(initial_games)}")
+            # Check that no old completed games are included
+            for game in initial_games:
+                if game.get('status') == 'completed':
+                    print(f"   Found recently completed game: {game.get('name')} (should be within 5 mins)")
+        
+        # Test 2: Get recently completed games (within 5 minutes)
+        success, recent_completed = self.run_test(
+            "Get Recent Completed Games (within 5 mins)",
+            "GET",
+            "games/recent-completed",
+            200
+        )
+        
+        if success:
+            print(f"   Recent completed games: {len(recent_completed)}")
+            for game in recent_completed:
+                print(f"   - {game.get('name')} (completed_at: {game.get('completed_at')})")
+                # Check if winners object exists
+                if 'winners' in game:
+                    print(f"     Winners: {game['winners']}")
+                else:
+                    print("     No winners data found")
+        
+        # Test 3: Get archived completed games (older than 5 minutes)
+        success, archived_games = self.run_test(
+            "Get Archived Completed Games (older than 5 mins)",
+            "GET",
+            "games/completed",
+            200
+        )
+        
+        if success:
+            print(f"   Archived completed games: {len(archived_games)}")
+            for game in archived_games:
+                print(f"   - {game.get('name')} (completed_at: {game.get('completed_at')})")
+                # Check if winners object exists
+                if 'winners' in game:
+                    print(f"     Winners: {game['winners']}")
+                else:
+                    print("     No winners data found")
+        
+        # Test 4: End a game and verify auto-archive behavior (if we have a live game)
+        if self.game_id:
+            # First start the game to make it live
+            success, start_result = self.run_test(
+                "Start Game for Archive Test",
+                "POST",
+                f"games/{self.game_id}/start",
+                200
+            )
+            
+            if success:
+                # Now end the game
+                success, end_result = self.run_test(
+                    "End Game (set completed_at timestamp)",
+                    "POST",
+                    f"games/{self.game_id}/end",
+                    200
+                )
+                
+                if success:
+                    print(f"   Game {self.game_id} ended successfully")
+                    
+                    # Verify it appears in recent-completed
+                    success, recent_after_end = self.run_test(
+                        "Verify Game in Recent Completed After End",
+                        "GET",
+                        "games/recent-completed",
+                        200
+                    )
+                    
+                    if success:
+                        found_in_recent = any(g.get('game_id') == self.game_id for g in recent_after_end)
+                        if found_in_recent:
+                            print(f"   ✅ Game {self.game_id} correctly appears in recent-completed")
+                        else:
+                            print(f"   ❌ Game {self.game_id} NOT found in recent-completed")
+                    
+                    # Verify it appears in default games list
+                    success, games_after_end = self.run_test(
+                        "Verify Game in Default List After End",
+                        "GET",
+                        "games",
+                        200
+                    )
+                    
+                    if success:
+                        found_in_default = any(g.get('game_id') == self.game_id for g in games_after_end)
+                        if found_in_default:
+                            print(f"   ✅ Game {self.game_id} correctly appears in default games list")
+                        else:
+                            print(f"   ❌ Game {self.game_id} NOT found in default games list")
+                    
+                    # Note: We can't test the 5-minute archive transition in real-time
+                    print("   ℹ️  Note: 5-minute archive transition cannot be tested in real-time")
+                    print("   ℹ️  After 5 minutes, the game should move from recent-completed to archived")
+        
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Tambola API Tests")
@@ -448,6 +563,7 @@ class TambolaAPITester:
         live_success = self.test_live_game_endpoints()
         profile_success = self.test_profile_endpoints()
         user_games_success = self.test_user_games_endpoints()
+        auto_archive_success = self.test_auto_archive_feature()
         
         # Print final results
         print("\n" + "="*60)
@@ -465,7 +581,8 @@ class TambolaAPITester:
             ("Admin", admin_success),
             ("Live Game", live_success),
             ("Profile", profile_success),
-            ("User Games", user_games_success)
+            ("User Games", user_games_success),
+            ("Auto-Archive Feature", auto_archive_success)
         ]
         
         print("\n📋 Test Suite Results:")
