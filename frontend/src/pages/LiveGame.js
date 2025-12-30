@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Trophy, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCallName } from '@/utils/tambolaCallNames';
 import confetti from 'canvas-confetti';
