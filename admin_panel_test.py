@@ -7,8 +7,8 @@ class AdminPanelTester:
     def __init__(self, base_url="https://housie-master-3.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
-        self.session_token = "lYnA2pHIaXdsZ_NSn4jX6i0MjmwN-Fgz3JFKe9y_ZPI"  # Valid session from DB
-        self.user_id = "user_b4186fef9da4"
+        self.session_token = "admin_session_1766786901455"  # Valid admin session from DB
+        self.user_id = "admin-user-1766786901455"
         self.tests_run = 0
         self.tests_passed = 0
         self.game_id = None
