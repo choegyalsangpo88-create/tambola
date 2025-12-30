@@ -953,7 +953,7 @@ async def get_booking_tickets(booking_id: str, user: User = Depends(get_current_
 # ============ ADMIN ROUTES ============
 
 @api_router.get("/admin/bookings")
-async def get_all_bookings(status: Optional[str] = None):
+async def get_all_bookings(request: Request, status: Optional[str] = None, _: bool = Depends(verify_admin)):
     query = {} if not status else {"status": status}
     bookings = await db.bookings.find(query, {"_id": 0}).to_list(100)
     
@@ -967,7 +967,7 @@ async def get_all_bookings(status: Optional[str] = None):
     return bookings
 
 @api_router.put("/admin/bookings/{booking_id}/confirm")
-async def confirm_booking(booking_id: str):
+async def confirm_booking(booking_id: str, request: Request, _: bool = Depends(verify_admin)):
     result = await db.bookings.update_one(
         {"booking_id": booking_id},
         {"$set": {"status": "confirmed", "whatsapp_confirmed": True}}
@@ -988,7 +988,7 @@ async def confirm_booking(booking_id: str):
 # ============ ADMIN GAME MANAGEMENT ============
 
 @api_router.delete("/admin/games/{game_id}")
-async def delete_game(game_id: str):
+async def delete_game(game_id: str, request: Request, _: bool = Depends(verify_admin)):
     """Delete a game and all associated tickets/bookings"""
     game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
     if not game:
