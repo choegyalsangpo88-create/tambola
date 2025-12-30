@@ -21,11 +21,10 @@ export default function LiveGame() {
   const [topPlayers, setTopPlayers] = useState([]);
   const [previousWinners, setPreviousWinners] = useState({});
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [ticketZoom, setTicketZoom] = useState(2); // 1 = small (4 per row), 2 = medium (2 per row), 3 = large (1 per row)
+  const [ticketZoom, setTicketZoom] = useState(2);
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
 
-  // Confetti celebration
   const celebrateWinner = (prizeType) => {
     confetti({
       particleCount: 150,
@@ -142,7 +141,7 @@ export default function LiveGame() {
 
     allBookedTickets.forEach(ticket => {
       const oderId = ticket.user_id || ticket.booked_by_name;
-      const userId = ticket.user_id || ticket.booked_by_name;
+      const oderId = ticket.user_id || ticket.booked_by_name;
       if (!userId) return;
 
       let markedCount = 0;
@@ -165,7 +164,6 @@ export default function LiveGame() {
     setTopPlayers(sortedPlayers);
   };
 
-  // Get ball color based on number range
   const getBallColor = (num) => {
     if (!num) return 'from-gray-400 to-gray-600';
     if (num <= 10) return 'from-red-400 to-red-600';
@@ -188,8 +186,7 @@ export default function LiveGame() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a3d2c] to-[#0a0a0c]">
-      {/* Audio */}
+    <div className="min-h-screen bg-gradient-to-b from-[#0a3d2c] to-[#0a0a0c] overflow-y-auto">
       <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGD0fPTgjMGHm7A7+OZTA0OVqzl7K1aFwlInN/zxmwlBSp9zPLdjTkIGGS38+OXRQwRX7fn77hjGQc9k9TxwXEcBip6yO7glT0KFF24+fGmXRoJQ5vd88dxKAYrdMnx3I0+ChljuO3nnEcNElWv5OysWxYLSJvf88lwKAUrdsrw3Y0/ChVhuvDmnUgOElu05+ytXBcLS5zf88hwJwYreMnw3I5AChZivPDmnUkOElm05u6sXBgLTZve8slxJQYrecrw3Y5AChZivPDlnUoOE1u15u6rXBcLS5vc9MlxJgYse8nw3Y5AChZivPDlnUoOE1u15u6rXBcLS5vc9MlxJgYse8nw3Y5AChZivPDlnUoO" preload="auto" />
       
       {/* Header */}
@@ -210,186 +207,57 @@ export default function LiveGame() {
         </div>
       </div>
 
-      {/* Main Content - 3 Column Layout */}
-      <div className="max-w-7xl mx-auto px-2 py-3">
-        <div className="flex gap-2">
-          
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-2 py-3 space-y-3">
+        
+        {/* Row 1: Top Players | Ball | Prizes - Hidden on mobile, flex on desktop */}
+        <div className="hidden md:flex gap-2">
           {/* LEFT: Players Podium */}
-          <div className="w-24 flex-shrink-0">
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          <div className="w-28 flex-shrink-0">
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 h-full">
               <h3 className="text-[10px] font-bold text-amber-400 mb-2 text-center">TOP PLAYERS</h3>
               <div className="space-y-1.5">
                 {topPlayers.length > 0 ? (
                   topPlayers.map((player, index) => (
-                    <div
-                      key={index}
-                      className={`p-1.5 rounded text-center ${
-                        index === 0 ? 'bg-amber-500/30 border border-amber-500/50' :
-                        index === 1 ? 'bg-gray-400/20 border border-gray-400/30' :
-                        index === 2 ? 'bg-orange-600/20 border border-orange-600/30' :
-                        'bg-white/5 border border-white/10'
-                      }`}
-                    >
+                    <div key={index} className={`p-1.5 rounded text-center ${
+                      index === 0 ? 'bg-amber-500/30 border border-amber-500/50' :
+                      index === 1 ? 'bg-gray-400/20 border border-gray-400/30' :
+                      index === 2 ? 'bg-orange-600/20 border border-orange-600/30' :
+                      'bg-white/5 border border-white/10'
+                    }`}>
                       <div className="text-[10px] font-bold text-white truncate">{player.name}</div>
                       <div className={`text-[9px] font-semibold ${
-                        index === 0 ? 'text-amber-400' :
-                        index === 1 ? 'text-gray-300' :
-                        index === 2 ? 'text-orange-400' :
-                        'text-gray-400'
-                      }`}>
-                        {player.totalMarked} pts
-                      </div>
+                        index === 0 ? 'text-amber-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-gray-400'
+                      }`}>{player.totalMarked} pts</div>
                     </div>
                   ))
-                ) : (
-                  <p className="text-[9px] text-gray-400 text-center">Loading...</p>
-                )}
+                ) : <p className="text-[9px] text-gray-400 text-center">Loading...</p>}
               </div>
             </div>
           </div>
 
-          {/* CENTER: Number Calling */}
-          <div className="flex-1">
-            {/* Current Number Ball */}
-            <div className="flex justify-center mb-3">
-              <div className="relative">
-                {/* Main Ball */}
-                <div className={`w-28 h-28 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-2xl`}
-                  style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 -10px 30px rgba(0,0,0,0.3), inset 0 10px 30px rgba(255,255,255,0.3)' }}
-                >
-                  {/* White circle inside */}
-                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-inner">
-                    <span className="text-4xl font-black text-gray-900">{session.current_number || '?'}</span>
-                  </div>
+          {/* CENTER: Ball */}
+          <div className="flex-1 flex flex-col items-center">
+            <div className="relative mb-2">
+              <div className={`w-32 h-32 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-2xl`}
+                style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 -10px 30px rgba(0,0,0,0.3), inset 0 10px 30px rgba(255,255,255,0.3)' }}>
+                <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-inner">
+                  <span className="text-5xl font-black text-gray-900">{session.current_number || '?'}</span>
                 </div>
-                {/* Highlight */}
-                <div className="absolute top-3 left-6 w-8 h-8 bg-white/40 rounded-full blur-xl" />
               </div>
+              <div className="absolute top-4 left-8 w-10 h-10 bg-white/40 rounded-full blur-xl" />
             </div>
-
-            {/* Call Name */}
             {session.current_number && (
-              <p className="text-center text-amber-400 font-semibold text-sm mb-3">
-                {getCallName(session.current_number)}
-              </p>
+              <p className="text-amber-400 font-semibold text-sm">{getCallName(session.current_number)}</p>
             )}
-
-            {/* Numbers Called Counter */}
-            <div className="text-center mb-3">
-              <span className="px-3 py-1 bg-black/40 rounded-full text-xs text-white">
-                <span className="text-amber-400 font-bold">{session.called_numbers?.length || 0}</span>/90 Numbers
-              </span>
-            </div>
-
-            {/* Called Numbers - Last 10 in One Line */}
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-gray-400">Last Called</span>
-                <span className="text-[10px] text-amber-400">{session.called_numbers?.length || 0}/90</span>
-              </div>
-              <div className="flex gap-1.5 overflow-x-auto">
-                {session.called_numbers && session.called_numbers.length > 0 ? (
-                  [...session.called_numbers].reverse().slice(0, 10).map((num, index) => (
-                    <div
-                      key={num}
-                      className={`w-8 h-8 flex-shrink-0 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[10px] font-bold text-white shadow-md ${
-                        index === 0 ? 'ring-2 ring-white scale-110' : ''
-                      }`}
-                    >
-                      {num}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[10px] text-gray-400">No numbers called yet</p>
-                )}
-              </div>
-            </div>
-
-            {/* My Tickets with Zoom Control */}
-            {myTickets.length > 0 && (
-              <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold text-white">My Tickets ({myTickets.length})</h3>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))}
-                      disabled={ticketZoom <= 1}
-                      className="h-6 w-6 text-white hover:bg-white/10"
-                    >
-                      <ZoomOut className="w-4 h-4" />
-                    </Button>
-                    <span className="text-[10px] text-gray-400 w-8 text-center">
-                      {ticketZoom === 1 ? 'S' : ticketZoom === 2 ? 'M' : 'L'}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))}
-                      disabled={ticketZoom >= 3}
-                      className="h-6 w-6 text-white hover:bg-white/10"
-                    >
-                      <ZoomIn className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Tickets Grid - responsive based on zoom level */}
-                <div className={`grid gap-2 ${
-                  ticketZoom === 1 ? 'grid-cols-4' : 
-                  ticketZoom === 2 ? 'grid-cols-2' : 
-                  'grid-cols-1'
-                }`}>
-                  {myTickets.map((ticket) => (
-                    <div 
-                      key={ticket.ticket_id} 
-                      className={`bg-amber-50 rounded-lg transition-all duration-300 ${
-                        ticketZoom === 1 ? 'p-1' : ticketZoom === 2 ? 'p-1.5' : 'p-3'
-                      }`}
-                    >
-                      <p className={`font-bold text-amber-700 mb-1 ${
-                        ticketZoom === 1 ? 'text-[6px]' : ticketZoom === 2 ? 'text-[8px]' : 'text-xs'
-                      }`}>
-                        {ticket.ticket_number}
-                      </p>
-                      <div className="grid grid-cols-9 gap-px">
-                        {ticket.numbers.map((row, rowIndex) => (
-                          row.map((num, colIndex) => {
-                            const isMarked = num && markedNumbers.has(num);
-                            return (
-                              <div
-                                key={`${rowIndex}-${colIndex}`}
-                                className={`flex items-center justify-center font-bold rounded-sm transition-all ${
-                                  ticketZoom === 1 
-                                    ? 'aspect-square text-[5px]' 
-                                    : ticketZoom === 2 
-                                    ? 'aspect-square text-[7px]' 
-                                    : 'aspect-[1.2/1] text-sm py-1'
-                                } ${
-                                  num === null
-                                    ? 'bg-amber-100'
-                                    : isMarked
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-white text-gray-800 border border-gray-200'
-                                }`}
-                              >
-                                {num || ''}
-                              </div>
-                            );
-                          })
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <span className="px-3 py-1 bg-black/40 rounded-full text-xs text-white mt-2">
+              <span className="text-amber-400 font-bold">{session.called_numbers?.length || 0}</span>/90
+            </span>
           </div>
 
-          {/* RIGHT: Dividends */}
-          <div className="w-28 flex-shrink-0">
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          {/* RIGHT: Prizes */}
+          <div className="w-32 flex-shrink-0">
+            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 h-full">
               <div className="flex items-center gap-1 mb-2">
                 <Trophy className="w-3 h-3 text-amber-500" />
                 <h3 className="text-[10px] font-bold text-white">PRIZES</h3>
@@ -398,29 +266,118 @@ export default function LiveGame() {
                 {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                   const winner = session.winners?.[prize];
                   return (
-                    <div
-                      key={prize}
-                      className={`p-1.5 rounded border text-[9px] ${
-                        winner
-                          ? 'bg-green-500/20 border-green-500/40'
-                          : 'bg-white/5 border-white/10'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
+                    <div key={prize} className={`p-1 rounded border text-[9px] ${winner ? 'bg-green-500/20 border-green-500/40' : 'bg-white/5 border-white/10'}`}>
+                      <div className="flex justify-between">
                         <span className="text-gray-300 truncate">{prize}</span>
                         <span className="text-amber-400 font-bold">₹{amount}</span>
                       </div>
-                      {winner && (
-                        <p className="text-green-400 text-[8px] mt-0.5 truncate">🏆 {winner.user_name}</p>
-                      )}
+                      {winner && <p className="text-green-400 text-[8px] truncate">🏆 {winner.user_name}</p>}
                     </div>
                   );
                 })}
               </div>
             </div>
           </div>
-
         </div>
+
+        {/* Mobile Only: Ball + Counter */}
+        <div className="md:hidden flex flex-col items-center">
+          <div className="relative mb-2">
+            <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-2xl`}
+              style={{ boxShadow: '0 15px 40px rgba(0,0,0,0.5), inset 0 -8px 20px rgba(0,0,0,0.3), inset 0 8px 20px rgba(255,255,255,0.3)' }}>
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-inner">
+                <span className="text-3xl font-black text-gray-900">{session.current_number || '?'}</span>
+              </div>
+            </div>
+            <div className="absolute top-2 left-5 w-6 h-6 bg-white/40 rounded-full blur-lg" />
+          </div>
+          {session.current_number && (
+            <p className="text-amber-400 font-semibold text-xs mb-1">{getCallName(session.current_number)}</p>
+          )}
+          <span className="px-2 py-0.5 bg-black/40 rounded-full text-[10px] text-white">
+            <span className="text-amber-400 font-bold">{session.called_numbers?.length || 0}</span>/90 Numbers
+          </span>
+        </div>
+
+        {/* Last Called Numbers - One Line */}
+        <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] text-gray-400">Last Called</span>
+            <span className="text-[10px] text-amber-400">{session.called_numbers?.length || 0}/90</span>
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {session.called_numbers && session.called_numbers.length > 0 ? (
+              [...session.called_numbers].reverse().slice(0, 10).map((num, index) => (
+                <div key={num} className={`w-7 h-7 flex-shrink-0 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[9px] font-bold text-white shadow-md ${index === 0 ? 'ring-2 ring-white scale-110' : ''}`}>
+                  {num}
+                </div>
+              ))
+            ) : <p className="text-[10px] text-gray-400">No numbers called yet</p>}
+          </div>
+        </div>
+
+        {/* Mobile Only: Prizes (Horizontal Compact) */}
+        <div className="md:hidden bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          <div className="flex items-center gap-1 mb-1.5">
+            <Trophy className="w-3 h-3 text-amber-500" />
+            <h3 className="text-[10px] font-bold text-white">PRIZES</h3>
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
+              const winner = session.winners?.[prize];
+              return (
+                <div key={prize} className={`flex-shrink-0 px-2 py-1 rounded border text-[9px] ${winner ? 'bg-green-500/20 border-green-500/40' : 'bg-white/5 border-white/10'}`}>
+                  <span className="text-gray-300">{prize.split(' ')[0]}</span>
+                  <span className="text-amber-400 font-bold ml-1">₹{amount}</span>
+                  {winner && <span className="text-green-400 ml-1">🏆</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* My Tickets - Full Width with Zoom Control */}
+        {myTickets.length > 0 && (
+          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-white">My Tickets ({myTickets.length})</h3>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))} disabled={ticketZoom <= 1} className="h-6 w-6 text-white hover:bg-white/10">
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <span className="text-[10px] text-gray-400 w-6 text-center">{ticketZoom === 1 ? 'S' : ticketZoom === 2 ? 'M' : 'L'}</span>
+                <Button variant="ghost" size="icon" onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))} disabled={ticketZoom >= 3} className="h-6 w-6 text-white hover:bg-white/10">
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-3 sm:grid-cols-4' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {myTickets.map((ticket) => (
+                <div key={ticket.ticket_id} className={`bg-amber-50 rounded-lg transition-all duration-300 ${ticketZoom === 1 ? 'p-1' : ticketZoom === 2 ? 'p-2' : 'p-3'}`}>
+                  <p className={`font-bold text-amber-700 mb-1 ${ticketZoom === 1 ? 'text-[7px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-sm'}`}>{ticket.ticket_number}</p>
+                  <div className="grid grid-cols-9 gap-px">
+                    {ticket.numbers.map((row, rowIndex) => (
+                      row.map((num, colIndex) => {
+                        const isMarked = num && markedNumbers.has(num);
+                        return (
+                          <div key={`${rowIndex}-${colIndex}`} className={`flex items-center justify-center font-bold rounded-sm transition-all ${
+                            ticketZoom === 1 ? 'aspect-square text-[6px]' : ticketZoom === 2 ? 'aspect-square text-[9px]' : 'aspect-[1.3/1] text-base py-1'
+                          } ${num === null ? 'bg-amber-100' : isMarked ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                            {num || ''}
+                          </div>
+                        );
+                      })
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="h-4" />
       </div>
     </div>
   );
