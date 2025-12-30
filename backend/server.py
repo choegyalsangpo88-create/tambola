@@ -878,6 +878,423 @@ async def confirm_booking(booking_id: str):
     
     return {"message": "Booking confirmed"}
 
+# ============ ADMIN GAME MANAGEMENT ============
+
+@api_router.delete("/admin/games/{game_id}")
+async def delete_game(game_id: str):
+    """Delete a game and all associated tickets/bookings"""
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Only allow deleting upcoming games
+    if game["status"] == "live":
+        raise HTTPException(status_code=400, detail="Cannot delete a live game")
+    
+    # Delete all associated data
+    await db.tickets.delete_many({"game_id": game_id})
+    await db.bookings.delete_many({"game_id": game_id})
+    await db.booking_requests.delete_many({"game_id": game_id})
+    await db.game_sessions.delete_many({"game_id": game_id})
+    await db.games.delete_one({"game_id": game_id})
+    
+    return {"message": f"Game {game_id} and all associated data deleted"}
+
+@api_router.get("/admin/games/{game_id}/tickets")
+async def get_game_tickets_admin(game_id: str, status: Optional[str] = None):
+    """Get all tickets for a game with booking info (admin)"""
+    query = {"game_id": game_id}
+    if status:
+        if status == "booked":
+            query["is_booked"] = True
+        elif status == "available":
+            query["is_booked"] = False
+    
+    tickets = await db.tickets.find(query, {"_id": 0}).to_list(1000)
+    
+    # Enrich with user info for booked tickets
+    for ticket in tickets:
+        if ticket.get("user_id"):
+            user = await db.users.find_one({"user_id": ticket["user_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
+            ticket["holder"] = user
+    
+    return {"tickets": tickets, "total": len(tickets)}
+
+@api_router.put("/admin/tickets/{ticket_id}/holder")
+async def update_ticket_holder_name(ticket_id: str, data: EditTicketHolderRequest):
+    """Edit the holder name for a booked ticket"""
+    ticket = await db.tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    if not ticket.get("is_booked"):
+        raise HTTPException(status_code=400, detail="Ticket is not booked")
+    
+    await db.tickets.update_one(
+        {"ticket_id": ticket_id},
+        {"$set": {"holder_name": data.holder_name}}
+    )
+    
+    return {"message": f"Ticket holder updated to {data.holder_name}"}
+
+@api_router.post("/admin/tickets/{ticket_id}/cancel")
+async def cancel_ticket(ticket_id: str):
+    """Cancel a booked ticket and return it to available pool"""
+    ticket = await db.tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    if not ticket.get("is_booked"):
+        raise HTTPException(status_code=400, detail="Ticket is not booked")
+    
+    game_id = ticket["game_id"]
+    
+    # Reset ticket to available
+    await db.tickets.update_one(
+        {"ticket_id": ticket_id},
+        {"$set": {
+            "is_booked": False,
+            "user_id": None,
+            "booking_status": "available",
+            "holder_name": None
+        }}
+    )
+    
+    # Update game available tickets count
+    await db.games.update_one(
+        {"game_id": game_id},
+        {"$inc": {"available_tickets": 1}}
+    )
+    
+    # Remove from booking if exists
+    await db.bookings.update_many(
+        {"ticket_ids": ticket_id},
+        {"$pull": {"ticket_ids": ticket_id}}
+    )
+    
+    return {"message": "Ticket cancelled and returned to available pool"}
+
+# ============ BOOKING REQUEST (APPROVAL WORKFLOW) ============
+
+@api_router.post("/booking-requests")
+async def create_booking_request(
+    request_data: TicketRequestInput,
+    user: User = Depends(get_current_user)
+):
+    """User requests tickets - goes to pending for admin approval"""
+    game = await db.games.find_one({"game_id": request_data.game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["status"] != "upcoming":
+        raise HTTPException(status_code=400, detail="Game is not accepting bookings")
+    
+    # Check tickets are available
+    tickets = await db.tickets.find(
+        {"ticket_id": {"$in": request_data.ticket_ids}, "is_booked": False},
+        {"_id": 0}
+    ).to_list(len(request_data.ticket_ids))
+    
+    if len(tickets) != len(request_data.ticket_ids):
+        raise HTTPException(status_code=400, detail="Some tickets are not available")
+    
+    # Check user doesn't already have pending request for these tickets
+    existing = await db.booking_requests.find_one({
+        "user_id": user.user_id,
+        "game_id": request_data.game_id,
+        "status": "pending"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="You already have a pending request for this game")
+    
+    # Create booking request
+    request_id = f"req_{uuid.uuid4().hex[:8]}"
+    total_amount = game["price"] * len(request_data.ticket_ids)
+    
+    booking_request = {
+        "request_id": request_id,
+        "user_id": user.user_id,
+        "user_name": user.name,
+        "user_email": user.email,
+        "user_phone": user.phone if hasattr(user, 'phone') else None,
+        "game_id": request_data.game_id,
+        "ticket_ids": request_data.ticket_ids,
+        "total_amount": total_amount,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.booking_requests.insert_one(booking_request)
+    
+    # Temporarily reserve tickets
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": request_data.ticket_ids}},
+        {"$set": {"booking_status": "pending", "reserved_by": user.user_id}}
+    )
+    
+    return {
+        "request_id": request_id,
+        "message": "Booking request submitted. Awaiting admin approval.",
+        "total_amount": total_amount
+    }
+
+@api_router.get("/booking-requests/my")
+async def get_my_booking_requests(user: User = Depends(get_current_user)):
+    """Get user's booking requests"""
+    requests = await db.booking_requests.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).to_list(100)
+    return requests
+
+@api_router.get("/admin/booking-requests")
+async def get_all_booking_requests(status: Optional[str] = None):
+    """Get all booking requests (admin)"""
+    query = {} if not status else {"status": status}
+    requests = await db.booking_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with game info
+    for req in requests:
+        game = await db.games.find_one({"game_id": req["game_id"]}, {"_id": 0, "name": 1, "date": 1, "time": 1})
+        req["game"] = game
+    
+    return requests
+
+@api_router.put("/admin/booking-requests/{request_id}/approve")
+async def approve_booking_request(request_id: str, data: ApproveRejectRequest = None):
+    """Approve a booking request"""
+    req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    if req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Request is already {req['status']}")
+    
+    # Create actual booking
+    booking_id = f"booking_{uuid.uuid4().hex[:8]}"
+    booking = {
+        "booking_id": booking_id,
+        "user_id": req["user_id"],
+        "game_id": req["game_id"],
+        "ticket_ids": req["ticket_ids"],
+        "total_amount": req["total_amount"],
+        "booking_date": datetime.now(timezone.utc),
+        "status": "confirmed",
+        "whatsapp_confirmed": True
+    }
+    
+    await db.bookings.insert_one(booking)
+    
+    # Mark tickets as booked
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": req["ticket_ids"]}},
+        {"$set": {
+            "is_booked": True,
+            "user_id": req["user_id"],
+            "booking_status": "confirmed",
+            "holder_name": req["user_name"]
+        }}
+    )
+    
+    # Update available tickets count
+    await db.games.update_one(
+        {"game_id": req["game_id"]},
+        {"$inc": {"available_tickets": -len(req["ticket_ids"])}}
+    )
+    
+    # Update request status
+    update_data = {"status": "approved", "approved_at": datetime.now(timezone.utc)}
+    if data and data.admin_notes:
+        update_data["admin_notes"] = data.admin_notes
+    
+    await db.booking_requests.update_one(
+        {"request_id": request_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Booking approved", "booking_id": booking_id}
+
+@api_router.put("/admin/booking-requests/{request_id}/reject")
+async def reject_booking_request(request_id: str, data: ApproveRejectRequest = None):
+    """Reject a booking request"""
+    req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    if req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Request is already {req['status']}")
+    
+    # Release reserved tickets
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": req["ticket_ids"]}},
+        {"$set": {"booking_status": "available", "reserved_by": None}}
+    )
+    
+    # Update request status
+    update_data = {"status": "rejected", "rejected_at": datetime.now(timezone.utc)}
+    if data and data.admin_notes:
+        update_data["admin_notes"] = data.admin_notes
+    
+    await db.booking_requests.update_one(
+        {"request_id": request_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Booking request rejected"}
+
+# ============ CALLER VOICE SETTINGS ============
+
+# Default prefix lines for Tambola
+DEFAULT_PREFIX_LINES = [
+    "Agle number pe dhyan do...",
+    "Lucky number aa raha hai...",
+    "Ready everyone?",
+    "Tambola ke raja kehte hain...",
+    "Ek aur special number...",
+    "Housie housie!",
+    "Check your tickets for...",
+    "And the next number is...",
+    "Get ready to mark...",
+    "Bole toh..."
+]
+
+# Voice mapping based on gender
+VOICE_MAP = {
+    "female": ["nova", "shimmer", "coral", "alloy"],
+    "male": ["onyx", "echo", "fable", "ash"]
+}
+
+@api_router.get("/admin/caller-settings")
+async def get_caller_settings():
+    """Get global caller voice settings"""
+    settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
+    
+    if not settings:
+        # Create default settings
+        settings = {
+            "settings_id": "global",
+            "voice": "nova",
+            "gender": "female",
+            "speed": 1.0,
+            "accent": "indian",
+            "prefix_lines": DEFAULT_PREFIX_LINES.copy(),
+            "enabled": True
+        }
+        await db.caller_settings.insert_one(settings)
+    
+    return settings
+
+@api_router.put("/admin/caller-settings")
+async def update_caller_settings(data: UpdateCallerSettingsRequest):
+    """Update global caller voice settings"""
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    
+    # Auto-select appropriate voice based on gender
+    if "gender" in update_data:
+        voices = VOICE_MAP.get(update_data["gender"], VOICE_MAP["female"])
+        if "voice" not in update_data or update_data.get("voice") not in voices:
+            update_data["voice"] = voices[0]
+    
+    if update_data:
+        await db.caller_settings.update_one(
+            {"settings_id": "global"},
+            {"$set": update_data},
+            upsert=True
+        )
+    
+    return await get_caller_settings()
+
+@api_router.post("/admin/caller-settings/prefix-lines")
+async def add_prefix_line(line: str):
+    """Add a custom prefix line"""
+    await db.caller_settings.update_one(
+        {"settings_id": "global"},
+        {"$push": {"prefix_lines": line}},
+        upsert=True
+    )
+    return {"message": "Prefix line added"}
+
+@api_router.delete("/admin/caller-settings/prefix-lines/{index}")
+async def delete_prefix_line(index: int):
+    """Delete a prefix line by index"""
+    settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
+    if not settings or "prefix_lines" not in settings:
+        raise HTTPException(status_code=404, detail="No prefix lines found")
+    
+    if index < 0 or index >= len(settings["prefix_lines"]):
+        raise HTTPException(status_code=400, detail="Invalid index")
+    
+    prefix_lines = settings["prefix_lines"]
+    del prefix_lines[index]
+    
+    await db.caller_settings.update_one(
+        {"settings_id": "global"},
+        {"$set": {"prefix_lines": prefix_lines}}
+    )
+    return {"message": "Prefix line deleted"}
+
+@api_router.post("/admin/caller-settings/reset-prefix-lines")
+async def reset_prefix_lines():
+    """Reset prefix lines to defaults"""
+    await db.caller_settings.update_one(
+        {"settings_id": "global"},
+        {"$set": {"prefix_lines": DEFAULT_PREFIX_LINES.copy()}},
+        upsert=True
+    )
+    return {"message": "Prefix lines reset to defaults"}
+
+# ============ TTS ENDPOINT ============
+
+@api_router.post("/tts/generate")
+async def generate_tts(text: str, include_prefix: bool = True):
+    """Generate TTS audio for a number call"""
+    try:
+        settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
+        if not settings:
+            settings = {
+                "voice": "nova",
+                "speed": 1.0,
+                "prefix_lines": DEFAULT_PREFIX_LINES.copy(),
+                "enabled": True
+            }
+        
+        if not settings.get("enabled"):
+            return {"enabled": False, "audio": None}
+        
+        # Add random prefix line
+        full_text = text
+        if include_prefix and settings.get("prefix_lines"):
+            prefix = random.choice(settings["prefix_lines"])
+            full_text = f"{prefix} {text}"
+        
+        # Generate TTS
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="TTS API key not configured")
+        
+        client = OpenAI(api_key=api_key)
+        
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice=settings.get("voice", "nova"),
+            input=full_text,
+            speed=settings.get("speed", 1.0)
+        )
+        
+        # Convert to base64
+        audio_bytes = response.content
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
+        return {
+            "enabled": True,
+            "audio": audio_base64,
+            "text": full_text,
+            "format": "mp3"
+        }
+    except Exception as e:
+        logger.error(f"TTS generation failed: {str(e)}")
+        return {"enabled": False, "audio": None, "error": str(e)}
+
 # ============ LIVE GAME ROUTES ============
 
 @api_router.post("/games/{game_id}/start")
