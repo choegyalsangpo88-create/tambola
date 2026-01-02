@@ -117,7 +117,7 @@ export default function CreateUserGame() {
               <Users className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Family & Party Tambola</h2>
+              <h2 className="text-xl font-bold text-white">Family & Party Games</h2>
               <p className="text-sm text-gray-400">Create a private game for your loved ones</p>
             </div>
           </div>
