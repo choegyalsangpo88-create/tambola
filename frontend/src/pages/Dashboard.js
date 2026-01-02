@@ -71,7 +71,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
-              Tambola
+              Six Seven
             </h1>
             {user && (
               <p className="text-sm text-gray-400">Hello, {user.name}!</p>
