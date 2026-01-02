@@ -267,13 +267,6 @@ export default function AdminPanel() {
       console.error('Failed to delete game:', error);
       toast.error(error.response?.data?.detail || 'Failed to delete game');
     }
-  };;
-      setSelectedGame(null);
-      fetchGames();
-    } catch (error) {
-      console.error('Failed to delete game:', error);
-      toast.error(error.response?.data?.detail || 'Failed to delete game');
-    }
   };
 
   const openEditModal = (game) => {
