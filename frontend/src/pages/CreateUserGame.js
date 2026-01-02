@@ -130,7 +130,7 @@ export default function CreateUserGame() {
               </label>
               <Input
                 type="text"
-                placeholder="e.g., Diwali Family Tambola"
+                placeholder="e.g., Diwali Family Game"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
