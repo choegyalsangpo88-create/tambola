@@ -671,8 +671,18 @@ export default function AdminPanel() {
                         <Ticket className="w-4 h-4 mr-1" /> Manage Tickets
                       </Button>
                       {game.status === 'live' && (
-                        <Button onClick={() => navigate(`/live/${game.game_id}`)} size="sm" className="bg-red-600 hover:bg-red-700">
-                          <Play className="w-4 h-4 mr-1" /> Go to Live
+                        <>
+                          <Button onClick={() => navigate(`/live/${game.game_id}`)} size="sm" className="bg-red-600 hover:bg-red-700">
+                            <Play className="w-4 h-4 mr-1" /> Go to Live
+                          </Button>
+                          <Button onClick={() => { setSelectedGame(game); setShowDeleteModal(true); }} variant="outline" size="sm" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
+                            <Trash2 className="w-4 h-4 mr-1" /> Delete
+                          </Button>
+                        </>
+                      )}
+                      {game.status === 'completed' && (
+                        <Button onClick={() => { setSelectedGame(game); setShowDeleteModal(true); }} variant="outline" size="sm" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
+                          <Trash2 className="w-4 h-4 mr-1" /> Delete
                         </Button>
                       )}
                     </div>
