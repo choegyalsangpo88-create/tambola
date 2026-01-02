@@ -79,8 +79,8 @@ export default function Profile() {
 
   const handleShareApp = () => {
     const shareData = {
-      title: 'Tambola Game',
-      text: 'Join me in playing Tambola and win amazing prizes!',
+      title: 'Six Seven Tambola',
+      text: 'Join me in playing Six Seven Tambola and win amazing prizes!',
       url: window.location.origin
     };
 
