@@ -1981,6 +1981,12 @@ async def end_user_game(
     
     return {"message": "Game ended!"}
 
+# ============ HEALTH CHECK ENDPOINT ============
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Kubernetes"""
+    return {"status": "healthy"}
+
 app.include_router(api_router)
 
 app.add_middleware(
