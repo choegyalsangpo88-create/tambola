@@ -980,12 +980,21 @@ export default function AdminPanel() {
           <div className="py-4">
             <p className="text-gray-400">Are you sure you want to delete <span className="text-white font-bold">{selectedGame?.name}</span>?</p>
             <p className="text-red-400 text-sm mt-2">This will also delete all tickets and bookings for this game. This action cannot be undone.</p>
+            {selectedGame?.status === 'live' && (
+              <p className="text-yellow-400 text-sm mt-2 p-2 bg-yellow-500/10 rounded">⚠️ This is a LIVE game. Use "Force Delete" to remove it.</p>
+            )}
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setShowDeleteModal(false)} className="flex-1">Cancel</Button>
-            <Button onClick={handleDeleteGame} className="flex-1 bg-red-600 hover:bg-red-700">
-              <Trash2 className="w-4 h-4 mr-2" /> Delete Game
-            </Button>
+            {selectedGame?.status === 'live' ? (
+              <Button onClick={() => handleDeleteGame(true)} className="flex-1 bg-red-600 hover:bg-red-700">
+                <Trash2 className="w-4 h-4 mr-2" /> Force Delete
+              </Button>
+            ) : (
+              <Button onClick={() => handleDeleteGame(false)} className="flex-1 bg-red-600 hover:bg-red-700">
+                <Trash2 className="w-4 h-4 mr-2" /> Delete Game
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
