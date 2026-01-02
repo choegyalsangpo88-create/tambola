@@ -1045,15 +1045,15 @@ async def confirm_booking(booking_id: str, request: Request, _: bool = Depends(v
 # ============ ADMIN GAME MANAGEMENT ============
 
 @api_router.delete("/admin/games/{game_id}")
-async def delete_game(game_id: str, request: Request, _: bool = Depends(verify_admin)):
+async def delete_game(game_id: str, request: Request, force: bool = False, _: bool = Depends(verify_admin)):
     """Delete a game and all associated tickets/bookings"""
     game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
     
-    # Only allow deleting upcoming games
-    if game["status"] == "live":
-        raise HTTPException(status_code=400, detail="Cannot delete a live game")
+    # Only allow deleting live games with force=True
+    if game["status"] == "live" and not force:
+        raise HTTPException(status_code=400, detail="Cannot delete a live game. Use force=true to override.")
     
     # Delete all associated data
     await db.tickets.delete_many({"game_id": game_id})
