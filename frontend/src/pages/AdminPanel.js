@@ -252,12 +252,22 @@ export default function AdminPanel() {
     }
   };
 
-  const handleDeleteGame = async () => {
+  const handleDeleteGame = async (force = false) => {
     if (!selectedGame) return;
     try {
-      await adminAxios.delete(`${API}/admin/games/${selectedGame.game_id}`);
+      const url = force 
+        ? `${API}/admin/games/${selectedGame.game_id}?force=true`
+        : `${API}/admin/games/${selectedGame.game_id}`;
+      await adminAxios.delete(url);
       toast.success('Game deleted successfully');
       setShowDeleteModal(false);
+      setSelectedGame(null);
+      fetchGames();
+    } catch (error) {
+      console.error('Failed to delete game:', error);
+      toast.error(error.response?.data?.detail || 'Failed to delete game');
+    }
+  };;
       setSelectedGame(null);
       fetchGames();
     } catch (error) {
