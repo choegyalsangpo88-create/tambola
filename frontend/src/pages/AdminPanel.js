@@ -524,7 +524,7 @@ export default function AdminPanel() {
                     <Input
                       value={gameForm.name}
                       onChange={(e) => setGameForm({ ...gameForm, name: e.target.value })}
-                      placeholder="e.g., Saturday Night Tambola"
+                      placeholder="e.g., Saturday Night Game"
                       required
                       className="bg-black/20 border-white/10 focus:border-amber-500 text-white h-12"
                     />
