@@ -107,30 +107,30 @@ export default function LiveGame() {
   useEffect(() => {
     initAudio();
     fetchGameData();
-    loadVoices();
     fetchMyTickets();
     fetchAllBookedTickets();
-    pollInterval.current = setInterval(() => {
-      fetchSession();
-      calculateTopPlayers();
-    }, 3000);
+    pollInterval.current = setInterval(fetchSession, 3000);
     return () => { if (pollInterval.current) clearInterval(pollInterval.current); };
   }, [gameId]);
 
   useEffect(() => {
     if (session && session.called_numbers) {
       setMarkedNumbers(new Set(session.called_numbers));
+      
+      // Check for new winners and celebrate
       if (session.winners) {
-        const currentWinners = Object.keys(session.winners);
-        const previousWinnerKeys = Object.keys(previousWinners);
-        const newWinnerPrizes = currentWinners.filter(prize => !previousWinnerKeys.includes(prize));
-        if (newWinnerPrizes.length > 0) newWinnerPrizes.forEach(prize => celebrateWinner(prize));
-        setPreviousWinners(session.winners);
+        Object.keys(session.winners).forEach(prize => {
+          if (!previousWinnersRef.current[prize]) {
+            const winner = session.winners[prize];
+            celebrateWinner(prize, winner.holder_name || winner.name || 'Player');
+          }
+        });
+        previousWinnersRef.current = session.winners;
       }
-      if (session.current_number && session.current_number !== previousWinners.lastNumber) {
-        // Play TTS announcement for new number
+      
+      // Play TTS for new number
+      if (session.current_number && session.current_number !== lastPlayedNumber) {
         playTTSAnnouncement(session.current_number);
-        setPreviousWinners(prev => ({ ...prev, lastNumber: session.current_number }));
       }
     }
   }, [session]);
@@ -139,6 +139,7 @@ export default function LiveGame() {
     try {
       const response = await axios.get(`${API}/games/${gameId}`);
       setGame(response.data);
+      previousWinnersRef.current = response.data.winners || {};
       fetchSession();
     } catch (error) { console.error('Failed to fetch game:', error); }
   };
@@ -150,19 +151,11 @@ export default function LiveGame() {
       
       // Check if game ended
       if (newSession.status === 'completed' && game?.status !== 'completed') {
-        // Stop polling
         if (pollInterval.current) {
           clearInterval(pollInterval.current);
           pollInterval.current = null;
         }
-        // Stop all sounds
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-        }
-        if (ttsAudioRef.current) {
-          ttsAudioRef.current.pause();
-        }
-        // Update game status
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         setGame(prev => ({ ...prev, status: 'completed' }));
         toast.success('🎉 Game Completed! All prizes have been claimed.');
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
