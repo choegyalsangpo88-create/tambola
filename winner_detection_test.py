@@ -340,9 +340,29 @@ class WinnerDetectionTester:
         self.log("TEST 5: WINNER DETECTION INTEGRATION")
         self.log("="*60)
         
-        if not self.user_game_id:
-            self.log("❌ No user game available for integration test")
+        # Create a new game for integration test
+        integration_game_data = {
+            "name": f"Integration Test {datetime.now().strftime('%H%M%S')}",
+            "date": "2025-02-02",
+            "time": "21:00",
+            "max_tickets": 6,
+            "prizes_description": "Integration testing"
+        }
+        
+        success, created_game = self.run_test(
+            "Create Integration Test Game",
+            "POST",
+            "user-games",
+            200,
+            data=integration_game_data
+        )
+        
+        if not success or not created_game:
+            self.log("❌ Failed to create integration test game")
             return False
+        
+        integration_game_id = created_game.get('user_game_id')
+        integration_share_code = created_game.get('share_code')
         
         # Join the game as a player
         join_data = {
@@ -351,9 +371,9 @@ class WinnerDetectionTester:
         }
         
         success, join_result = self.run_test(
-            "Join Game for Integration Test",
+            "Join Integration Game",
             "POST",
-            f"user-games/code/{self.share_code}/join",
+            f"user-games/code/{integration_share_code}/join",
             200,
             data=join_data,
             headers={}  # No auth needed
@@ -370,9 +390,9 @@ class WinnerDetectionTester:
                 
                 # Start the game
                 success, start_result = self.run_test(
-                    "Start User Game",
+                    "Start Integration Game",
                     "POST",
-                    f"user-games/{self.user_game_id}/start",
+                    f"user-games/{integration_game_id}/start",
                     200
                 )
                 
@@ -384,7 +404,7 @@ class WinnerDetectionTester:
                         success, call_result = self.run_test(
                             f"Call Number {i+1}",
                             "POST",
-                            f"user-games/{self.user_game_id}/call-number",
+                            f"user-games/{integration_game_id}/call-number",
                             200
                         )
                         
@@ -394,9 +414,9 @@ class WinnerDetectionTester:
                     
                     # Get game session to check called numbers
                     success, session_data = self.run_test(
-                        "Get Game Session",
+                        "Get Integration Game Session",
                         "GET",
-                        f"user-games/{self.user_game_id}/session",
+                        f"user-games/{integration_game_id}/session",
                         200
                     )
                     
