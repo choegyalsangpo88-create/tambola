@@ -579,6 +579,8 @@ test_plan:
 
 agent_communication:
   - agent: "main"
+    message: "IMPLEMENTED NEW FEATURES: 1) User name display on tickets (A. Sharma format), 2) Top Players section shows progress toward winning with visual dots (●●●●○), 3) Enhanced winner celebration with confetti bursts + TTS announcement of winner name, 4) Results section accessible via bottom nav shows completed game winners, 5) Tickets now show holder name in purple badge. All features implemented in LiveGame.js, UserGamePlay.js, and Results page already exists at /past-results."
+  - agent: "main"
     message: "COMPLETED TASKS: 1) WhatsApp Sandbox Notice - Added yellow warning box on login page explaining international users need to join sandbox first with 'Learn more' link. 2) Performance Optimization - Added MongoDB indexes for all critical collections (users, sessions, games, tickets, bookings, user_games) to improve query performance for 1000+ concurrent users. 3) Created refactored backend structure with routes/ and services/ directories - auth.py and tts.py routers ready, models in models/schemas.py. Full server.py refactoring deferred to avoid breaking changes."
   - agent: "main"
     message: "FIXED WINNER DETECTION ISSUES: 1) Four Corners now correctly finds actual corner NUMBERS (first/last number in top/bottom rows) instead of fixed grid positions. 2) Full House 1st/2nd/3rd tracking now properly tracks sequential winners. 3) Full Sheet Bonus now correctly checks for 2+ marks on each of 6 tickets. 4) iOS audio fixed - now uses server-side TTS (OpenAI) with fallback to browser TTS. All fixes tested with unit tests: Four Corners, Full House, Full Sheet Bonus all passing."
