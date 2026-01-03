@@ -543,6 +543,278 @@ class TambolaAPITester:
         
         return True
 
+    def test_host_self_booking(self):
+        """Test Host Self-Booking for User Games feature"""
+        print("\n" + "="*50)
+        print("TESTING HOST SELF-BOOKING FEATURE")
+        print("="*50)
+        
+        # First create a user game
+        user_game_data = {
+            "name": f"Host Booking Test Game {datetime.now().strftime('%H%M%S')}",
+            "date": "2025-02-01",
+            "time": "19:00",
+            "max_tickets": 30,
+            "prizes_description": "1st Prize: ₹500, 2nd Prize: ₹300"
+        }
+        
+        success, created_game = self.run_test(
+            "Create User Game for Host Booking Test",
+            "POST",
+            "user-games",
+            200,
+            data=user_game_data
+        )
+        
+        if not success or not created_game:
+            print("❌ Failed to create user game for host booking test")
+            return False
+        
+        test_game_id = created_game.get('user_game_id')
+        print(f"   Created test game ID: {test_game_id}")
+        
+        # Test 1: Host joins with 1 ticket
+        success, join_result = self.run_test(
+            "Host Self-Booking (1 ticket)",
+            "POST",
+            f"user-games/{test_game_id}/host-join?ticket_count=1",
+            200
+        )
+        
+        if success and join_result:
+            print(f"   Host booking message: {join_result.get('message')}")
+            print(f"   Tickets assigned: {len(join_result.get('tickets', []))}")
+            
+            # Verify the host is in players list
+            success, game_details = self.run_test(
+                "Verify Host in Players List",
+                "GET",
+                f"user-games/{test_game_id}",
+                200
+            )
+            
+            if success and game_details:
+                players = game_details.get('players', [])
+                host_player = next((p for p in players if p.get('is_host')), None)
+                
+                if host_player:
+                    print(f"   ✅ Host found in players: {host_player.get('name')}")
+                    print(f"   ✅ Host tickets: {len(host_player.get('tickets', []))}")
+                    
+                    # Check abbreviated name format
+                    host_name = host_player.get('name', '')
+                    if '.' in host_name and len(host_name.split()) >= 2:
+                        print(f"   ✅ Abbreviated name format correct: {host_name}")
+                    else:
+                        print(f"   ⚠️  Name format: {host_name} (may not be abbreviated)")
+                else:
+                    print("   ❌ Host not found in players list")
+                    return False
+        
+        # Test 2: Host joins with multiple tickets
+        success, join_result2 = self.run_test(
+            "Host Self-Booking (2 more tickets)",
+            "POST",
+            f"user-games/{test_game_id}/host-join?ticket_count=2",
+            200
+        )
+        
+        if success and join_result2:
+            print(f"   Additional tickets assigned: {len(join_result2.get('tickets', []))}")
+            
+            # Verify total tickets for host
+            success, updated_game = self.run_test(
+                "Verify Host Total Tickets",
+                "GET",
+                f"user-games/{test_game_id}",
+                200
+            )
+            
+            if success and updated_game:
+                players = updated_game.get('players', [])
+                host_player = next((p for p in players if p.get('is_host')), None)
+                
+                if host_player:
+                    total_tickets = len(host_player.get('tickets', []))
+                    print(f"   ✅ Host total tickets: {total_tickets} (expected: 3)")
+                    if total_tickets == 3:
+                        print("   ✅ Host self-booking working correctly!")
+                    else:
+                        print(f"   ❌ Expected 3 tickets, got {total_tickets}")
+        
+        # Test 3: Try to join after game starts (should fail)
+        # First start the game
+        success, start_result = self.run_test(
+            "Start Game for Negative Test",
+            "POST",
+            f"user-games/{test_game_id}/start",
+            200
+        )
+        
+        if success:
+            # Now try to join (should fail)
+            success, fail_result = self.run_test(
+                "Host Join After Game Started (should fail)",
+                "POST",
+                f"user-games/{test_game_id}/host-join?ticket_count=1",
+                400  # Expecting failure
+            )
+            
+            if success:  # Success means we got the expected 400 error
+                print("   ✅ Correctly prevented host joining after game started")
+            else:
+                print("   ❌ Should have prevented host joining after game started")
+        
+        return True
+
+    def test_auto_calling_fix(self):
+        """Test Auto-Calling Fix for Already-Live Games"""
+        print("\n" + "="*50)
+        print("TESTING AUTO-CALLING FIX FOR LIVE GAMES")
+        print("="*50)
+        
+        # Create a user game for testing
+        user_game_data = {
+            "name": f"Auto-Call Test Game {datetime.now().strftime('%H%M%S')}",
+            "date": "2025-02-01",
+            "time": "19:00",
+            "max_tickets": 30,
+            "prizes_description": "Auto-call test prizes"
+        }
+        
+        success, created_game = self.run_test(
+            "Create User Game for Auto-Call Test",
+            "POST",
+            "user-games",
+            200,
+            data=user_game_data
+        )
+        
+        if not success or not created_game:
+            print("❌ Failed to create user game for auto-call test")
+            return False
+        
+        test_game_id = created_game.get('user_game_id')
+        print(f"   Created test game ID: {test_game_id}")
+        
+        # Add some players to the game
+        join_data = {
+            "player_name": "Test Player 1",
+            "ticket_count": 2
+        }
+        
+        success, join_result = self.run_test(
+            "Add Player to Game",
+            "POST",
+            f"user-games/code/{created_game.get('share_code')}/join",
+            200,
+            data=join_data,
+            headers={}  # No auth for public join
+        )
+        
+        if success:
+            print(f"   Player joined: {join_result.get('player_name')}")
+        
+        # Start the game
+        success, start_result = self.run_test(
+            "Start Game for Auto-Call Test",
+            "POST",
+            f"user-games/{test_game_id}/start",
+            200
+        )
+        
+        if not success:
+            print("❌ Failed to start game for auto-call test")
+            return False
+        
+        print("   ✅ Game started successfully")
+        
+        # Get initial session state
+        success, initial_session = self.run_test(
+            "Get Initial Game Session",
+            "GET",
+            f"user-games/{test_game_id}/session",
+            200
+        )
+        
+        if success and initial_session:
+            initial_called = initial_session.get('calledNumbers', [])
+            print(f"   Initial called numbers: {len(initial_called)}")
+        else:
+            initial_called = []
+        
+        # Wait for auto-calling to work (background task runs every 5 seconds, calls every 8 seconds)
+        print("   ⏳ Waiting 15 seconds for auto-calling to work...")
+        import time
+        time.sleep(15)
+        
+        # Check if numbers have been auto-called
+        success, updated_session = self.run_test(
+            "Check Auto-Called Numbers",
+            "GET",
+            f"user-games/{test_game_id}/session",
+            200
+        )
+        
+        if success and updated_session:
+            updated_called = updated_session.get('calledNumbers', [])
+            current_number = updated_session.get('currentNumber')
+            
+            print(f"   Called numbers after wait: {len(updated_called)}")
+            print(f"   Current number: {current_number}")
+            print(f"   Called numbers: {updated_called}")
+            
+            if len(updated_called) > len(initial_called):
+                print("   ✅ Auto-calling is working! Numbers were called automatically")
+                
+                # Check if auto_call_enabled flag is set
+                success, game_details = self.run_test(
+                    "Check Auto-Call Flag",
+                    "GET",
+                    f"user-games/{test_game_id}",
+                    200
+                )
+                
+                if success and game_details:
+                    auto_call_enabled = game_details.get('auto_call_enabled')
+                    last_call_time = game_details.get('last_call_time')
+                    
+                    print(f"   Auto-call enabled: {auto_call_enabled}")
+                    print(f"   Last call time: {last_call_time}")
+                    
+                    if auto_call_enabled:
+                        print("   ✅ Auto-call flag correctly set to True")
+                    else:
+                        print("   ❌ Auto-call flag not set correctly")
+                
+                return True
+            else:
+                print("   ❌ Auto-calling not working - no new numbers called")
+                print("   ℹ️  This could be due to timing or background task not running")
+                
+                # Check if the game has the auto_call_enabled flag
+                success, game_details = self.run_test(
+                    "Check Game Auto-Call Setup",
+                    "GET",
+                    f"user-games/{test_game_id}",
+                    200
+                )
+                
+                if success and game_details:
+                    auto_call_enabled = game_details.get('auto_call_enabled')
+                    print(f"   Auto-call enabled flag: {auto_call_enabled}")
+                    
+                    if auto_call_enabled is True:
+                        print("   ✅ Auto-call flag is set correctly")
+                        print("   ℹ️  Background task may need more time or manual trigger")
+                    else:
+                        print("   ❌ Auto-call flag not set - this is the issue!")
+                
+                return False
+        else:
+            print("   ❌ Failed to get updated session")
+            return False
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Tambola API Tests")
@@ -556,6 +828,11 @@ class TambolaAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
             
+        # Test the new features first (as requested)
+        host_booking_success = self.test_host_self_booking()
+        auto_calling_success = self.test_auto_calling_fix()
+        
+        # Run other test suites
         game_success = self.test_game_endpoints()
         ticket_success = self.test_ticket_endpoints()
         booking_success = self.test_booking_endpoints()
@@ -575,6 +852,8 @@ class TambolaAPITester:
         # Test suite results
         suites = [
             ("Authentication", auth_success),
+            ("Host Self-Booking", host_booking_success),
+            ("Auto-Calling Fix", auto_calling_success),
             ("Games", game_success),
             ("Tickets", ticket_success),
             ("Bookings", booking_success),
