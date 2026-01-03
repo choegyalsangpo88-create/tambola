@@ -417,7 +417,7 @@ frontend:
     file: "/app/frontend/src/pages/LiveGame.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -425,6 +425,9 @@ frontend:
       - working: "NA"
         agent: "testing"
         comment: "❌ AUTHENTICATION LIMITATION: Cannot test User Names on Tickets feature due to Google Auth requirement. This is a frontend feature that requires: 1) Valid user session to access live game page ✅, 2) Booked tickets with holder names ✅, 3) LiveGame.js component rendering ✅. Code analysis shows proper implementation with holder_name/booked_by_name display. Manual testing with authenticated user required."
+      - working: "NA"
+        agent: "testing"
+        comment: "⚠️ AUTHENTICATION LIMITATION CONFIRMED: Cannot test User Names on Tickets without Google OAuth. Frontend structure verified: UserGamePlay.js (live game component) properly implemented with auto-calling status, sound toggle, current ball display. Code shows abbreviated name display functionality. REQUIRES MANUAL TESTING with authenticated user session to verify: 1) User names appear above tickets in abbreviated format (A. Sharma), 2) Names display correctly during live gameplay."
 
   - task: "Join Live Button in My Games"
     implemented: true
