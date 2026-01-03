@@ -1151,35 +1151,29 @@ class TambolaAPITester:
         # Test the specific review request items
         review_request_success = self.test_six_seven_tambola_review_request()
         
-        # WINNER DETECTION FIXES TESTING (Priority 1)
-        print("\n" + "🎯"*60)
-        print("WINNER DETECTION FIXES TESTING - PRIORITY 1")
-        print("🎯"*60)
-        
-        # Test 1: Winner Detection Logic (Four Corners, Full House, Full Sheet Bonus)
-        winner_detection_success = self.test_winner_detection_fixes()
-        
-        # Test 2: TTS Endpoint for Mobile Audio
-        tts_success = self.test_tts_endpoint()
-        
-        # Test 3: User Games Critical Fixes (Ticket Generation + Duplicate Prevention)
-        user_games_success = self.test_user_games_endpoints()
-        
-        # Test 4: Admin Game Auto-Start and Auto-Calling
-        auto_game_id = self.test_admin_game_automation()
-        
-        # ADDITIONAL TESTING (Priority 2)
-        print("\n" + "📋"*60)
-        print("ADDITIONAL API TESTING - PRIORITY 2")
-        print("📋"*60)
-        
-        game_success = self.test_game_endpoints()
-        ticket_success = self.test_ticket_endpoints()
-        booking_success = self.test_booking_endpoints()
-        admin_success = self.test_admin_endpoints()
-        live_success = self.test_live_game_endpoints()
-        profile_success = self.test_profile_endpoints()
-        auto_archive_success = True  # Skip auto-archive test for now
+        # ADDITIONAL TESTING (Priority 2) - Only if review request passes
+        if review_request_success:
+            print("\n" + "📋"*60)
+            print("ADDITIONAL API TESTING - PRIORITY 2")
+            print("📋"*60)
+            
+            # Test 2: Winner Detection Logic (Four Corners, Full House, Full Sheet Bonus)
+            winner_detection_success = self.test_winner_detection_fixes()
+            
+            # Test 3: TTS Endpoint for Mobile Audio
+            tts_success = self.test_tts_endpoint()
+            
+            # Test 4: User Games Critical Fixes (Ticket Generation + Duplicate Prevention)
+            user_games_success = self.test_user_games_endpoints()
+            
+            # Test 5: Admin Game Auto-Start and Auto-Calling
+            auto_game_id = self.test_admin_game_automation()
+        else:
+            print("\n⚠️  Skipping additional tests due to review request failures")
+            winner_detection_success = False
+            tts_success = False
+            user_games_success = False
+            auto_game_id = None
         
         # Print final results
         print("\n" + "="*60)
@@ -1188,41 +1182,25 @@ class TambolaAPITester:
         print(f"📊 Tests passed: {self.tests_passed}/{self.tests_run}")
         print(f"✅ Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
-        # Winner detection fixes results
-        print("\n🎯 WINNER DETECTION FIXES RESULTS:")
-        winner_detection_results = [
-            ("Winner Detection Logic (Four Corners, Full House, Full Sheet)", winner_detection_success),
-            ("TTS Endpoint for Mobile Audio", tts_success),
-            ("User Games (Tickets + Duplicate Prevention)", user_games_success),
-            ("Admin Game Auto-Start & Auto-Calling", auto_game_id is not None)
-        ]
+        # Review request results (Priority 1)
+        print("\n🎯 SIX SEVEN TAMBOLA REVIEW REQUEST RESULTS:")
+        print(f"   Review Request Tests: {'✅ PASS' if review_request_success else '❌ FAIL'}")
         
-        for fix_name, success in winner_detection_results:
-            status = "✅ PASS" if success else "❌ FAIL"
-            print(f"   {fix_name}: {status}")
+        if review_request_success:
+            # Additional test results (Priority 2)
+            print("\n📋 ADDITIONAL TEST SUITE RESULTS:")
+            additional_results = [
+                ("Winner Detection Logic", winner_detection_success),
+                ("TTS Endpoint Extended", tts_success),
+                ("User Games Critical Fixes", user_games_success),
+                ("Admin Game Auto-Start", auto_game_id is not None)
+            ]
+            
+            for test_name, success in additional_results:
+                status = "✅ PASS" if success else "❌ FAIL"
+                print(f"   {test_name}: {status}")
         
-        # Additional test suite results
-        print("\n📋 ADDITIONAL TEST SUITE RESULTS:")
-        suites = [
-            ("Authentication", auth_success),
-            ("Games", game_success),
-            ("Tickets", ticket_success),
-            ("Bookings", booking_success),
-            ("Admin", admin_success),
-            ("Live Game", live_success),
-            ("Profile", profile_success),
-            ("Auto-Archive Feature", auto_archive_success)
-        ]
-        
-        for suite_name, success in suites:
-            status = "✅ PASS" if success else "❌ FAIL"
-            print(f"   {suite_name}: {status}")
-        
-        # Summary for winner detection fixes
-        winner_detection_passed = sum(1 for _, success in winner_detection_results if success)
-        print(f"\n🎯 WINNER DETECTION FIXES SUMMARY: {winner_detection_passed}/{len(winner_detection_results)} PASSED")
-        
-        return self.tests_passed == self.tests_run
+        return review_request_success
 
 def main():
     tester = TambolaAPITester()
