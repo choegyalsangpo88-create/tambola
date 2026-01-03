@@ -2480,7 +2480,60 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
 
 @app.on_event("startup")
 async def startup_event():
-    """Start background tasks on app startup"""
+    """Start background tasks and create indexes on app startup"""
+    # Create MongoDB indexes for performance
+    try:
+        # User indexes
+        await db.users.create_index("user_id", unique=True)
+        await db.users.create_index("email")
+        await db.users.create_index("phone")
+        
+        # Session indexes
+        await db.user_sessions.create_index("session_token", unique=True)
+        await db.user_sessions.create_index("user_id")
+        await db.user_sessions.create_index("expires_at")
+        
+        # Game indexes
+        await db.games.create_index("game_id", unique=True)
+        await db.games.create_index("status")
+        await db.games.create_index([("date", 1), ("time", 1)])
+        
+        # Ticket indexes - critical for live game performance
+        await db.tickets.create_index("ticket_id", unique=True)
+        await db.tickets.create_index("game_id")
+        await db.tickets.create_index([("game_id", 1), ("is_booked", 1)])
+        await db.tickets.create_index([("game_id", 1), ("booking_status", 1)])
+        await db.tickets.create_index("user_id")
+        await db.tickets.create_index("full_sheet_id")
+        
+        # Game session indexes - critical for real-time updates
+        await db.game_sessions.create_index("game_id", unique=True)
+        
+        # Booking indexes
+        await db.bookings.create_index("booking_id", unique=True)
+        await db.bookings.create_index("user_id")
+        await db.bookings.create_index("game_id")
+        await db.bookings.create_index("status")
+        
+        # User game indexes
+        await db.user_games.create_index("user_game_id", unique=True)
+        await db.user_games.create_index("share_code", unique=True)
+        await db.user_games.create_index("host_user_id")
+        await db.user_games.create_index("status")
+        
+        # Admin session indexes
+        await db.admin_sessions.create_index("session_token", unique=True)
+        await db.admin_sessions.create_index("expires_at")
+        
+        # OTP indexes with TTL (auto-expire after 10 minutes)
+        await db.otp_codes.create_index("phone")
+        await db.otp_codes.create_index("expires_at", expireAfterSeconds=0)
+        
+        logger.info("MongoDB indexes created successfully")
+    except Exception as e:
+        logger.warning(f"Index creation warning (may already exist): {e}")
+    
+    # Start background tasks
     asyncio.create_task(auto_game_manager())
     logger.info("Auto-game manager started")
 
