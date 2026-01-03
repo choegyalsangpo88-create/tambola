@@ -386,21 +386,8 @@ export default function LiveGame() {
             
             <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-3' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {myTickets.map((ticket) => {
-                // Get abbreviated name (e.g., "Anil Sharma" -> "A. Sharma")
-                const fullName = ticket.holder_name || ticket.booked_by_name || '';
-                const nameParts = fullName.split(' ');
-                const abbrevName = nameParts.length > 1 
-                  ? `${nameParts[0][0]}. ${nameParts.slice(1).join(' ')}`
-                  : fullName;
-                
                 return (
                   <div key={ticket.ticket_id} className={`bg-amber-50 rounded-lg transition-all duration-300 ${ticketZoom === 1 ? 'p-1' : ticketZoom === 2 ? 'p-2' : 'p-3'}`}>
-                    {/* User Name Above Ticket */}
-                    {abbrevName && (
-                      <p className={`text-center font-semibold text-purple-700 mb-0.5 truncate ${ticketZoom === 1 ? 'text-[6px]' : ticketZoom === 2 ? 'text-[8px]' : 'text-xs'}`}>
-                        {abbrevName}
-                      </p>
-                    )}
                     <p className={`font-bold text-amber-700 mb-1 ${ticketZoom === 1 ? 'text-[7px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-sm'}`}>{ticket.ticket_number}</p>
                     <div className="grid grid-cols-9 gap-px">
                       {ticket.numbers.map((row, rowIndex) => (
