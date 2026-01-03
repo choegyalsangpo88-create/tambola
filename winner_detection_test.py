@@ -188,15 +188,15 @@ class WinnerDetectionTester:
             sys.path.append('/app/backend')
             from winner_detection import check_full_house
             
-            # Create a test ticket with all 15 numbers
+            # Create a test ticket with all 15 numbers (5 per row)
             full_house_ticket = [
                 [4, None, 14, None, 30, 42, None, 61, None],      # 5 numbers
                 [None, 11, None, 25, None, None, 56, None, 78],   # 5 numbers  
-                [7, 18, None, 39, None, None, 67, 75, None]       # 5 numbers = 15 total
+                [7, 18, None, 39, None, 55, 67, 75, None]         # 5 numbers = 15 total (added 55)
             ]
             
-            # All numbers in the ticket
-            all_ticket_numbers = [4, 14, 30, 42, 61, 11, 25, 56, 78, 7, 18, 39, 67, 75]
+            # All numbers in the ticket (must be exactly 15)
+            all_ticket_numbers = [4, 14, 30, 42, 61, 11, 25, 56, 78, 7, 18, 39, 55, 67, 75]
             
             # Test with all numbers called (Full House)
             called_numbers_full = all_ticket_numbers + [1, 2, 3, 5, 6, 8, 9, 10]
