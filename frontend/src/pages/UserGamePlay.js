@@ -143,11 +143,7 @@ export default function UserGamePlay() {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
           }
-          // Cancel any ongoing speech
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-          }
-          // Show game completed message
+          if ('speechSynthesis' in window) window.speechSynthesis.cancel();
           toast.success('🎉 Game Completed! All prizes have been claimed.');
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
@@ -157,6 +153,17 @@ export default function UserGamePlay() {
     } catch (error) {
       console.error('Poll error:', error);
     }
+  };
+
+  // Celebrate winner with confetti and toast
+  const celebrateWinner = (prize, winnerName) => {
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.7 },
+      colors: ['#FFD700', '#FFA500', '#FF6347', '#00FF00']
+    });
+    toast.success(`🏆 ${prize} Winner: ${winnerName}!`, { duration: 5000 });
   };
 
   const showNewNumber = async (number) => {
@@ -169,35 +176,68 @@ export default function UserGamePlay() {
     setCurrentBall(number);
     setShowBallAnimation(true);
     
-    // Play announcement if audio enabled and sound is on
-    if (soundEnabled && audioEnabled && game?.status === 'live') {
+    // Play announcement if sound is on
+    if (soundEnabled && game?.status === 'live') {
       await announceNumber(number);
     }
     
     setTimeout(() => setShowBallAnimation(false), 3000);
   };
 
-  // Main announcement function - handles both API audio and browser TTS
+  // Main announcement function - reliable audio
   const announceNumber = async (number) => {
-    if (isAnnouncing || game?.status === 'completed' || !audioEnabled) return;
+    if (isAnnouncingRef.current || game?.status === 'completed') return;
+    isAnnouncingRef.current = true;
     
-    setIsAnnouncing(true);
     const callName = getCallName(number);
     
     try {
-      // Try API-generated audio first (better quality)
-      const response = await axios.post(
-        `${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=false`,
-        {},
-        { timeout: 5000 } // 5 second timeout
-      );
+      // Resume audio context for mobile
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
       
-      if (response.data.enabled && response.data.audio && !response.data.use_browser_tts) {
-        // Use API audio
-        await playAudioData(response.data.audio);
-      } else {
-        // Fallback to browser TTS
-        await speakWithBrowserTTS(callName);
+      // Use browser TTS for reliability (no lag/skip)
+      await speakWithBrowserTTS(callName);
+    } catch (error) {
+      console.log('Announcement error:', error);
+    } finally {
+      isAnnouncingRef.current = false;
+    }
+  };
+
+  // Browser speech synthesis - most reliable for real-time
+  const speakWithBrowserTTS = (text) => {
+    return new Promise((resolve) => {
+      if (!('speechSynthesis' in window)) {
+        resolve();
+        return;
+      }
+      
+      try {
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        if (speechSynthRef.current) {
+          utterance.voice = speechSynthRef.current;
+        }
+        
+        utterance.onend = () => resolve();
+        utterance.onerror = () => resolve();
+        
+        window.speechSynthesis.speak(utterance);
+        
+        // Timeout safety
+        setTimeout(resolve, 8000);
+      } catch (e) {
+        resolve();
+      }
+    });
+  };
       }
     } catch (error) {
       console.log('API TTS unavailable, using browser TTS');
