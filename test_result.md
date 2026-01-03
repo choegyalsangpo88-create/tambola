@@ -584,6 +584,7 @@ frontend:
 
 test_plan:
   current_focus:
+    - "Join User Game Functionality Testing - COMPLETED"
     - "Six Seven Tambola New Features Testing - COMPLETED"
   stuck_tasks: []
   test_all: false
