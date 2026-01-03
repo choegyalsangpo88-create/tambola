@@ -382,6 +382,33 @@ export default function UserGamePlay() {
         </div>
       </div>
 
+      {/* Audio Enable Prompt for Mobile */}
+      {showAudioPrompt && !audioEnabled && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1f] rounded-2xl p-6 max-w-sm w-full text-center border border-amber-500/30">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Volume2 className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Enable Sound</h2>
+            <p className="text-gray-400 text-sm mb-6">
+              Tap below to enable number announcements. This is required for audio to work on mobile devices.
+            </p>
+            <Button
+              onClick={enableAudio}
+              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-full"
+            >
+              <Volume2 className="w-5 h-5 mr-2" /> Enable Sound
+            </Button>
+            <button
+              onClick={() => setShowAudioPrompt(false)}
+              className="mt-3 text-gray-500 text-sm hover:text-gray-400"
+            >
+              Continue without sound
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Current Ball Display */}
         <div className="flex justify-center mb-8">
