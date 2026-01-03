@@ -711,8 +711,15 @@ class TambolaAPITester:
             [7, None, 15, None, 30, None, 42, None, 75]
         ]
         
-        # All 15 numbers from the ticket
-        all_numbers = [4, 12, 25, 37, 61, 8, 19, 28, 45, 7, 15, 30, 42, 75]
+        # Extract all non-None numbers from the ticket
+        all_numbers = []
+        for row in full_house_ticket:
+            for num in row:
+                if num is not None:
+                    all_numbers.append(num)
+        
+        print(f"   📋 Ticket numbers: {sorted(all_numbers)} (count: {len(all_numbers)})")
+        
         complete_numbers = all_numbers + [1, 2, 3]  # Add extra numbers
         
         full_house_result = check_full_house(full_house_ticket, complete_numbers)
@@ -720,6 +727,7 @@ class TambolaAPITester:
         
         # Test with 14/15 numbers (should fail)
         incomplete_numbers = all_numbers[:-1]  # Remove last number
+        print(f"   📋 Incomplete numbers: {sorted(incomplete_numbers)} (count: {len(incomplete_numbers)})")
         
         incomplete_house_result = check_full_house(full_house_ticket, incomplete_numbers)
         print(f"   ✅ Full House with 14/15 numbers: {incomplete_house_result} (should be False)")
@@ -728,6 +736,7 @@ class TambolaAPITester:
             print("   ✅ Full House detection WORKING correctly!")
         else:
             print("   ❌ Full House detection FAILED!")
+            print(f"   🔍 Debug: full_house_result={full_house_result}, incomplete_house_result={incomplete_house_result}")
         
         # Summary
         all_tests_passed = (
