@@ -2346,8 +2346,8 @@ async def auto_call_user_game_numbers():
             logger.error(f"Auto-call error for user game {game.get('user_game_id')}: {e}")
 
 async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
-    """Check for winners in user-created games"""
-    from winner_detection import check_all_winners
+    """Check for winners in user-created games with proper Full House tracking"""
+    from winner_detection import check_all_winners, check_full_house, check_four_corners, check_full_sheet_bonus
     
     try:
         game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
@@ -2362,58 +2362,103 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
         assigned_tickets = [t for t in tickets if t.get("assigned_to")]
         
         # If no embedded tickets, try participants collection
+        participants = []
         if not assigned_tickets:
             participants = await db.user_game_participants.find({
                 "user_game_id": user_game_id
             }, {"_id": 0}).to_list(100)
+        
+        # Track Full House winners for sequential assignment
+        full_house_candidates = []
+        
+        # Check Full Sheet Bonus first (requires grouped tickets)
+        full_sheet_bonus_checked = False
+        
+        # Use assigned_tickets or participants
+        ticket_source = assigned_tickets if assigned_tickets else [
+            {"numbers": p.get("ticket", {}).get("numbers", []), "assigned_to": p.get("name"), "participant_id": p.get("participant_id")}
+            for p in participants if p.get("ticket")
+        ]
+        
+        for prize_type in dividends.keys():
+            if prize_type in current_winners:
+                continue
             
-            for prize_type in dividends.keys():
-                if prize_type in current_winners:
+            # Skip Full House prizes for now - collect candidates first
+            prize_lower = prize_type.lower()
+            if "full house" in prize_lower:
+                continue
+            
+            # Skip Full Sheet Bonus - handle separately
+            if "full sheet" in prize_lower or "bonus" in prize_lower:
+                continue
+            
+            for ticket in ticket_source:
+                ticket_numbers = ticket.get("numbers", [])
+                if not ticket_numbers or len(ticket_numbers) < 3:
                     continue
                 
-                for participant in participants:
-                    ticket = participant.get("ticket", {})
-                    if not ticket:
-                        continue
-                        
-                    winner_info = check_all_winners({"numbers": ticket.get("numbers", [])}, called_numbers, prize_type)
-                    if winner_info:
-                        current_winners[prize_type] = {
-                            "participant_id": participant.get("participant_id"),
-                            "name": participant.get("name"),
-                            "won_at": datetime.now(timezone.utc).isoformat()
-                        }
-                        await db.user_games.update_one(
-                            {"user_game_id": user_game_id},
-                            {"$set": {"winners": current_winners}}
-                        )
-                        logger.info(f"Winner found for {prize_type} in user game {user_game_id}")
-                        break
-        else:
-            # Use embedded tickets
-            for prize_type in dividends.keys():
-                if prize_type in current_winners:
-                    continue
-                
-                for ticket in assigned_tickets:
-                    ticket_numbers = ticket.get("numbers", [])
-                    if not ticket_numbers:
-                        continue
-                        
-                    winner_info = check_all_winners({"numbers": ticket_numbers}, called_numbers, prize_type)
-                    if winner_info:
-                        current_winners[prize_type] = {
-                            "ticket_id": ticket.get("ticket_id"),
-                            "name": ticket.get("assigned_to"),
-                            "ticket_number": ticket.get("ticket_number"),
-                            "won_at": datetime.now(timezone.utc).isoformat()
-                        }
-                        await db.user_games.update_one(
-                            {"user_game_id": user_game_id},
-                            {"$set": {"winners": current_winners}}
-                        )
-                        logger.info(f"Winner found for {prize_type} in user game {user_game_id}: {ticket.get('assigned_to')}")
-                        break
+                winner_info = check_all_winners({"numbers": ticket_numbers}, called_numbers, prize_type)
+                if winner_info:
+                    current_winners[prize_type] = {
+                        "ticket_id": ticket.get("ticket_id"),
+                        "holder_name": ticket.get("assigned_to"),
+                        "name": ticket.get("assigned_to"),
+                        "ticket_number": ticket.get("ticket_number"),
+                        "won_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.user_games.update_one(
+                        {"user_game_id": user_game_id},
+                        {"$set": {"winners": current_winners}}
+                    )
+                    logger.info(f"Winner found for {prize_type} in user game {user_game_id}: {ticket.get('assigned_to')}")
+                    break
+        
+        # Now check Full House - collect all tickets that have completed Full House
+        for ticket in ticket_source:
+            ticket_numbers = ticket.get("numbers", [])
+            if not ticket_numbers or len(ticket_numbers) < 3:
+                continue
+            
+            if check_full_house(ticket_numbers, called_numbers):
+                ticket_id = ticket.get("ticket_id")
+                # Check if this ticket already won any Full House
+                already_won = any(
+                    w.get("ticket_id") == ticket_id 
+                    for w in current_winners.values() 
+                    if "Full House" in w.get("pattern", str(w.get("prize_type", "")))
+                )
+                if not already_won:
+                    full_house_candidates.append({
+                        "ticket_id": ticket_id,
+                        "holder_name": ticket.get("assigned_to"),
+                        "ticket_number": ticket.get("ticket_number")
+                    })
+        
+        # Assign Full House prizes in order (1st, 2nd, 3rd)
+        house_prizes = ["1st Full House", "2nd Full House", "3rd Full House"]
+        existing_house_count = sum(1 for p in current_winners.keys() if "Full House" in p)
+        
+        for idx, candidate in enumerate(full_house_candidates):
+            prize_idx = existing_house_count + idx
+            if prize_idx >= len(house_prizes):
+                break
+            
+            prize = house_prizes[prize_idx]
+            if prize in dividends and prize not in current_winners:
+                current_winners[prize] = {
+                    "ticket_id": candidate["ticket_id"],
+                    "holder_name": candidate["holder_name"],
+                    "name": candidate["holder_name"],
+                    "ticket_number": candidate["ticket_number"],
+                    "pattern": prize,
+                    "won_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.user_games.update_one(
+                    {"user_game_id": user_game_id},
+                    {"$set": {"winners": current_winners}}
+                )
+                logger.info(f"Winner found for {prize} in user game {user_game_id}: {candidate['holder_name']}")
         
         # Auto-end game if all prizes won
         # Filter out Full Sheet Bonus from check
