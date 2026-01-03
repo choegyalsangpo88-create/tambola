@@ -342,9 +342,19 @@ export default function UserGamePlay() {
         )}
 
         {/* Auto-Calling Status - No manual controls needed */}
-        <div className="text-center mb-6">
-          <p className="text-emerald-400 text-sm">🔄 Numbers are being called automatically every 8 seconds</p>
-        </div>
+        {game.status === 'live' && (
+          <div className="text-center mb-6">
+            <p className="text-emerald-400 text-sm">🔄 Numbers are being called automatically every 10 seconds</p>
+          </div>
+        )}
+        
+        {/* Game Completed Message */}
+        {game.status === 'completed' && (
+          <div className="text-center mb-6 p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
+            <p className="text-amber-400 text-lg font-bold">🎉 Game Completed!</p>
+            <p className="text-gray-400 text-sm mt-1">All numbers have been called or all prizes won</p>
+          </div>
+        )}
 
         {/* Host Controls - Only End Game button */}
         {isHost && game.status === 'live' && (
