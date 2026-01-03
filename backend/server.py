@@ -2051,11 +2051,20 @@ async def auto_call_numbers():
     """Automatically call numbers for live games with auto_call_enabled"""
     now = datetime.now(timezone.utc)
     
-    # Find active game sessions with auto-call enabled
+    # Find active game sessions - check both with auto_call_enabled and without (legacy)
     sessions = await db.game_sessions.find({
-        "status": "active",
-        "auto_call_enabled": True
+        "status": "active"
     }, {"_id": 0}).to_list(100)
+    
+    # Also enable auto-call for sessions that don't have the flag
+    for session in sessions:
+        if "auto_call_enabled" not in session:
+            await db.game_sessions.update_one(
+                {"session_id": session["session_id"]},
+                {"$set": {"auto_call_enabled": True, "last_call_time": now.isoformat()}}
+            )
+            session["auto_call_enabled"] = True
+            session["last_call_time"] = now.isoformat()
     
     for session in sessions:
         try:
