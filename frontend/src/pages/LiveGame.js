@@ -313,11 +313,42 @@ export default function LiveGame() {
               </div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)} className="h-8 w-8 text-white">
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!audioUnlocked && (
+              <Button
+                onClick={unlockAudio}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7 animate-pulse"
+              >
+                🔊 Sound
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => {
+                if (!audioUnlocked) unlockAudio();
+                setSoundEnabled(!soundEnabled);
+              }} 
+              className={`h-8 w-8 ${soundEnabled && audioUnlocked ? 'text-green-400' : 'text-white'}`}
+            >
+              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Sound Enable Banner for Mobile */}
+      {!audioUnlocked && game?.status === 'live' && (
+        <div 
+          onClick={unlockAudio}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-center cursor-pointer"
+        >
+          <p className="text-white text-sm font-medium">
+            📱 Tap here to enable caller voice on your phone
+          </p>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 py-2 space-y-2">
