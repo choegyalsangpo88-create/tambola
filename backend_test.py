@@ -1834,9 +1834,33 @@ class TambolaAPITester:
         return ticket_selection_success
 
 def main():
+    # Run only the specific test for the review request
     tester = TambolaAPITester()
-    success = tester.run_all_tests()
-    return 0 if success else 1
+    
+    # Test authentication first
+    auth_success = tester.test_auth_endpoints()
+    
+    if auth_success:
+        # Run the specific Full Sheet Bonus detection test
+        full_sheet_bonus_success = tester.test_full_sheet_bonus_detection()
+        
+        # Print final summary
+        print("\n" + "="*60)
+        print("REVIEW REQUEST TEST SUMMARY")
+        print("="*60)
+        print(f"Tests Run: {tester.tests_run}")
+        print(f"Tests Passed: {tester.tests_passed}")
+        print(f"Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+        
+        if full_sheet_bonus_success:
+            print("🎉 FULL SHEET BONUS DETECTION TEST: ✅ PASSED!")
+            return 0
+        else:
+            print("⚠️  FULL SHEET BONUS DETECTION TEST: ❌ FAILED!")
+            return 1
+    else:
+        print("❌ Authentication failed - cannot run tests")
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())
