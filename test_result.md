@@ -582,6 +582,18 @@ frontend:
         agent: "testing"
         comment: "✅ SIX SEVEN TAMBOLA NEW FEATURES TESTING COMPLETE (100% SUCCESS): Comprehensive testing of all review request items completed successfully! RESULTS: 1) COMPLETED GAMES API ✅ - GET /api/games/completed returns list of completed games with winners info, response time 41ms, found 1 completed game with proper winners dict containing ['second_line', 'first_line', 'full_house'], all required fields present ✅, 2) WINNER DETECTION STILL WORKS ✅ - Created test game (game_ddcdf25c), started successfully, called 3 numbers (43, 37, 85), winner detection system working correctly, no winners yet (normal for few numbers), game session tracking properly ✅, 3) TTS FOR WINNER ANNOUNCEMENT ✅ - POST /api/tts/generate with 'Congratulations John! You have won Top Line!' working perfectly, response time 1915ms, returns audio data as base64 mp3, server-side TTS enabled (use_browser_tts: false), includes prefix functionality ('Housie housie!' prefix added) ✅, 4) API RESPONSE TIMES ✅ - Excellent performance across all endpoints: games (35ms), games/completed (32ms), games/recent-completed (35ms), auth/me (32ms), average response time 34ms, MongoDB indexes working perfectly for sub-50ms responses ✅. ALL REVIEW REQUEST TESTS PASSED (4/4 - 100% success rate). Backend APIs are production-ready with excellent performance and all new features working correctly."
 
+  - task: "Full Sheet Bonus Detection Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ FULL SHEET BONUS DETECTION TESTING COMPLETE (100% SUCCESS): Comprehensive testing of review request requirements completed successfully! RESULTS: 1) FULL SHEET BONUS WINNER VERIFICATION ✅ - GET /api/user-games/code/WQFMR6 successfully returns game with Full Sheet Bonus winner, winner details match exactly: holder_name='FullSheetPlayer', pattern='Full Sheet Bonus', full_sheet_id='FS001' as specified in review request ✅, 2) TICKET SELECTION ENDPOINT STRUCTURE ✅ - GET /api/user-games/code/7PZP3C/tickets returns exactly 12 tickets as expected, all tickets have required fields (ticket_id, ticket_number, full_sheet_id, ticket_position_in_sheet, numbers, assigned_to), full_sheet_id format correct (FS001/FS002), ticket_position_in_sheet valid (1-6), numbers array is proper 3x9 grid with 15 numbers per ticket, assigned_to correctly null for available tickets ✅. ALL REVIEW REQUEST TESTS PASSED (2/2 - 100% success rate). Full Sheet Bonus detection system working perfectly and ticket selection endpoint structure verified as specified."
+
 test_plan:
   current_focus:
     - "Six Seven Tambola New User Game Features Testing - COMPLETED"
