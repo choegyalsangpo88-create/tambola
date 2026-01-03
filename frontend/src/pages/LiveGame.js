@@ -393,51 +393,83 @@ export default function LiveGame() {
           </div>
         </div>
 
-        {/* Top Players - Show names from beginning */}
+        {/* Top Players - Show progress toward winning prizes */}
         <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-          <h3 className="text-[10px] font-bold text-amber-400 mb-1 text-center">TOP PLAYERS</h3>
-          <div className="grid grid-cols-4 gap-1">
+          <h3 className="text-[10px] font-bold text-amber-400 mb-1 text-center">🔥 CLOSE TO WINNING</h3>
+          <div className="space-y-1">
             {allBookedTickets.length > 0 ? (
               (() => {
-                // Calculate marks for all players
                 const calledSet = new Set(session.called_numbers || []);
-                const playerMarks = {};
+                const playerProgress = [];
                 
+                // Calculate progress for each player's best prize
                 allBookedTickets.forEach(ticket => {
-                  const playerId = ticket.user_id || ticket.holder_name || ticket.booked_by_name;
                   const playerName = ticket.holder_name || ticket.booked_by_name || 'Player';
+                  const ticketNum = ticket.ticket_number;
                   
-                  if (!playerMarks[playerId]) {
-                    playerMarks[playerId] = { name: playerName, marks: 0 };
+                  if (!ticket.numbers || ticket.numbers.length < 3) return;
+                  
+                  // Check Top Line progress (5 numbers needed)
+                  const topRow = ticket.numbers[0].filter(n => n !== null);
+                  const topMarked = topRow.filter(n => calledSet.has(n)).length;
+                  if (topMarked >= 3 && topMarked < 5 && !session.winners?.['Top Line']) {
+                    playerProgress.push({ name: playerName, prize: 'Top Line', marked: topMarked, total: 5, ticket: ticketNum });
                   }
                   
-                  if (ticket.numbers) {
-                    ticket.numbers.forEach(row => {
-                      row.forEach(num => {
-                        if (num && calledSet.has(num)) {
-                          playerMarks[playerId].marks++;
-                        }
-                      });
-                    });
+                  // Check Middle Line progress
+                  const midRow = ticket.numbers[1].filter(n => n !== null);
+                  const midMarked = midRow.filter(n => calledSet.has(n)).length;
+                  if (midMarked >= 3 && midMarked < 5 && !session.winners?.['Middle Line']) {
+                    playerProgress.push({ name: playerName, prize: 'Middle Line', marked: midMarked, total: 5, ticket: ticketNum });
+                  }
+                  
+                  // Check Bottom Line progress
+                  const botRow = ticket.numbers[2].filter(n => n !== null);
+                  const botMarked = botRow.filter(n => calledSet.has(n)).length;
+                  if (botMarked >= 3 && botMarked < 5 && !session.winners?.['Bottom Line']) {
+                    playerProgress.push({ name: playerName, prize: 'Bottom Line', marked: botMarked, total: 5, ticket: ticketNum });
+                  }
+                  
+                  // Check Four Corners progress
+                  const corners = [ticket.numbers[0][0], ticket.numbers[0][8], ticket.numbers[2][0], ticket.numbers[2][8]].filter(n => n !== null);
+                  const cornersMarked = corners.filter(n => calledSet.has(n)).length;
+                  if (cornersMarked >= 2 && cornersMarked < corners.length && !session.winners?.['Four Corners']) {
+                    playerProgress.push({ name: playerName, prize: 'Corners', marked: cornersMarked, total: corners.length, ticket: ticketNum });
+                  }
+                  
+                  // Check Full House progress (15 numbers)
+                  const allNums = ticket.numbers.flat().filter(n => n !== null);
+                  const fullMarked = allNums.filter(n => calledSet.has(n)).length;
+                  if (fullMarked >= 10 && fullMarked < 15) {
+                    playerProgress.push({ name: playerName, prize: 'Full House', marked: fullMarked, total: 15, ticket: ticketNum });
                   }
                 });
                 
-                // Sort by marks
-                const sortedPlayers = Object.values(playerMarks)
-                  .sort((a, b) => b.marks - a.marks)
+                // Sort by closest to winning (highest percentage)
+                const sorted = playerProgress
+                  .sort((a, b) => (b.marked / b.total) - (a.marked / a.total))
                   .slice(0, 4);
                 
-                return sortedPlayers.map((player, idx) => (
-                  <div key={idx} className={`rounded p-1 text-center ${
-                    idx === 0 ? 'bg-amber-500/30' : idx === 1 ? 'bg-gray-500/20' : idx === 2 ? 'bg-orange-600/20' : 'bg-white/5'
-                  }`}>
-                    <p className="text-[9px] text-white truncate">{player.name?.split(' ')[0]}</p>
-                    <p className="text-[8px] text-amber-400">{player.marks}</p>
+                if (sorted.length === 0) {
+                  return <p className="text-[9px] text-gray-500 text-center py-1">Game starting...</p>;
+                }
+                
+                return sorted.map((p, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white/5 rounded px-2 py-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-white font-medium truncate max-w-[60px]">{p.name.split(' ')[0]}</span>
+                      <span className="text-[8px] text-amber-400">{p.prize}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: p.total }).map((_, i) => (
+                        <span key={i} className={`w-2 h-2 rounded-full ${i < p.marked ? 'bg-green-500' : 'bg-gray-600'}`} />
+                      ))}
+                    </div>
                   </div>
                 ));
               })()
             ) : (
-              <p className="col-span-4 text-[9px] text-gray-500 text-center py-1">Waiting for players...</p>
+              <p className="text-[9px] text-gray-500 text-center py-1">Waiting for players...</p>
             )}
           </div>
         </div>
