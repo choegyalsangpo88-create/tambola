@@ -513,7 +513,177 @@ class TambolaAPITester:
         
         return True
 
-    def test_auto_archive_feature(self):
+    def test_admin_game_automation(self):
+        """Test admin game auto-start and auto-calling features"""
+        print("\n" + "="*50)
+        print("TESTING ADMIN GAME AUTOMATION")
+        print("="*50)
+        
+        # Test 1: Create admin game with past start time for auto-start
+        print("\n🔍 TEST 1: Admin Game Auto-Start")
+        from datetime import datetime, timedelta
+        
+        # Create a game scheduled 5 minutes ago to trigger auto-start
+        past_time = datetime.now() - timedelta(minutes=5)
+        
+        auto_game_data = {
+            "name": f"Auto-Start Test Game {datetime.now().strftime('%H%M%S')}",
+            "date": past_time.strftime('%Y-%m-%d'),
+            "time": past_time.strftime('%H:%M'),
+            "price": 50.0,
+            "total_tickets": 60,
+            "prizes": {
+                "Early Five": 500.0,
+                "Top Line": 1000.0,
+                "Middle Line": 1000.0,
+                "Bottom Line": 1000.0,
+                "Full House": 2000.0
+            }
+        }
+        
+        success, auto_game = self.run_test(
+            "Create Admin Game with Past Start Time",
+            "POST",
+            "games",
+            200,
+            data=auto_game_data
+        )
+        
+        if success and auto_game:
+            auto_game_id = auto_game.get('game_id')
+            print(f"   ✅ Created auto-start game ID: {auto_game_id}")
+            print(f"   ✅ Initial status: {auto_game.get('status')}")
+            
+            # Wait a moment and check if game auto-started
+            import time
+            print("   ⏳ Waiting 10 seconds for auto-start to trigger...")
+            time.sleep(10)
+            
+            # Check game status
+            success, updated_game = self.run_test(
+                "Check Game Status After Auto-Start",
+                "GET",
+                f"games/{auto_game_id}",
+                200
+            )
+            
+            if success and updated_game:
+                current_status = updated_game.get('status')
+                print(f"   ✅ Current status: {current_status}")
+                
+                if current_status == 'live':
+                    print(f"   ✅ AUTO-START WORKING: Game transitioned to 'live' status")
+                    
+                    # Test 2: Check if game session was created with auto-calling
+                    success, session_data = self.run_test(
+                        "Check Game Session for Auto-Calling",
+                        "GET",
+                        f"games/{auto_game_id}/session",
+                        200
+                    )
+                    
+                    if success and session_data:
+                        auto_call_enabled = session_data.get('auto_call_enabled', False)
+                        called_numbers = session_data.get('called_numbers', [])
+                        print(f"   ✅ Auto-call enabled: {auto_call_enabled}")
+                        print(f"   ✅ Numbers called so far: {len(called_numbers)}")
+                        
+                        if called_numbers:
+                            print(f"   ✅ Called numbers: {called_numbers}")
+                            
+                            # Wait a bit more to see if more numbers are called automatically
+                            print("   ⏳ Waiting 30 seconds to verify auto-calling...")
+                            time.sleep(30)
+                            
+                            # Check again
+                            success, updated_session = self.run_test(
+                                "Check Auto-Calling Progress",
+                                "GET",
+                                f"games/{auto_game_id}/session",
+                                200
+                            )
+                            
+                            if success and updated_session:
+                                new_called_numbers = updated_session.get('called_numbers', [])
+                                print(f"   ✅ Numbers called after 30s: {len(new_called_numbers)}")
+                                
+                                if len(new_called_numbers) > len(called_numbers):
+                                    print(f"   ✅ AUTO-CALLING WORKING: {len(new_called_numbers) - len(called_numbers)} new numbers called")
+                                    print(f"   ✅ New numbers: {new_called_numbers[len(called_numbers):]}")
+                                else:
+                                    print(f"   ⚠️  AUTO-CALLING: No new numbers called in 30 seconds")
+                        else:
+                            print(f"   ⚠️  No numbers called yet - auto-calling may be slow to start")
+                    else:
+                        print(f"   ❌ Could not retrieve game session")
+                else:
+                    print(f"   ❌ AUTO-START FAILED: Game status is still '{current_status}', expected 'live'")
+            else:
+                print(f"   ❌ Could not retrieve updated game status")
+            
+            return auto_game_id
+        else:
+            print(f"   ❌ Failed to create auto-start game")
+            return None
+
+    def test_tts_endpoint(self):
+        """Test TTS endpoint for number calling"""
+        print("\n" + "="*50)
+        print("TESTING TTS ENDPOINT")
+        print("="*50)
+        
+        # Test 1: TTS with prefix
+        print("\n🔍 TEST 1: TTS with Prefix")
+        success, tts_response = self.run_test(
+            "TTS Generate with Prefix",
+            "POST",
+            "tts/generate?text=Number%2045%20-%20Halfway%20There&include_prefix=true",
+            200
+        )
+        
+        if success and tts_response:
+            print(f"   ✅ TTS Response keys: {list(tts_response.keys())}")
+            print(f"   ✅ Use browser TTS: {tts_response.get('use_browser_tts')}")
+            print(f"   ✅ Text: {tts_response.get('text')}")
+            print(f"   ✅ Has audio: {tts_response.get('audio') is not None}")
+            
+            # Check voice settings
+            voice_settings = tts_response.get('voice_settings', {})
+            if voice_settings:
+                print(f"   ✅ Voice settings: {voice_settings}")
+        
+        # Test 2: TTS without prefix
+        print("\n🔍 TEST 2: TTS without Prefix")
+        success, tts_response_no_prefix = self.run_test(
+            "TTS Generate without Prefix",
+            "POST",
+            "tts/generate?text=Number%2045%20-%20Halfway%20There&include_prefix=false",
+            200
+        )
+        
+        if success and tts_response_no_prefix:
+            text_with_prefix = tts_response.get('text', '')
+            text_without_prefix = tts_response_no_prefix.get('text', '')
+            print(f"   ✅ Text without prefix: {text_without_prefix}")
+            
+            if len(text_with_prefix) > len(text_without_prefix):
+                print(f"   ✅ Prefix functionality working - text is longer with prefix")
+            else:
+                print(f"   ⚠️  Prefix functionality unclear - similar text lengths")
+        
+        # Test 3: Different number format
+        print("\n🔍 TEST 3: Different Number Format")
+        success, tts_response_diff = self.run_test(
+            "TTS Generate Different Number",
+            "POST",
+            "tts/generate?text=Number%2090%20-%20Top%20of%20the%20Shop&include_prefix=true",
+            200
+        )
+        
+        if success and tts_response_diff:
+            print(f"   ✅ Different number TTS: {tts_response_diff.get('text')}")
+        
+        return True
         """Test Auto-Archive feature for completed games"""
         print("\n" + "="*50)
         print("TESTING AUTO-ARCHIVE FEATURE")
