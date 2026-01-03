@@ -326,8 +326,8 @@ export default function UserGamePlay() {
 
   // Check if game is completed
   const isGameCompleted = game.status === 'completed';
-  const allWinners = game.winners || session?.winners || {};
-  const dividends = game.dividends || {};
+  const displayWinners = allWinners || game.winners || session?.winners || {};
+  const displayDividends = dividends || game.dividends || {};
 
   // Game Ended Screen
   if (isGameCompleted) {
@@ -339,14 +339,14 @@ export default function UserGamePlay() {
           <p className="text-gray-400 mb-6">Congratulations to all winners!</p>
           
           <div className="space-y-3 mb-6">
-            {Object.entries(allWinners).map(([prize, winner]) => (
+            {Object.entries(displayWinners).map(([prize, winner]) => (
               <div key={prize} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-amber-400 font-bold">{prize}</span>
                   <Trophy className="w-5 h-5 text-amber-500" />
                 </div>
                 <p className="text-white text-sm mt-1">
-                  Winner: {winner.name || winner.ticket_number || 'Winner'}
+                  Winner: {winner.name || winner.holder_name || winner.ticket_number || 'Winner'}
                 </p>
               </div>
             ))}
