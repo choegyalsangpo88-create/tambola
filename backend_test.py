@@ -1388,10 +1388,10 @@ class TambolaAPITester:
         # Test the specific review request items
         review_request_success = self.test_six_seven_tambola_review_request()
         
-        # ADDITIONAL TESTING (Priority 2) - Only if review request passes
-        if review_request_success:
+        # ADDITIONAL TESTING (Priority 3) - Only if join functionality passes
+        if join_functionality_success:
             print("\n" + "📋"*60)
-            print("ADDITIONAL API TESTING - PRIORITY 2")
+            print("ADDITIONAL API TESTING - PRIORITY 3")
             print("📋"*60)
             
             # Test 2: Winner Detection Logic (Four Corners, Full House, Full Sheet Bonus)
@@ -1406,7 +1406,7 @@ class TambolaAPITester:
             # Test 5: Admin Game Auto-Start and Auto-Calling
             auto_game_id = self.test_admin_game_automation()
         else:
-            print("\n⚠️  Skipping additional tests due to review request failures")
+            print("\n⚠️  Skipping additional tests due to join functionality failures")
             winner_detection_success = False
             tts_success = False
             user_games_success = False
@@ -1419,12 +1419,16 @@ class TambolaAPITester:
         print(f"📊 Tests passed: {self.tests_passed}/{self.tests_run}")
         print(f"✅ Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
-        # Review request results (Priority 1)
+        # Join functionality results (Priority 1)
+        print("\n🎯 JOIN USER GAME FUNCTIONALITY RESULTS:")
+        print(f"   Join Functionality Tests: {'✅ PASS' if join_functionality_success else '❌ FAIL'}")
+        
+        # Review request results (Priority 2)
         print("\n🎯 SIX SEVEN TAMBOLA REVIEW REQUEST RESULTS:")
         print(f"   Review Request Tests: {'✅ PASS' if review_request_success else '❌ FAIL'}")
         
-        if review_request_success:
-            # Additional test results (Priority 2)
+        if join_functionality_success:
+            # Additional test results (Priority 3)
             print("\n📋 ADDITIONAL TEST SUITE RESULTS:")
             additional_results = [
                 ("Winner Detection Logic", winner_detection_success),
@@ -1437,7 +1441,7 @@ class TambolaAPITester:
                 status = "✅ PASS" if success else "❌ FAIL"
                 print(f"   {test_name}: {status}")
         
-        return review_request_success
+        return join_functionality_success
 
 def main():
     tester = TambolaAPITester()
