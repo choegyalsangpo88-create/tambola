@@ -1417,7 +1417,7 @@ async def reset_prefix_lines(request: Request, _: bool = Depends(verify_admin)):
 
 @api_router.post("/tts/generate")
 async def generate_tts(text: str, include_prefix: bool = True):
-    """Generate TTS audio for a number call - Currently using fallback due to API key requirements"""
+    """Generate TTS audio for a number call using OpenAI TTS via emergentintegrations"""
     try:
         settings = await db.caller_settings.find_one({"settings_id": "global"}, {"_id": 0})
         if not settings:
@@ -1437,24 +1437,20 @@ async def generate_tts(text: str, include_prefix: bool = True):
             prefix = random.choice(settings["prefix_lines"])
             full_text = f"{prefix} {text}"
         
-        # TTS generation - requires OpenAI API key from user
-        # For now, return the text for browser-based speech synthesis
-        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY")
+        # TTS generation using emergentintegrations
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
         
-        if api_key and api_key.startswith("sk-") and not api_key.startswith("sk-emergent"):
+        if api_key:
             try:
-                client = OpenAI(api_key=api_key)
+                tts = OpenAITextToSpeech(api_key=api_key)
                 
-                response = client.audio.speech.create(
+                # Generate speech as base64
+                audio_base64 = await tts.generate_speech_base64(
+                    text=full_text,
                     model="tts-1",
                     voice=settings.get("voice", "nova"),
-                    input=full_text,
                     speed=settings.get("speed", 1.0)
                 )
-                
-                # Convert to base64
-                audio_bytes = response.content
-                audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
                 
                 return {
                     "enabled": True,
