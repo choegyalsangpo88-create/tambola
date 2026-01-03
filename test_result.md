@@ -105,6 +105,30 @@
 user_problem_statement: Build a full-stack Tambola (Housie) game with Google Auth, user dashboard, live game, admin panel, and now add "Create Your Own Tambola Game" feature for family/party games with shareable links and QR codes.
 
 backend:
+  - task: "Auto-Calling Fix for Already-Live Games"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented fix for auto-calling background task to handle games that are already live when server starts. The auto_call_numbers() and auto_call_user_game_numbers() functions now check for sessions/games without auto_call_enabled flag and set it to True. Needs testing."
+
+  - task: "Host Self-Booking for User Games"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented POST /api/user-games/{id}/host-join endpoint that allows the game creator to book their own tickets. Returns abbreviated name (e.g., 'A. Sharma'). Needs testing."
+
   - task: "Google Auth Session Exchange"
     implemented: true
     working: true
