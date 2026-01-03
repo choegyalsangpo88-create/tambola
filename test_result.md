@@ -453,6 +453,18 @@ frontend:
         agent: "testing"
         comment: "❌ AUTHENTICATION LIMITATION: Cannot test User Game Deletion feature due to Google Auth requirement. Backend endpoint DELETE /api/user-games/{user_game_id} properly implemented with: 1) Host authentication check ✅, 2) Works for any game status (including live) ✅, 3) 403 error for non-host attempts ✅, 4) Complete game deletion ✅. Frontend delete button exists on UserGameDetails.js. Manual testing with valid user session required."
 
+  - task: "TTS Endpoint for Number Calling"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TTS ENDPOINT TESTING COMPLETE: POST /api/tts/generate working perfectly! TESTED: 1) TTS with prefix (include_prefix=true) returns proper response ✅, 2) use_browser_tts: true as expected ✅, 3) Text properly formatted with prefix line: 'Get ready to mark... Number 45 - Halfway There' ✅, 4) TTS without prefix (include_prefix=false) works correctly ✅, 5) Voice settings included (voice: shimmer, speed: 1.3, gender: female) ✅. Endpoint responds correctly to exact review request parameters: text=Number%2045%20-%20Halfway%20There&include_prefix=true."
+
 test_plan:
   current_focus:
     - "Game Automation Features (auto-start, auto-call, auto-end)"
