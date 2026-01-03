@@ -1898,6 +1898,78 @@ async def get_user_game_players(user_game_id: str):
     
     return {"players": players, "total": len(players)}
 
+@api_router.post("/user-games/{user_game_id}/host-join")
+async def host_join_user_game(
+    user_game_id: str,
+    ticket_count: int = 1,
+    user: User = Depends(get_current_user)
+):
+    """Host joins their own game with tickets"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can use this endpoint")
+    
+    if game["status"] != "upcoming":
+        raise HTTPException(status_code=400, detail="Cannot join game that has started")
+    
+    # Find available tickets
+    tickets = game.get("tickets", [])
+    available_tickets = [t for t in tickets if not t.get("assigned_to")]
+    
+    if len(available_tickets) < ticket_count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only {len(available_tickets)} tickets available"
+        )
+    
+    # Get abbreviated name (e.g., "Anil Sharma" -> "A. Sharma")
+    name_parts = (user.name or "Host").split()
+    if len(name_parts) > 1:
+        abbrev_name = f"{name_parts[0][0]}. {' '.join(name_parts[1:])}"
+    else:
+        abbrev_name = user.name or "Host"
+    
+    # Assign tickets to host
+    assigned_ticket_ids = []
+    for i in range(ticket_count):
+        ticket_id = available_tickets[i]["ticket_id"]
+        assigned_ticket_ids.append(ticket_id)
+        for t in tickets:
+            if t["ticket_id"] == ticket_id:
+                t["assigned_to"] = abbrev_name
+                t["user_id"] = user.user_id
+                break
+    
+    # Add host to players list if not already
+    players = game.get("players", [])
+    host_player = next((p for p in players if p.get("user_id") == user.user_id), None)
+    
+    if host_player:
+        host_player["tickets"].extend(assigned_ticket_ids)
+    else:
+        players.append({
+            "name": abbrev_name,
+            "user_id": user.user_id,
+            "tickets": assigned_ticket_ids,
+            "is_host": True,
+            "joined_at": datetime.now(timezone.utc).isoformat()
+        })
+    
+    await db.user_games.update_one(
+        {"user_game_id": user_game_id},
+        {"$set": {"tickets": tickets, "players": players}}
+    )
+    
+    player_tickets = [t for t in tickets if t["ticket_id"] in assigned_ticket_ids]
+    
+    return {
+        "message": f"Tickets assigned to {abbrev_name}",
+        "tickets": player_tickets
+    }
+
 @api_router.post("/user-games/{user_game_id}/start")
 async def start_user_game(
     user_game_id: str,
