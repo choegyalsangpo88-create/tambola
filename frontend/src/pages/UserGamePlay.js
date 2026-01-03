@@ -171,77 +171,117 @@ export default function UserGamePlay() {
 
   const showNewNumber = async (number) => {
     if (!number || game?.status === 'completed') return;
+    
+    // Prevent duplicate announcements
+    if (lastAnnouncedRef.current === number) return;
+    lastAnnouncedRef.current = number;
+    
     setCurrentBall(number);
     setShowBallAnimation(true);
     
-    // Only play sound if audio is enabled (user clicked enable button)
+    // Play announcement if audio enabled and sound is on
     if (soundEnabled && audioEnabled && game?.status === 'live') {
-      await playTTSAnnouncement(number);
+      await announceNumber(number);
     }
     
     setTimeout(() => setShowBallAnimation(false), 3000);
   };
 
-  const playTTSAnnouncement = async (number) => {
-    // Don't play if game ended or audio not enabled
-    if (game?.status === 'completed' || !audioEnabled) return;
+  // Main announcement function - handles both API audio and browser TTS
+  const announceNumber = async (number) => {
+    if (isAnnouncing || game?.status === 'completed' || !audioEnabled) return;
+    
+    setIsAnnouncing(true);
+    const callName = getCallName(number);
     
     try {
-      const callName = getCallName(number);
-      const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=true`);
+      // Try API-generated audio first (better quality)
+      const response = await axios.post(
+        `${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=false`,
+        {},
+        { timeout: 5000 } // 5 second timeout
+      );
       
-      if (response.data.enabled && game?.status === 'live') {
-        if (response.data.audio && !response.data.use_browser_tts) {
-          // Use API-generated audio
-          const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
-          audioRef.current = audio;
-          
-          // For mobile, we need to ensure AudioContext is active
-          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            await audioContextRef.current.resume();
-          }
-          
-          await audio.play().catch(err => {
-            console.error('Audio play failed:', err);
-            // Fallback to browser TTS
-            speakWithBrowserTTS(response.data.text || callName);
-          });
-        } else if (response.data.use_browser_tts && response.data.text) {
-          speakWithBrowserTTS(response.data.text, response.data.voice_settings);
-        }
+      if (response.data.enabled && response.data.audio && !response.data.use_browser_tts) {
+        // Use API audio
+        await playAudioData(response.data.audio);
+      } else {
+        // Fallback to browser TTS
+        await speakWithBrowserTTS(callName);
       }
     } catch (error) {
-      console.error('TTS failed:', error);
-      // Fallback to browser TTS
-      speakWithBrowserTTS(getCallName(number));
+      console.log('API TTS unavailable, using browser TTS');
+      // Fallback to browser TTS on any error
+      await speakWithBrowserTTS(callName);
+    } finally {
+      setIsAnnouncing(false);
     }
   };
 
-  const speakWithBrowserTTS = (text, voiceSettings = {}) => {
-    if (!('speechSynthesis' in window) || !audioEnabled) return;
-    
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = voiceSettings.speed || 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      
-      // Try to get Indian English voice
-      const voices = window.speechSynthesis.getVoices();
-      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
-      const englishVoice = voices.find(v => v.lang.includes('en'));
-      
-      if (indianVoice) {
-        utterance.voice = indianVoice;
-      } else if (englishVoice) {
-        utterance.voice = englishVoice;
+  // Play base64 audio data
+  const playAudioData = (base64Audio) => {
+    return new Promise((resolve) => {
+      try {
+        // Resume AudioContext if needed
+        if (audioContextRef.current?.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+        
+        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+        audioRef.current = audio;
+        
+        audio.onended = resolve;
+        audio.onerror = () => {
+          console.log('Audio play error, falling back to TTS');
+          resolve();
+        };
+        
+        audio.play().catch(() => {
+          console.log('Could not play audio');
+          resolve();
+        });
+        
+        // Timeout fallback
+        setTimeout(resolve, 8000);
+      } catch (e) {
+        resolve();
+      }
+    });
+  };
+
+  // Browser speech synthesis - reliable fallback
+  const speakWithBrowserTTS = (text) => {
+    return new Promise((resolve) => {
+      if (!('speechSynthesis' in window) || !audioEnabled) {
+        resolve();
+        return;
       }
       
-      window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error('Browser TTS failed:', error);
-    }
+      try {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        // Use pre-loaded voice if available
+        if (speechSynthRef.current) {
+          utterance.voice = speechSynthRef.current;
+        }
+        
+        utterance.onend = resolve;
+        utterance.onerror = resolve;
+        
+        window.speechSynthesis.speak(utterance);
+        
+        // Timeout fallback (max 10 seconds)
+        setTimeout(resolve, 10000);
+      } catch (e) {
+        resolve();
+      }
+    });
   };
 
   const playSound = () => {
