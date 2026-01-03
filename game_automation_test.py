@@ -587,12 +587,12 @@ class GameAutomationTester:
         test_results.append(("User Game Deletion", result4))
         
         # Test 5: TTS Endpoint
-        result5 = self.test_tts_endpoint()
+        result5 = self.test_tts_endpoint_comprehensive()
         test_results.append(("TTS Endpoint", result5))
         
-        # Test 6: User Games API
-        result6 = self.test_user_games_api()
-        test_results.append(("User Games API", result6))
+        # Test 6: User Games API (Public endpoints only)
+        result6 = self.test_user_games_api_public()
+        test_results.append(("User Games API (Public)", result6))
         
         # Print final results
         print("\n" + "="*70)
