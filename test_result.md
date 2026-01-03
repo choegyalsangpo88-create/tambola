@@ -453,7 +453,7 @@ frontend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -461,6 +461,9 @@ frontend:
       - working: "NA"
         agent: "testing"
         comment: "❌ AUTHENTICATION LIMITATION: Cannot test User Game Deletion feature due to Google Auth requirement. Backend endpoint DELETE /api/user-games/{user_game_id} properly implemented with: 1) Host authentication check ✅, 2) Works for any game status (including live) ✅, 3) 403 error for non-host attempts ✅, 4) Complete game deletion ✅. Frontend delete button exists on UserGameDetails.js. Manual testing with valid user session required."
+      - working: "NA"
+        agent: "testing"
+        comment: "⚠️ AUTHENTICATION LIMITATION CONFIRMED: Cannot test User Game Deletion without Google OAuth. Frontend structure verified: UserGameDetails.js and MyUserGames.js both contain delete buttons (trash icons) with confirmation dialogs. Backend endpoint properly implemented. REQUIRES MANUAL TESTING with authenticated user session to verify: 1) Host can delete games at any status, 2) Confirmation dialog appears, 3) Non-host gets 403 error, 4) Game deletion completes successfully."
 
   - task: "TTS Endpoint for Number Calling"
     implemented: true
