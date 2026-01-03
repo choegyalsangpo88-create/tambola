@@ -313,6 +313,33 @@ export default function LiveGame() {
     <div className="min-h-screen bg-gradient-to-b from-[#0a3d2c] to-[#0a0a0c] overflow-y-auto">
       <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGD0fPTgjMGHm7A7+OZTA0OVqzl7K1aFwlInN/zxmwlBSp9zPLdjTkIGGS38+OXRQwRX7fn77hjGQc9k9TxwXEcBip6yO7glT0KFF24+fGmXRoJQ5vd88dxKAYrdMnx3I0+ChljuO3nnEcNElWv5OysWxYLSJvf88lwKAUrdsrw3Y0/ChVhuvDmnUgOElu05+ytXBcLS5zf88hwJwYreMnw3I5AChZivPDmnUkOElm05u6sXBgLTZve8slxJQYrecrw3Y5AChZivPDlnUoOE1u15u6rXBcLS5vc9MlxJgYse8nw3Y5AChZivPDlnUoOE1u15u6rXBcLS5vc9MlxJgYse8nw3Y5AChZivPDlnUoO" preload="auto" />
       
+      {/* Audio Enable Prompt for Mobile */}
+      {showAudioPrompt && !audioEnabled && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1f] rounded-2xl p-6 max-w-sm w-full text-center border border-amber-500/30">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Volume2 className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Enable Sound</h2>
+            <p className="text-gray-400 text-sm mb-6">
+              Tap to enable number announcements. Required for audio on mobile.
+            </p>
+            <Button
+              onClick={enableAudio}
+              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-full"
+            >
+              <Volume2 className="w-5 h-5 mr-2" /> Enable Sound
+            </Button>
+            <button
+              onClick={() => setShowAudioPrompt(false)}
+              className="mt-3 text-gray-500 text-sm hover:text-gray-400"
+            >
+              Continue without sound
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="bg-black/30 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between">
