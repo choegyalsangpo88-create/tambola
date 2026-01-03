@@ -799,25 +799,43 @@ class TambolaAPITester:
         return True
 
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🚀 Starting Tambola API Tests")
+        """Run all API tests with focus on critical fixes"""
+        print("🚀 Starting Tambola API Tests - CRITICAL FIXES FOCUS")
         print(f"🔗 Base URL: {self.base_url}")
         print(f"👤 Test User ID: {self.user_id}")
         print(f"🔑 Session Token: {self.session_token[:20]}...")
         
-        # Run test suites
+        # Run authentication first
         auth_success = self.test_auth_endpoints()
         if not auth_success:
             print("❌ Authentication failed - stopping tests")
             return False
-            
+        
+        # CRITICAL FIXES TESTING (Priority 1)
+        print("\n" + "🔥"*60)
+        print("CRITICAL FIXES TESTING - PRIORITY 1")
+        print("🔥"*60)
+        
+        # Test 1: User Games Critical Fixes (Ticket Generation + Duplicate Prevention)
+        user_games_success = self.test_user_games_endpoints()
+        
+        # Test 2: Admin Game Auto-Start and Auto-Calling
+        auto_game_id = self.test_admin_game_automation()
+        
+        # Test 3: TTS Endpoint
+        tts_success = self.test_tts_endpoint()
+        
+        # ADDITIONAL TESTING (Priority 2)
+        print("\n" + "📋"*60)
+        print("ADDITIONAL API TESTING - PRIORITY 2")
+        print("📋"*60)
+        
         game_success = self.test_game_endpoints()
         ticket_success = self.test_ticket_endpoints()
         booking_success = self.test_booking_endpoints()
         admin_success = self.test_admin_endpoints()
         live_success = self.test_live_game_endpoints()
         profile_success = self.test_profile_endpoints()
-        user_games_success = self.test_user_games_endpoints()
         auto_archive_success = self.test_auto_archive_feature()
         
         # Print final results
@@ -827,7 +845,20 @@ class TambolaAPITester:
         print(f"📊 Tests passed: {self.tests_passed}/{self.tests_run}")
         print(f"✅ Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
-        # Test suite results
+        # Critical fixes results
+        print("\n🔥 CRITICAL FIXES RESULTS:")
+        critical_results = [
+            ("User Games (Tickets + Duplicate Prevention)", user_games_success),
+            ("Admin Game Auto-Start & Auto-Calling", auto_game_id is not None),
+            ("TTS Endpoint", tts_success)
+        ]
+        
+        for fix_name, success in critical_results:
+            status = "✅ PASS" if success else "❌ FAIL"
+            print(f"   {fix_name}: {status}")
+        
+        # Additional test suite results
+        print("\n📋 ADDITIONAL TEST SUITE RESULTS:")
         suites = [
             ("Authentication", auth_success),
             ("Games", game_success),
@@ -836,14 +867,16 @@ class TambolaAPITester:
             ("Admin", admin_success),
             ("Live Game", live_success),
             ("Profile", profile_success),
-            ("User Games", user_games_success),
             ("Auto-Archive Feature", auto_archive_success)
         ]
         
-        print("\n📋 Test Suite Results:")
         for suite_name, success in suites:
             status = "✅ PASS" if success else "❌ FAIL"
             print(f"   {suite_name}: {status}")
+        
+        # Summary for critical fixes
+        critical_passed = sum(1 for _, success in critical_results if success)
+        print(f"\n🎯 CRITICAL FIXES SUMMARY: {critical_passed}/{len(critical_results)} PASSED")
         
         return self.tests_passed == self.tests_run
 
