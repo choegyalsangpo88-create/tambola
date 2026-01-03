@@ -1,5 +1,5 @@
 # OFFICIAL TAMBOLA WINNER DETECTION
-# Complete rules for all winning patterns
+# Complete rules for all winning patterns - FIXED VERSION
 import logging
 
 logger = logging.getLogger(__name__)
@@ -72,9 +72,9 @@ def check_bottom_line(ticket_numbers, called_numbers):
 def check_full_house(ticket_numbers, called_numbers):
     """
     FULL HOUSE (COVERALL): Mark ALL 15 numbers on the ticket
-    1st Full House = Main Jackpot
-    2nd Full House = Second winner
-    3rd Full House = Third winner
+    - Ticket has 3 rows × 9 columns = 27 spaces
+    - Only 15 contain numbers (5 per row)
+    - Full House = All 15 numbers marked
     """
     called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
     
@@ -96,33 +96,44 @@ def check_full_house(ticket_numbers, called_numbers):
 
 def check_four_corners(ticket_numbers, called_numbers):
     """
-    FOUR CORNERS: Mark 4 numbers at the FIXED corner positions
+    FOUR CORNERS: Mark the 4 corner NUMBERS of the ticket
     
-    Positions:
-    - Top-Left:     Row1-Col1 (position [0][0])
-    - Top-Right:    Row1-Col9 (position [0][8])
-    - Bottom-Left:  Row3-Col1 (position [2][0])
-    - Bottom-Right: Row3-Col9 (position [2][8])
+    In Tambola, each row has 5 numbers and 4 blanks across 9 columns.
+    The CORNERS are:
+    - Top-Left Corner: FIRST number in Row 1 (leftmost number)
+    - Top-Right Corner: LAST number in Row 1 (rightmost number)
+    - Bottom-Left Corner: FIRST number in Row 3 (leftmost number)
+    - Bottom-Right Corner: LAST number in Row 3 (rightmost number)
     
-    Note: These positions must have numbers (not blanks) AND be marked
+    NOT at fixed column positions! Find the actual numbers.
     """
-    if len(ticket_numbers) < 3 or len(ticket_numbers[0]) < 9:
+    if len(ticket_numbers) < 3:
         return False
     
     called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
     
-    # Get corner values at FIXED positions
-    corners = [
-        ticket_numbers[0][0],  # Top-Left: Row1-Col1
-        ticket_numbers[0][8],  # Top-Right: Row1-Col9
-        ticket_numbers[2][0],  # Bottom-Left: Row3-Col1
-        ticket_numbers[2][8],  # Bottom-Right: Row3-Col9
-    ]
+    # Find corner numbers (not positions)
+    top_row = ticket_numbers[0]
+    bottom_row = ticket_numbers[2]
     
-    # All corners must have numbers (not None/0)
-    for corner in corners:
-        if corner is None or corner == 0:
-            return False  # This corner position is blank
+    # Get actual numbers in each row (excluding blanks)
+    top_numbers = [(idx, num) for idx, num in enumerate(top_row) if num is not None and num != 0]
+    bottom_numbers = [(idx, num) for idx, num in enumerate(bottom_row) if num is not None and num != 0]
+    
+    if len(top_numbers) < 2 or len(bottom_numbers) < 2:
+        return False
+    
+    # Sort by column position to get leftmost and rightmost
+    top_numbers.sort(key=lambda x: x[0])
+    bottom_numbers.sort(key=lambda x: x[0])
+    
+    # Get the 4 corner numbers
+    corners = [
+        top_numbers[0][1],      # Top-Left: First number in top row
+        top_numbers[-1][1],     # Top-Right: Last number in top row
+        bottom_numbers[0][1],   # Bottom-Left: First number in bottom row
+        bottom_numbers[-1][1],  # Bottom-Right: Last number in bottom row
+    ]
     
     # All corners must be marked (called)
     return all(corner in called_set for corner in corners)
@@ -130,33 +141,41 @@ def check_four_corners(ticket_numbers, called_numbers):
 
 def check_star(ticket_numbers, called_numbers):
     """
-    STAR PATTERN: Mark 5 numbers - 4 corners + center cell
-    
-    Positions:
-    - Top-Left:     Row1-Col1 (position [0][0])
-    - Top-Right:    Row1-Col9 (position [0][8])
-    - Center:       Row2-Col5 (position [1][4])
-    - Bottom-Left:  Row3-Col1 (position [2][0])
-    - Bottom-Right: Row3-Col9 (position [2][8])
+    STAR PATTERN: Mark 5 numbers - 4 corners + center number in middle row
     """
-    if len(ticket_numbers) < 3 or len(ticket_numbers[0]) < 9:
+    if len(ticket_numbers) < 3:
         return False
     
     called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
     
-    # Get star positions
-    star_positions = [
-        ticket_numbers[0][0],  # Top-Left
-        ticket_numbers[0][8],  # Top-Right
-        ticket_numbers[1][4],  # Center (Row2-Col5)
-        ticket_numbers[2][0],  # Bottom-Left
-        ticket_numbers[2][8],  # Bottom-Right
-    ]
+    # Get corners first
+    top_row = ticket_numbers[0]
+    middle_row = ticket_numbers[1]
+    bottom_row = ticket_numbers[2]
     
-    # All positions must have numbers
-    for pos in star_positions:
-        if pos is None or pos == 0:
-            return False
+    top_numbers = [(idx, num) for idx, num in enumerate(top_row) if num is not None and num != 0]
+    middle_numbers = [(idx, num) for idx, num in enumerate(middle_row) if num is not None and num != 0]
+    bottom_numbers = [(idx, num) for idx, num in enumerate(bottom_row) if num is not None and num != 0]
+    
+    if len(top_numbers) < 2 or len(middle_numbers) < 1 or len(bottom_numbers) < 2:
+        return False
+    
+    top_numbers.sort(key=lambda x: x[0])
+    middle_numbers.sort(key=lambda x: x[0])
+    bottom_numbers.sort(key=lambda x: x[0])
+    
+    # Get center number from middle row (middle position)
+    center_idx = len(middle_numbers) // 2
+    center_num = middle_numbers[center_idx][1]
+    
+    # Star positions: 4 corners + center
+    star_positions = [
+        top_numbers[0][1],      # Top-Left
+        top_numbers[-1][1],     # Top-Right
+        center_num,             # Center
+        bottom_numbers[0][1],   # Bottom-Left
+        bottom_numbers[-1][1],  # Bottom-Right
+    ]
     
     # All must be marked
     return all(pos in called_set for pos in star_positions)
@@ -210,8 +229,9 @@ def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=2):
     
     # Check each ticket has at least min_marks_per_ticket marked
     for ticket in tickets:
+        ticket_numbers = ticket.get("numbers", ticket) if isinstance(ticket, dict) else ticket
         marked_count = 0
-        for row in ticket:
+        for row in ticket_numbers:
             for num in row:
                 if num is not None and num != 0 and num in called_set:
                     marked_count += 1
@@ -261,9 +281,6 @@ def detect_all_patterns(ticket_numbers, called_numbers):
         
         # Full house
         "Full House": check_full_house(ticket_numbers, called_set),
-        "1st House": check_full_house(ticket_numbers, called_set),
-        "2nd House": check_full_house(ticket_numbers, called_set),
-        "3rd House": check_full_house(ticket_numbers, called_set),
     }
 
 
@@ -312,14 +329,17 @@ def check_all_winners(ticket, called_numbers, prize_type):
         "corners": check_four_corners,
         "star": check_star,
         
-        # House prizes
+        # House prizes - all use same check function
         "full house": check_full_house,
+        "1st full house": check_full_house,
+        "first full house": check_full_house,
+        "2nd full house": check_full_house,
+        "second full house": check_full_house,
+        "3rd full house": check_full_house,
+        "third full house": check_full_house,
         "1st house": check_full_house,
-        "first house": check_full_house,
         "2nd house": check_full_house,
-        "second house": check_full_house,
         "3rd house": check_full_house,
-        "third house": check_full_house,
         "housie": check_full_house,
     }
     
@@ -331,21 +351,21 @@ def check_all_winners(ticket, called_numbers, prize_type):
     return None
 
 
-async def auto_detect_winners(db, game_id, called_numbers, existing_winners):
+async def auto_detect_winners(db, game_id, called_numbers, existing_winners, game_dividends=None):
     """
     Automatically detect winners for all patterns.
     Returns dict of newly detected winners.
     
     Prize detection order:
-    1. Early Five - first to mark any 5 numbers
-    2. Top Line - complete first row
-    3. Middle Line - complete second row
-    4. Bottom Line - complete third row
-    5. Four Corners - mark all 4 corner positions
-    6. Star - mark 4 corners + center
-    7. 1st House - first to complete all 15 numbers (Main Jackpot)
-    8. 2nd House - second to complete all 15 numbers
-    9. 3rd House - third to complete all 15 numbers
+    1. Quick Five / Early Five - first to mark any 5 numbers
+    2. Four Corners - mark all 4 corner numbers of a single ticket
+    3. Top Line - complete first row
+    4. Middle Line - complete second row
+    5. Bottom Line - complete third row
+    6. Full Sheet Bonus - 2+ marks on each of 6 tickets in a sheet
+    7. 1st Full House - first to complete all 15 numbers (Main Jackpot)
+    8. 2nd Full House - second to complete all 15 numbers
+    9. 3rd Full House - third to complete all 15 numbers
     """
     if not called_numbers or len(called_numbers) < 5:
         return {}
@@ -362,18 +382,25 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners):
     if not tickets:
         return {}
     
-    # Regular patterns to check (excluding house prizes)
-    patterns_to_check = [
-        "Early Five",
-        "Top Line",
-        "Middle Line",
-        "Bottom Line",
-        "Four Corners",
-        "Star",
-    ]
+    # Determine which prizes to check based on game_dividends
+    prizes_to_check = []
+    if game_dividends:
+        for prize_name in game_dividends.keys():
+            prizes_to_check.append(prize_name)
+    else:
+        # Default prizes
+        prizes_to_check = [
+            "Quick Five", "Early Five",
+            "Four Corners",
+            "Top Line", "Middle Line", "Bottom Line",
+            "1st Full House", "2nd Full House", "3rd Full House"
+        ]
     
-    # Track Full House winners for 1st, 2nd, 3rd house
-    full_house_winners = []
+    # Track Full House winners in order
+    full_house_tickets = []  # List of (ticket_id, ticket_data)
+    
+    # Track Full Sheet Bonus by sheet
+    sheets = {}  # full_sheet_id -> list of tickets
     
     for ticket in tickets:
         user_id = ticket.get("user_id")
@@ -385,40 +412,104 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners):
         if not ticket_numbers or len(ticket_numbers) < 3:
             continue
         
-        patterns = detect_all_patterns(ticket_numbers, called_numbers)
+        ticket_id = ticket.get("ticket_id")
+        full_sheet_id = ticket.get("full_sheet_id")
         
-        # Check regular patterns
-        for pattern in patterns_to_check:
-            if pattern in existing_winners or pattern in new_winners:
-                continue
-            
-            if patterns.get(pattern, False):
-                new_winners[pattern] = {
+        # Group tickets by full sheet for Full Sheet Bonus
+        if full_sheet_id:
+            if full_sheet_id not in sheets:
+                sheets[full_sheet_id] = {"user_id": user_id, "holder_name": holder_name, "tickets": []}
+            sheets[full_sheet_id]["tickets"].append(ticket)
+        
+        # Check single-ticket patterns
+        patterns = detect_all_patterns(ticket_numbers, called_set)
+        
+        # Check Quick Five / Early Five
+        for prize_name in ["Quick Five", "Early Five"]:
+            if prize_name in prizes_to_check and prize_name not in existing_winners and prize_name not in new_winners:
+                if patterns.get(prize_name, False) or patterns.get("Early Five", False):
+                    new_winners[prize_name] = {
+                        "user_id": user_id,
+                        "ticket_id": ticket_id,
+                        "ticket_number": ticket.get("ticket_number"),
+                        "holder_name": holder_name,
+                        "pattern": prize_name
+                    }
+                    logger.info(f"🎉 Winner: {holder_name or user_id} - {prize_name}")
+        
+        # Check Four Corners (single ticket)
+        if "Four Corners" in prizes_to_check and "Four Corners" not in existing_winners and "Four Corners" not in new_winners:
+            if patterns.get("Four Corners", False):
+                new_winners["Four Corners"] = {
                     "user_id": user_id,
-                    "ticket_id": ticket.get("ticket_id"),
+                    "ticket_id": ticket_id,
                     "ticket_number": ticket.get("ticket_number"),
                     "holder_name": holder_name,
-                    "pattern": pattern
+                    "pattern": "Four Corners"
                 }
-                logger.info(f"🎉 Winner: {holder_name or user_id} - {pattern}")
+                logger.info(f"🎉 Winner: {holder_name or user_id} - Four Corners")
         
-        # Check Full House
+        # Check Line patterns
+        for line_name in ["Top Line", "Middle Line", "Bottom Line"]:
+            if line_name in prizes_to_check and line_name not in existing_winners and line_name not in new_winners:
+                if patterns.get(line_name, False):
+                    new_winners[line_name] = {
+                        "user_id": user_id,
+                        "ticket_id": ticket_id,
+                        "ticket_number": ticket.get("ticket_number"),
+                        "holder_name": holder_name,
+                        "pattern": line_name
+                    }
+                    logger.info(f"🎉 Winner: {holder_name or user_id} - {line_name}")
+        
+        # Check Full House - collect all tickets that have completed Full House
         if patterns.get("Full House", False):
-            ticket_id = ticket.get("ticket_id")
-            already_won = any(w.get("ticket_id") == ticket_id for w in full_house_winners)
+            # Check if this ticket already won a house prize
+            already_won = (
+                ticket_id in [w.get("ticket_id") for w in existing_winners.values() if "Full House" in w.get("pattern", "")] or
+                ticket_id in [w.get("ticket_id") for w in new_winners.values() if "Full House" in w.get("pattern", "")]
+            )
             if not already_won:
-                full_house_winners.append({
+                full_house_tickets.append({
                     "user_id": user_id,
                     "ticket_id": ticket_id,
                     "ticket_number": ticket.get("ticket_number"),
                     "holder_name": holder_name
                 })
     
-    # Assign 1st, 2nd, 3rd House prizes
-    house_prizes = ["1st House", "2nd House", "3rd House"]
-    for idx, winner_data in enumerate(full_house_winners[:3]):
-        prize = house_prizes[idx]
-        if prize not in existing_winners and prize not in new_winners:
+    # Check Full Sheet Bonus (requires 6 tickets with 2+ marks each)
+    if "Full Sheet Bonus" in prizes_to_check and "Full Sheet Bonus" not in existing_winners and "Full Sheet Bonus" not in new_winners:
+        for sheet_id, sheet_data in sheets.items():
+            if len(sheet_data["tickets"]) == 6:
+                # Check if all 6 tickets have at least 2 marks
+                all_have_marks = True
+                for t in sheet_data["tickets"]:
+                    marks = get_marked_count(t.get("numbers", []), called_set)
+                    if marks < 2:
+                        all_have_marks = False
+                        break
+                
+                if all_have_marks:
+                    new_winners["Full Sheet Bonus"] = {
+                        "user_id": sheet_data["user_id"],
+                        "full_sheet_id": sheet_id,
+                        "holder_name": sheet_data["holder_name"],
+                        "pattern": "Full Sheet Bonus"
+                    }
+                    logger.info(f"🎉 Winner: {sheet_data['holder_name'] or sheet_data['user_id']} - Full Sheet Bonus")
+                    break
+    
+    # Assign 1st, 2nd, 3rd Full House prizes in order
+    house_prizes = ["1st Full House", "2nd Full House", "3rd Full House"]
+    existing_house_count = sum(1 for p in existing_winners.keys() if "Full House" in p)
+    
+    for idx, winner_data in enumerate(full_house_tickets):
+        prize_idx = existing_house_count + idx
+        if prize_idx >= len(house_prizes):
+            break
+        
+        prize = house_prizes[prize_idx]
+        if prize in prizes_to_check and prize not in existing_winners and prize not in new_winners:
             new_winners[prize] = {
                 "user_id": winner_data["user_id"],
                 "ticket_id": winner_data["ticket_id"],
@@ -447,10 +538,6 @@ async def check_all_dividends_claimed(game_dividends: dict, current_winners: dic
         return False
     
     for prize_type in game_dividends.keys():
-        # Skip Full Sheet Bonus (handled separately)
-        if "Full Sheet" in prize_type or "Bonus" in prize_type:
-            continue
-        
         if prize_type not in current_winners:
             return False
     
