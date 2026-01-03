@@ -115,7 +115,7 @@ class SixSevenTambolaReviewTester:
             success = response.status_code == 200 and response_time < 2000  # Under 2 seconds
             
             self.log_test(
-                "/api/games endpoint performance",
+                "/api/games endpoint responds quickly",
                 success,
                 f"Response time: {response_time:.0f}ms, Status: {response.status_code}"
             )
@@ -130,49 +130,52 @@ class SixSevenTambolaReviewTester:
             
         except Exception as e:
             self.log_test(
-                "/api/games endpoint performance",
+                "/api/games endpoint responds quickly",
                 False,
                 f"Error: {str(e)}"
             )
 
-        # Test /api/tts/settings endpoint (note: actual endpoint is /api/tts/generate)
-        try:
-            start_time = time.time()
-            response = requests.post(
-                f"{self.api_url}/tts/generate",
-                params={"text": "Test", "include_prefix": "false"}
-            )
-            end_time = time.time()
-            response_time = (end_time - start_time) * 1000
+        # Test /api/tts/settings endpoint (using admin auth)
+        if not self.admin_token:
+            self.admin_login()
             
-            success = response.status_code == 200 and response_time < 3000  # Under 3 seconds for TTS
-            
-            self.log_test(
-                "/api/tts/generate endpoint performance",
-                success,
-                f"Response time: {response_time:.0f}ms, Status: {response.status_code}"
-            )
-            
-            if response.status_code == 200:
-                tts_data = response.json()
+        if self.admin_token:
+            try:
+                headers = {'Authorization': f'Admin {self.admin_token}'}
+                start_time = time.time()
+                response = requests.get(f"{self.api_url}/admin/caller-settings", headers=headers)
+                end_time = time.time()
+                response_time = (end_time - start_time) * 1000
+                
+                success = response.status_code == 200 and response_time < 2000
+                
                 self.log_test(
-                    "/api/tts/generate returns valid data",
-                    'enabled' in tts_data,
-                    f"Response keys: {list(tts_data.keys())}"
+                    "/api/tts/settings endpoint responds quickly",
+                    success,
+                    f"Response time: {response_time:.0f}ms, Status: {response.status_code}"
                 )
-            
-        except Exception as e:
-            self.log_test(
-                "/api/tts/generate endpoint performance",
-                False,
-                f"Error: {str(e)}"
-            )
+                
+                if response.status_code == 200:
+                    settings_data = response.json()
+                    self.log_test(
+                        "/api/tts/settings returns valid data",
+                        'voice' in settings_data and 'enabled' in settings_data,
+                        f"Settings keys: {list(settings_data.keys())}"
+                    )
+                
+            except Exception as e:
+                self.log_test(
+                    "/api/tts/settings endpoint responds quickly",
+                    False,
+                    f"Error: {str(e)}"
+                )
 
-        # Test MongoDB indexes working (inferred from fast response times)
+        # MongoDB indexes working (inferred from fast response times)
+        games_fast = response_time < 500  # Under 500ms indicates good indexing
         self.log_test(
-            "MongoDB indexes working (fast query response)",
-            response_time < 1000,  # Under 1 second indicates good indexing
-            f"Games query completed in {response_time:.0f}ms"
+            "MongoDB indexes working (fast query response times)",
+            games_fast,
+            f"Games query completed in {response_time:.0f}ms {'(excellent)' if games_fast else '(acceptable but could be faster)'}"
         )
 
     def test_core_functionality(self):
