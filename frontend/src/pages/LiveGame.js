@@ -44,7 +44,9 @@ export default function LiveGame() {
           speechSynthRef.current = v.find(x => x.lang.includes('en-IN')) || v.find(x => x.lang.includes('en')) || v[0];
         };
       }
-    } catch (e) {}
+    } catch (e) {
+      console.log('Audio init:', e);
+    }
   }, []);
 
   // Celebrate winner
