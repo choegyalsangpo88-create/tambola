@@ -2070,6 +2070,10 @@ class TambolaAPITester:
         print("\n🎯 SIX SEVEN TAMBOLA REVIEW REQUEST RESULTS:")
         print(f"   Review Request Tests: {'✅ PASS' if review_request_success else '❌ FAIL'}")
         
+        # Critical test results
+        print("\n🚨 CRITICAL TEST RESULTS:")
+        print(f"   Full Sheet Bonus Detection Fix: {'✅ PASS' if full_sheet_bonus_fix_success else '❌ FAIL'}")
+        
         if ticket_selection_success:
             # Additional test results (Priority 4)
             print("\n📋 ADDITIONAL TEST SUITE RESULTS:")
