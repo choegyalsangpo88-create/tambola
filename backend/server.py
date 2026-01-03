@@ -2236,13 +2236,27 @@ async def auto_call_user_game_numbers():
             if last_call:
                 try:
                     last_call_dt = datetime.fromisoformat(last_call.replace('Z', '+00:00'))
-                    if (now - last_call_dt).total_seconds() < 8:
+                    # Call every 10 seconds for classic Tambola pacing
+                    if (now - last_call_dt).total_seconds() < 10:
                         continue
                 except:
                     pass
             
             called = game.get("called_numbers", [])
-            if len(called) >= 90:
+            
+            # Stop calling if all 90 numbers called or game completed
+            if len(called) >= 90 or game.get("status") == "completed":
+                # Mark game as completed if all numbers called
+                if len(called) >= 90 and game.get("status") != "completed":
+                    await db.user_games.update_one(
+                        {"user_game_id": game["user_game_id"]},
+                        {"$set": {
+                            "status": "completed",
+                            "auto_call_enabled": False,
+                            "ended_at": now.isoformat()
+                        }}
+                    )
+                    logger.info(f"User game {game['user_game_id']} completed - all 90 numbers called")
                 continue
             
             all_numbers = list(range(1, 91))
@@ -2261,7 +2275,7 @@ async def auto_call_user_game_numbers():
                     }}
                 )
                 
-                logger.info(f"Auto-called number {next_number} for user game {game['user_game_id']}")
+                logger.info(f"Auto-called number {next_number} for user game {game['user_game_id']} ({len(called)}/90)")
                 
                 # Check for winners
                 await check_user_game_winners(game["user_game_id"], called)
