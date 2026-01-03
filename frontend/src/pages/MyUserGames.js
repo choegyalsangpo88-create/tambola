@@ -128,23 +128,34 @@ export default function MyUserGames() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDelete(game.user_game_id, e)}
+                      className="text-gray-400 hover:text-red-400"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                    {game.status === 'live' && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/user-game-play/${game.user_game_id}`);
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 animate-pulse"
+                      >
+                        <Play className="w-4 h-4 mr-1" /> Join Live
+                      </Button>
+                    )}
                     {game.status === 'upcoming' && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={(e) => handleDelete(game.user_game_id, e)}
-                        className="text-gray-400 hover:text-red-400"
+                        className="text-gray-400 hover:text-white"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Settings className="w-5 h-5" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-white"
-                    >
-                      {game.status === 'live' ? <Play className="w-5 h-5" /> : <Settings className="w-5 h-5" />}
-                    </Button>
                   </div>
                 </div>
               </div>
