@@ -283,21 +283,33 @@ export default function UserGameDetails() {
       {/* Fixed Bottom Bar */}
       {game.status === 'upcoming' && (
         <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t border-white/10 p-4">
-          <div className="max-w-4xl mx-auto flex gap-3">
-            <Button
-              onClick={() => navigate(`/edit-game/${userGameId}`)}
-              variant="outline"
-              className="flex-1 h-12 border-white/10 text-white hover:bg-white/10"
-            >
-              <Edit2 className="w-4 h-4 mr-2" /> Edit Game
-            </Button>
-            <Button
-              onClick={handleStartGame}
-              disabled={players.length === 0}
-              className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 font-bold"
-            >
-              <Play className="w-4 h-4 mr-2" /> Start Game
-            </Button>
+          <div className="max-w-4xl mx-auto space-y-3">
+            {/* Host Book Ticket Button */}
+            {!hostHasTicket && (
+              <Button
+                onClick={handleHostBookTicket}
+                variant="outline"
+                className="w-full h-10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+              >
+                <Ticket className="w-4 h-4 mr-2" /> Book My Own Ticket
+              </Button>
+            )}
+            <div className="flex gap-3">
+              <Button
+                onClick={() => navigate(`/edit-game/${userGameId}`)}
+                variant="outline"
+                className="flex-1 h-12 border-white/10 text-white hover:bg-white/10"
+              >
+                <Edit2 className="w-4 h-4 mr-2" /> Edit Game
+              </Button>
+              <Button
+                onClick={handleStartGame}
+                disabled={players.length === 0}
+                className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 font-bold"
+              >
+                <Play className="w-4 h-4 mr-2" /> Start Game
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -309,7 +321,7 @@ export default function UserGameDetails() {
               onClick={() => navigate(`/user-game-play/${userGameId}`)}
               className="w-full h-14 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold text-lg animate-pulse"
             >
-              <Play className="w-5 h-5 mr-2" /> Continue Live Game
+              <Play className="w-5 h-5 mr-2" /> Join Live Game
             </Button>
           </div>
         </div>
