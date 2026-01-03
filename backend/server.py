@@ -2215,18 +2215,34 @@ async def auto_call_user_game_numbers():
     """Automatically call numbers for live user games"""
     now = datetime.now(timezone.utc)
     
+    # Find all live user games (including those without auto_call_enabled flag)
     live_games = await db.user_games.find({
-        "status": "live",
-        "auto_call_enabled": True
+        "status": "live"
     }, {"_id": 0}).to_list(100)
     
+    # Enable auto-call for games that don't have the flag
     for game in live_games:
+        if "auto_call_enabled" not in game or game.get("auto_call_enabled") is None:
+            await db.user_games.update_one(
+                {"user_game_id": game["user_game_id"]},
+                {"$set": {"auto_call_enabled": True, "last_call_time": now.isoformat()}}
+            )
+            game["auto_call_enabled"] = True
+            game["last_call_time"] = now.isoformat()
+    
+    for game in live_games:
+        if not game.get("auto_call_enabled", True):
+            continue
+            
         try:
             last_call = game.get("last_call_time")
             if last_call:
-                last_call_dt = datetime.fromisoformat(last_call.replace('Z', '+00:00'))
-                if (now - last_call_dt).total_seconds() < 8:
-                    continue
+                try:
+                    last_call_dt = datetime.fromisoformat(last_call.replace('Z', '+00:00'))
+                    if (now - last_call_dt).total_seconds() < 8:
+                        continue
+                except:
+                    pass
             
             called = game.get("called_numbers", [])
             if len(called) >= 90:
@@ -2247,6 +2263,8 @@ async def auto_call_user_game_numbers():
                         "last_call_time": now.isoformat()
                     }}
                 )
+                
+                logger.info(f"Auto-called number {next_number} for user game {game['user_game_id']}")
                 
                 # Check for winners
                 await check_user_game_winners(game["user_game_id"], called)
