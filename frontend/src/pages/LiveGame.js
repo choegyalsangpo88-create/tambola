@@ -60,7 +60,7 @@ export default function LiveGame() {
     toast.success(`🏆 ${prize} Winner: ${winnerName}!`, { duration: 5000 });
   };
 
-  // Play TTS announcement
+  // Play TTS announcement - uses server TTS for iOS compatibility
   const playTTSAnnouncement = async (number) => {
     if (!soundEnabled || isAnnouncingRef.current || game?.status === 'completed') return;
     if (lastAnnouncedRef.current === number) return;
@@ -75,11 +75,48 @@ export default function LiveGame() {
       if (audioContextRef.current?.state === 'suspended') {
         await audioContextRef.current.resume();
       }
-      await speakWithBrowserTTS(callName);
+      
+      // Try server-side TTS first (works on iOS)
+      const played = await playServerTTS(callName);
+      
+      // Fallback to browser TTS if server TTS fails
+      if (!played) {
+        await speakWithBrowserTTS(callName);
+      }
     } catch (error) {
       console.log('TTS error:', error);
     } finally {
       isAnnouncingRef.current = false;
+    }
+  };
+
+  // Server-side TTS - works better on iOS
+  const playServerTTS = async (text) => {
+    try {
+      const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
+      const data = response.data;
+      
+      if (data.audio) {
+        // Play base64 audio
+        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+        audio.volume = 1.0;
+        
+        return new Promise((resolve) => {
+          audio.onended = () => resolve(true);
+          audio.onerror = () => resolve(false);
+          audio.play().then(() => {
+            // Audio started playing
+          }).catch(() => resolve(false));
+          
+          // Timeout safety
+          setTimeout(() => resolve(true), 5000);
+        });
+      }
+      
+      return false;
+    } catch (e) {
+      console.log('Server TTS error:', e);
+      return false;
     }
   };
 
