@@ -1775,7 +1775,7 @@ async def join_user_game(
     user_game_id: str,
     join_data: JoinUserGameRequest
 ):
-    """Join a user game (public - just needs name)"""
+    """Join a user game (public - just needs name). Supports specific ticket selection."""
     game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
@@ -1787,22 +1787,34 @@ async def join_user_game(
     tickets = game.get("tickets", [])
     available_tickets = [t for t in tickets if not t.get("assigned_to")]
     
-    if len(available_tickets) < join_data.ticket_count:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only {len(available_tickets)} tickets available"
-        )
+    # If specific ticket_ids provided, use those
+    if join_data.ticket_ids and len(join_data.ticket_ids) > 0:
+        # Validate requested tickets are available
+        available_ids = {t["ticket_id"] for t in available_tickets}
+        requested_ids = set(join_data.ticket_ids)
+        
+        unavailable = requested_ids - available_ids
+        if unavailable:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Some tickets are not available: {list(unavailable)}"
+            )
+        
+        assigned_ticket_ids = join_data.ticket_ids
+    else:
+        # Random assignment based on ticket_count
+        if len(available_tickets) < join_data.ticket_count:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only {len(available_tickets)} tickets available"
+            )
+        
+        assigned_ticket_ids = [available_tickets[i]["ticket_id"] for i in range(join_data.ticket_count)]
     
     # Assign tickets to player
-    assigned_ticket_ids = []
-    for i in range(join_data.ticket_count):
-        ticket_id = available_tickets[i]["ticket_id"]
-        assigned_ticket_ids.append(ticket_id)
-        # Update ticket in the array
-        for t in tickets:
-            if t["ticket_id"] == ticket_id:
-                t["assigned_to"] = join_data.player_name
-                break
+    for t in tickets:
+        if t["ticket_id"] in assigned_ticket_ids:
+            t["assigned_to"] = join_data.player_name
     
     # Add player to players list
     player_entry = {
