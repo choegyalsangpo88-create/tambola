@@ -151,8 +151,8 @@ export default function UserGamePlay() {
     setCurrentBall(number);
     setShowBallAnimation(true);
     
-    if (soundEnabled && game?.status === 'live') {
-      // Play TTS announcement
+    // Only play sound if audio is enabled (user clicked enable button)
+    if (soundEnabled && audioEnabled && game?.status === 'live') {
       await playTTSAnnouncement(number);
     }
     
@@ -160,8 +160,8 @@ export default function UserGamePlay() {
   };
 
   const playTTSAnnouncement = async (number) => {
-    // Don't play if game ended
-    if (game?.status === 'completed') return;
+    // Don't play if game ended or audio not enabled
+    if (game?.status === 'completed' || !audioEnabled) return;
     
     try {
       const callName = getCallName(number);
@@ -172,23 +172,52 @@ export default function UserGamePlay() {
           // Use API-generated audio
           const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
           audioRef.current = audio;
-          await audio.play().catch(() => {});
-        } else if (response.data.use_browser_tts && response.data.text) {
-          // Use browser's built-in speech synthesis
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(response.data.text);
-            utterance.rate = response.data.voice_settings?.speed || 1.0;
-            window.speechSynthesis.speak(utterance);
+          
+          // For mobile, we need to ensure AudioContext is active
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume();
           }
+          
+          await audio.play().catch(err => {
+            console.error('Audio play failed:', err);
+            // Fallback to browser TTS
+            speakWithBrowserTTS(response.data.text || callName);
+          });
+        } else if (response.data.use_browser_tts && response.data.text) {
+          speakWithBrowserTTS(response.data.text, response.data.voice_settings);
         }
       }
     } catch (error) {
       console.error('TTS failed:', error);
-      // Only play beep if game is still live
-      if (game?.status === 'live') {
-        playSound();
+      // Fallback to browser TTS
+      speakWithBrowserTTS(getCallName(number));
+    }
+  };
+
+  const speakWithBrowserTTS = (text, voiceSettings = {}) => {
+    if (!('speechSynthesis' in window) || !audioEnabled) return;
+    
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = voiceSettings.speed || 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      // Try to get Indian English voice
+      const voices = window.speechSynthesis.getVoices();
+      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
+      const englishVoice = voices.find(v => v.lang.includes('en'));
+      
+      if (indianVoice) {
+        utterance.voice = indianVoice;
+      } else if (englishVoice) {
+        utterance.voice = englishVoice;
       }
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Browser TTS failed:', error);
     }
   };
 
