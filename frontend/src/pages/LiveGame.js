@@ -18,50 +18,45 @@ export default function LiveGame() {
   const [myTickets, setMyTickets] = useState([]);
   const [allBookedTickets, setAllBookedTickets] = useState([]);
   const [markedNumbers, setMarkedNumbers] = useState(new Set());
-  const [topPlayers, setTopPlayers] = useState([]);
-  const [previousWinners, setPreviousWinners] = useState({});
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
-  const [audioEnabled, setAudioEnabled] = useState(false);
-  const [showAudioPrompt, setShowAudioPrompt] = useState(true);
-  const [isAnnouncing, setIsAnnouncing] = useState(false);
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
-  const ttsAudioRef = useRef(null);
   const audioContextRef = useRef(null);
   const speechSynthRef = useRef(null);
   const lastAnnouncedRef = useRef(null);
+  const isAnnouncingRef = useRef(false);
+  const previousWinnersRef = useRef({});
 
-  // Pre-load voices for better mobile performance
-  const loadVoices = useCallback(() => {
-    if ('speechSynthesis' in window) {
-      const voices = window.speechSynthesis.getVoices();
-      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
-      const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
-      speechSynthRef.current = indianVoice || englishVoice || voices[0];
-    }
-  }, []);
-
-  // Enable audio on user interaction (required for mobile)
-  const enableAudio = async () => {
+  // Initialize audio
+  const initAudio = useCallback(() => {
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       }
-      await audioContextRef.current.resume();
-      
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        loadVoices();
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-        const utterance = new SpeechSynthesisUtterance('');
-        utterance.volume = 0;
-        window.speechSynthesis.speak(utterance);
+        const voices = window.speechSynthesis.getVoices();
+        speechSynthRef.current = voices.find(v => v.lang.includes('en-IN')) || 
+                                  voices.find(v => v.lang.includes('en')) || voices[0];
+        window.speechSynthesis.onvoiceschanged = () => {
+          const v = window.speechSynthesis.getVoices();
+          speechSynthRef.current = v.find(x => x.lang.includes('en-IN')) || v.find(x => x.lang.includes('en')) || v[0];
+        };
       }
-      
-      const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+0DEAAAHAAGgAAAANIAAANIAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+0LEJgAAA0gAAAAADSAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
-      await silentAudio.play().catch(() => {});
+    } catch (e) {}
+  }, []);
+
+  // Celebrate winner
+  const celebrateWinner = (prize, winnerName) => {
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.7 },
+      colors: ['#FFD700', '#FFA500', '#FF6347', '#00FF00']
+    });
+    toast.success(`🏆 ${prize} Winner: ${winnerName}!`, { duration: 5000 });
+  };
       
       setAudioEnabled(true);
       setShowAudioPrompt(false);
