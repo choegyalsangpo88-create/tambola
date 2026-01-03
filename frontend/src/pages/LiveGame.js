@@ -349,64 +349,83 @@ export default function LiveGame() {
           <div className="col-span-3 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
             <p className="text-[8px] text-amber-400 font-bold mb-1">Top Players</p>
             <div className="space-y-1.5 max-h-36 overflow-y-auto">
-              {allBookedTickets.length > 0 ? (
+              {allBookedTickets.length > 0 && game?.prizes ? (
                 (() => {
                   const calledSet = new Set(session.called_numbers || []);
                   const playerProgress = [];
+                  const gamePrizes = Object.keys(game.prizes || {});
                   
-                  // Calculate who is closest to winning each prize
+                  // Calculate who is closest to winning each prize (only check prizes in dividends)
                   allBookedTickets.forEach(ticket => {
                     const name = ticket.holder_name || ticket.booked_by_name || 'Player';
                     if (!ticket.numbers || ticket.numbers.length < 3) return;
                     
-                    // Top Line (5 numbers)
-                    const topRow = ticket.numbers[0].filter(n => n !== null);
-                    const topMarked = topRow.filter(n => calledSet.has(n)).length;
-                    const topRemaining = 5 - topMarked;
-                    if (topRemaining > 0 && topRemaining <= 3 && !session.winners?.['Top Line']) {
-                      playerProgress.push({ name, prize: 'Top Line', remaining: topRemaining });
-                    }
-                    
-                    // Middle Line
-                    const midRow = ticket.numbers[1].filter(n => n !== null);
-                    const midMarked = midRow.filter(n => calledSet.has(n)).length;
-                    const midRemaining = 5 - midMarked;
-                    if (midRemaining > 0 && midRemaining <= 3 && !session.winners?.['Middle Line']) {
-                      playerProgress.push({ name, prize: 'Middle Line', remaining: midRemaining });
-                    }
-                    
-                    // Bottom Line
-                    const botRow = ticket.numbers[2].filter(n => n !== null);
-                    const botMarked = botRow.filter(n => calledSet.has(n)).length;
-                    const botRemaining = 5 - botMarked;
-                    if (botRemaining > 0 && botRemaining <= 3 && !session.winners?.['Bottom Line']) {
-                      playerProgress.push({ name, prize: 'Bottom Line', remaining: botRemaining });
-                    }
-                    
-                    // Four Corners - check physical positions
-                    const corners = [
-                      ticket.numbers[0][0], ticket.numbers[0][8],
-                      ticket.numbers[2][0], ticket.numbers[2][8]
-                    ].filter(n => n !== null);
-                    if (corners.length === 4) {
-                      const cornersMarked = corners.filter(n => calledSet.has(n)).length;
-                      const cornersRemaining = 4 - cornersMarked;
-                      if (cornersRemaining > 0 && cornersRemaining <= 2 && !session.winners?.['Four Corners']) {
-                        playerProgress.push({ name, prize: 'Four Corners', remaining: cornersRemaining });
+                    // Check Top Line only if it's in dividends
+                    if (gamePrizes.includes('Top Line') && !session.winners?.['Top Line']) {
+                      const topRow = ticket.numbers[0].filter(n => n !== null);
+                      const topMarked = topRow.filter(n => calledSet.has(n)).length;
+                      const topRemaining = Math.min(5 - topMarked, 5);
+                      if (topRemaining > 0 && topRemaining <= 3) {
+                        playerProgress.push({ name, remaining: topRemaining });
                       }
                     }
                     
-                    // Full House (15 numbers)
-                    const allNums = ticket.numbers.flat().filter(n => n !== null);
-                    const fullMarked = allNums.filter(n => calledSet.has(n)).length;
-                    const fullRemaining = 15 - fullMarked;
-                    if (fullRemaining > 0 && fullRemaining <= 5 && !session.winners?.['1st Full House']) {
-                      playerProgress.push({ name, prize: 'Full House', remaining: fullRemaining });
+                    // Check Middle Line only if it's in dividends
+                    if (gamePrizes.includes('Middle Line') && !session.winners?.['Middle Line']) {
+                      const midRow = ticket.numbers[1].filter(n => n !== null);
+                      const midMarked = midRow.filter(n => calledSet.has(n)).length;
+                      const midRemaining = Math.min(5 - midMarked, 5);
+                      if (midRemaining > 0 && midRemaining <= 3) {
+                        playerProgress.push({ name, remaining: midRemaining });
+                      }
+                    }
+                    
+                    // Check Bottom Line only if it's in dividends
+                    if (gamePrizes.includes('Bottom Line') && !session.winners?.['Bottom Line']) {
+                      const botRow = ticket.numbers[2].filter(n => n !== null);
+                      const botMarked = botRow.filter(n => calledSet.has(n)).length;
+                      const botRemaining = Math.min(5 - botMarked, 5);
+                      if (botRemaining > 0 && botRemaining <= 3) {
+                        playerProgress.push({ name, remaining: botRemaining });
+                      }
+                    }
+                    
+                    // Check Four Corners only if it's in dividends
+                    if (gamePrizes.includes('Four Corners') && !session.winners?.['Four Corners']) {
+                      // Get first and last numbers in top and bottom rows
+                      const topNums = ticket.numbers[0].map((n, i) => ({n, i})).filter(x => x.n !== null);
+                      const botNums = ticket.numbers[2].map((n, i) => ({n, i})).filter(x => x.n !== null);
+                      if (topNums.length >= 2 && botNums.length >= 2) {
+                        const corners = [topNums[0].n, topNums[topNums.length-1].n, botNums[0].n, botNums[botNums.length-1].n];
+                        const cornersMarked = corners.filter(n => calledSet.has(n)).length;
+                        const cornersRemaining = Math.min(4 - cornersMarked, 5);
+                        if (cornersRemaining > 0 && cornersRemaining <= 2) {
+                          playerProgress.push({ name, remaining: cornersRemaining });
+                        }
+                      }
+                    }
+                    
+                    // Check Full House variants
+                    const fullHousePrizes = gamePrizes.filter(p => p.includes('Full House'));
+                    if (fullHousePrizes.length > 0 && !session.winners?.['1st Full House']) {
+                      const allNums = ticket.numbers.flat().filter(n => n !== null);
+                      const fullMarked = allNums.filter(n => calledSet.has(n)).length;
+                      const fullRemaining = Math.min(15 - fullMarked, 5);
+                      if (fullRemaining > 0 && fullRemaining <= 5) {
+                        playerProgress.push({ name, remaining: fullRemaining });
+                      }
                     }
                   });
                   
-                  // Sort by remaining (fewer = closer to winning) and take top 5
-                  const top5 = playerProgress
+                  // Sort by remaining (fewer = closer to winning), take top 5, remove duplicates
+                  const uniquePlayers = {};
+                  playerProgress.forEach(p => {
+                    if (!uniquePlayers[p.name] || uniquePlayers[p.name].remaining > p.remaining) {
+                      uniquePlayers[p.name] = p;
+                    }
+                  });
+                  
+                  const top5 = Object.values(uniquePlayers)
                     .sort((a, b) => a.remaining - b.remaining)
                     .slice(0, 5);
                   
@@ -416,12 +435,9 @@ export default function LiveGame() {
                   
                   return top5.map((p, idx) => (
                     <div key={idx} className="bg-white/5 rounded px-1.5 py-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[8px] text-white font-medium truncate max-w-[45px]">{p.name.split(' ')[0]}</span>
-                        <span className="text-[7px] text-amber-400">{p.prize}</span>
-                      </div>
+                      <span className="text-[9px] text-white font-medium truncate block">{p.name.split(' ')[0]}</span>
                       <div className="flex gap-0.5 mt-0.5">
-                        {Array.from({ length: p.remaining }).map((_, i) => (
+                        {Array.from({ length: Math.min(p.remaining, 5) }).map((_, i) => (
                           <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
                         ))}
                       </div>
