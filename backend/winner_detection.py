@@ -96,38 +96,54 @@ def check_full_house(ticket_numbers, called_numbers):
 
 def check_four_corners(ticket_numbers, called_numbers):
     """
-    FOUR CORNERS: Mark the 4 numbers at the PHYSICAL corner positions of the 3x9 grid
+    FOUR CORNERS: Mark the FIRST and LAST numbers in the TOP row and BOTTOM row.
     
-    A Tambola ticket is a 3 rows × 9 columns grid.
-    The FOUR CORNERS are at these FIXED positions:
-    - Top-Left:     Position [0][0] (Row 1, Column 1)
-    - Top-Right:    Position [0][8] (Row 1, Column 9)
-    - Bottom-Left:  Position [2][0] (Row 3, Column 1)
-    - Bottom-Right: Position [2][8] (Row 3, Column 9)
+    NOT the physical corner positions! Find the actual numbers:
+    - Top-Left Corner: FIRST number (leftmost) in Row 1
+    - Top-Right Corner: LAST number (rightmost) in Row 1
+    - Bottom-Left Corner: FIRST number (leftmost) in Row 3
+    - Bottom-Right Corner: LAST number (rightmost) in Row 3
     
-    ALL FOUR corner positions must have numbers (not blank) AND all must be marked.
-    If any corner position is blank (None), this ticket CANNOT win Four Corners.
+    Example:
+    Top row:    [0, 8, 0, 0, 0, 0, 0, 80, 0] -> First=8, Last=80
+    Bottom row: [12, 0, 40, 53, 0, 0, 70, 0, 0] -> First=12, Last=70
+    Four Corners = 8, 80, 12, 70
     
-    Example from T001:
-    - [0][0] = 4    (top-left)
-    - [0][8] = 61   (top-right) - Note: might be None if blank
-    - [2][0] = 7    (bottom-left)
-    - [2][8] = 75   (bottom-right) - Note: might be None if blank
+    ALL tickets can potentially win Four Corners (no blank corner restriction).
     """
-    if len(ticket_numbers) < 3 or len(ticket_numbers[0]) < 9:
+    if len(ticket_numbers) < 3:
         return False
     
     called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
     
-    # Get values at the 4 PHYSICAL corner positions
-    top_left = ticket_numbers[0][0]      # Row 1, Col 1
-    top_right = ticket_numbers[0][8]     # Row 1, Col 9
-    bottom_left = ticket_numbers[2][0]   # Row 3, Col 1
-    bottom_right = ticket_numbers[2][8]  # Row 3, Col 9
+    top_row = ticket_numbers[0]
+    bottom_row = ticket_numbers[2]
     
-    corners = [top_left, top_right, bottom_left, bottom_right]
+    # Get numbers with their positions in top row
+    top_numbers = [(idx, num) for idx, num in enumerate(top_row) if num is not None and num != 0]
+    bottom_numbers = [(idx, num) for idx, num in enumerate(bottom_row) if num is not None and num != 0]
     
-    # ALL four corners must have numbers (not None/0)
+    if len(top_numbers) < 2 or len(bottom_numbers) < 2:
+        return False
+    
+    # Sort by position to get first (leftmost) and last (rightmost)
+    top_numbers.sort(key=lambda x: x[0])
+    bottom_numbers.sort(key=lambda x: x[0])
+    
+    # Four Corners are:
+    # - First number in top row (leftmost)
+    # - Last number in top row (rightmost)
+    # - First number in bottom row (leftmost)
+    # - Last number in bottom row (rightmost)
+    corners = [
+        top_numbers[0][1],      # Top-Left: First number in top row
+        top_numbers[-1][1],     # Top-Right: Last number in top row
+        bottom_numbers[0][1],   # Bottom-Left: First number in bottom row
+        bottom_numbers[-1][1],  # Bottom-Right: Last number in bottom row
+    ]
+    
+    # All four corner numbers must be marked
+    return all(corner in called_set for corner in corners)
     # If any corner is blank, this ticket cannot win Four Corners
     for corner in corners:
         if corner is None or corner == 0:
