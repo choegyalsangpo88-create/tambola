@@ -543,6 +543,18 @@ frontend:
         agent: "testing"
         comment: "✅ CRITICAL FIXES TESTING COMPLETE: RecursionError FIXED! Comprehensive testing verified all critical fixes working perfectly: 1) ADMIN GAME AUTO-START ✅ - Created admin game with past start time (5 mins ago), game automatically transitioned from 'upcoming' to 'live' status within 10 seconds, game session created with auto_call_enabled: true, auto number calling verified (numbers called automatically every ~10 seconds) ✅, 2) USER GAME CREATION WITH TICKETS ✅ - generates proper 3x9 Tambola grids with 15 numbers per ticket, 5 numbers per row, proper ticket structure with ticket_id/numbers/assigned_to fields ✅, 3) DUPLICATE GAME PREVENTION ✅ - blocks same name/date/time games with clear error message 'A game with same name, date and time already exists. Please change at least one.' ✅, 4) TTS ENDPOINT ✅ - POST /api/tts/generate working perfectly with exact review request parameters (text=Number%2045&include_prefix=true), returns audio data with prefix functionality, use_browser_tts: false, proper voice settings ✅. All critical fixes are now WORKING and production-ready!"
 
+  - task: "Winner Detection Fixes - Four Corners, Full House, Full Sheet Bonus, TTS"
+    implemented: true
+    working: true
+    file: "/app/backend/winner_detection.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ WINNER DETECTION FIXES TESTING COMPLETE (100% SUCCESS): Comprehensive testing of FIXED winner detection for Six Seven Tambola completed with 5/5 tests passing! RESULTS: 1) FOUR CORNERS DETECTION FIX ✅ - Now correctly finds actual corner NUMBERS (first/last number in top/bottom rows) instead of fixed grid positions [0][0], [0][8], [2][0], [2][8]. Test ticket with corners 4, 61, 7, 75 correctly detected ✅, 2) FULL HOUSE DETECTION ✅ - Properly detects when ALL 15 numbers are marked, correctly rejects incomplete houses (14/15 numbers), sequential 1st/2nd/3rd Full House assignment working ✅, 3) FULL SHEET BONUS ✅ - Correctly requires 2+ marks on each of 6 tickets, properly rejects when any ticket has insufficient marks ✅, 4) TTS ENDPOINT FOR iOS ✅ - Returns audio data (base64) with server-side TTS (use_browser_tts: false), prefix functionality working, format: mp3, can be played on iOS Safari ✅, 5) INTEGRATION TEST ✅ - Complete game flow working: create game, join player, start game, call numbers, session tracking, winner detection system integrated ✅. ALL WINNER DETECTION FIXES ARE PRODUCTION-READY AND WORKING AS SPECIFIED!"
+
 test_plan:
   current_focus:
     - "All critical fixes verified and working"
