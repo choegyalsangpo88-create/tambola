@@ -23,14 +23,52 @@ export default function UserGamePlay() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentBall, setCurrentBall] = useState(null);
   const [showBallAnimation, setShowBallAnimation] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(false); // Track if user has enabled audio
+  const [showAudioPrompt, setShowAudioPrompt] = useState(true); // Show prompt to enable audio
   
   const audioRef = useRef(null);
   const pollIntervalRef = useRef(null);
+  const audioContextRef = useRef(null);
+
+  // Enable audio on user interaction (required for mobile)
+  const enableAudio = async () => {
+    try {
+      // Create AudioContext to unlock audio on mobile
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      await audioContextRef.current.resume();
+      
+      // Also initialize speech synthesis
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        // Speak empty string to initialize
+        const utterance = new SpeechSynthesisUtterance('');
+        utterance.volume = 0;
+        window.speechSynthesis.speak(utterance);
+      }
+      
+      // Play silent audio to unlock
+      const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+0DEAAAHAAGgAAAANIAAANIAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+0LEJgAAA0gAAAAADSAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
+      await silentAudio.play().catch(() => {});
+      
+      setAudioEnabled(true);
+      setShowAudioPrompt(false);
+      toast.success('🔊 Audio enabled! You will now hear number announcements.');
+    } catch (error) {
+      console.error('Failed to enable audio:', error);
+      toast.error('Could not enable audio. Please check your device settings.');
+    }
+  };
 
   useEffect(() => {
     fetchInitialData();
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      // Cleanup audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, [userGameId]);
 
