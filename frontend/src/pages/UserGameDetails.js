@@ -334,10 +334,17 @@ export default function UserGameDetails() {
 
       {game.status === 'live' && (
         <div className="fixed bottom-0 left-0 right-0 bg-[#121216] border-t border-white/10 p-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto flex gap-3">
+            <Button
+              onClick={handleDeleteGame}
+              variant="outline"
+              className="h-14 px-4 border-red-500/30 text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
             <Button
               onClick={() => navigate(`/user-game-play/${userGameId}`)}
-              className="w-full h-14 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold text-lg animate-pulse"
+              className="flex-1 h-14 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold text-lg animate-pulse"
             >
               <Play className="w-5 h-5 mr-2" /> Join Live Game
             </Button>
