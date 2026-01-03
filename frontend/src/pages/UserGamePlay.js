@@ -427,23 +427,55 @@ export default function UserGamePlay() {
       <div className="max-w-4xl mx-auto px-3 py-4">
         {/* Main Row: Caller Ball | Dividends - Equal Space */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* Left: Compact Caller Ball */}
+          {/* Left: 3D Caller Ball */}
           <div className="bg-black/30 rounded-xl p-3 flex flex-col items-center justify-center">
-            <div className={`relative transition-all duration-500 ${showBallAnimation ? 'scale-110' : 'scale-100'}`}>
-              <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br ${getBallColor(currentBall || session?.current_number || 0)} flex items-center justify-center shadow-xl`}
-                style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 -5px 15px rgba(0,0,0,0.3), inset 0 5px 15px rgba(255,255,255,0.3)' }}
+            <div className="sphere-3d" style={{ perspective: '1000px' }}>
+              <div 
+                className={`sphere-3d-inner relative transition-all duration-500 ${showBallAnimation ? 'ball-spin' : ''}`}
+                style={{ transformStyle: 'preserve-3d' }}
               >
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-inner">
-                  <span className="text-2xl md:text-3xl font-black text-gray-900">
-                    {currentBall || session?.current_number || '?'}
-                  </span>
+                {/* 3D Premium Ball */}
+                <div 
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-full relative"
+                  style={{
+                    background: `radial-gradient(circle at 30% 30%, ${getBallGradient(currentBall || session?.current_number || 0)})`,
+                    boxShadow: `
+                      0 15px 35px rgba(0,0,0,0.6),
+                      0 5px 15px rgba(0,0,0,0.4),
+                      inset 0 -10px 25px rgba(0,0,0,0.5),
+                      inset 0 10px 25px rgba(255,255,255,0.25),
+                      inset 0 0 40px rgba(0,0,0,0.3)
+                    `
+                  }}
+                >
+                  {/* Top highlight shine */}
+                  <div 
+                    className="absolute top-2 left-5 w-7 h-4 rounded-full opacity-70"
+                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.9), transparent)' }}
+                  />
+                  {/* White center circle with number */}
+                  <div 
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
+                    style={{
+                      width: '60px',
+                      height: '60px',
+                      background: 'radial-gradient(circle at 40% 40%, #ffffff, #f5f5f5 50%, #e8e8e8 80%, #ddd)',
+                      boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.15), 0 2px 4px rgba(255,255,255,0.5)'
+                    }}
+                  >
+                    <span className="text-3xl md:text-4xl font-black text-gray-900">
+                      {currentBall || session?.current_number || '?'}
+                    </span>
+                  </div>
                 </div>
+                {/* Ball shadow on surface */}
+                <div 
+                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-4 rounded-full opacity-50"
+                  style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.7), transparent 70%)' }}
+                />
               </div>
-              {showBallAnimation && (
-                <div className="absolute inset-0 rounded-full bg-white/30 animate-ping" />
-              )}
             </div>
-            <p className="text-amber-400 text-xs mt-2">{session?.called_numbers?.length || 0}/90 Numbers</p>
+            <p className="text-amber-400 text-xs mt-3">{session?.called_numbers?.length || 0}/90 Numbers</p>
           </div>
 
           {/* Right: Dividends with Winner Names */}
