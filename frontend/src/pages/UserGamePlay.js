@@ -238,45 +238,9 @@ export default function UserGamePlay() {
       }
     });
   };
-      }
-    } catch (error) {
-      console.log('API TTS unavailable, using browser TTS');
-      // Fallback to browser TTS on any error
-      await speakWithBrowserTTS(callName);
-    } finally {
-      setIsAnnouncing(false);
-    }
-  };
 
-  // Play base64 audio data
-  const playAudioData = (base64Audio) => {
-    return new Promise((resolve) => {
-      try {
-        // Resume AudioContext if needed
-        if (audioContextRef.current?.state === 'suspended') {
-          audioContextRef.current.resume();
-        }
-        
-        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-        audioRef.current = audio;
-        
-        audio.onended = resolve;
-        audio.onerror = () => {
-          console.log('Audio play error, falling back to TTS');
-          resolve();
-        };
-        
-        audio.play().catch(() => {
-          console.log('Could not play audio');
-          resolve();
-        });
-        
-        // Timeout fallback
-        setTimeout(resolve, 8000);
-      } catch (e) {
-        resolve();
-      }
-    });
+  const playSound = () => {
+    // Simple beep fallback
   };
 
   // Browser speech synthesis - reliable fallback
