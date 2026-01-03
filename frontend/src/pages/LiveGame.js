@@ -133,61 +133,6 @@ export default function LiveGame() {
       return false;
     }
   };
-      
-      if (data.audio) {
-        return new Promise((resolve) => {
-          const audio = new Audio();
-          audio.src = `data:audio/mp3;base64,${data.audio}`;
-          audio.volume = 1.0;
-          audio.preload = 'auto';
-          
-          audio.onended = () => resolve(true);
-          audio.onerror = (e) => {
-            console.log('Audio error:', e);
-            resolve(false);
-          };
-          
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((e) => {
-              console.log('Play failed:', e);
-              resolve(false);
-            });
-          }
-          
-          setTimeout(() => resolve(true), 6000);
-        });
-      }
-      
-      return false;
-    } catch (e) {
-      console.log('Server TTS error:', e);
-      return false;
-    }
-  };
-
-  const speakWithBrowserTTS = (text) => {
-    return new Promise((resolve) => {
-      if (!('speechSynthesis' in window)) {
-        resolve();
-        return;
-      }
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        utterance.lang = 'en-US';
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
-        window.speechSynthesis.speak(utterance);
-        setTimeout(resolve, 8000);
-      } catch (e) {
-        resolve();
-      }
-    });
-  };
 
   useEffect(() => {
     fetchGameData();
