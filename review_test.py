@@ -105,6 +105,9 @@ class SixSevenTambolaReviewTester:
         print("TEST 2: API PERFORMANCE")
         print("="*60)
         
+        games_success = False
+        tts_success = False
+        
         # Test /api/games endpoint performance
         try:
             start_time = time.time()
@@ -112,11 +115,11 @@ class SixSevenTambolaReviewTester:
             end_time = time.time()
             response_time = (end_time - start_time) * 1000  # Convert to milliseconds
             
-            success = response.status_code == 200 and response_time < 2000  # Under 2 seconds
+            games_success = response.status_code == 200 and response_time < 2000  # Under 2 seconds
             
             self.log_test(
                 "/api/games endpoint responds quickly",
-                success,
+                games_success,
                 f"Response time: {response_time:.0f}ms, Status: {response.status_code}"
             )
             
@@ -147,11 +150,11 @@ class SixSevenTambolaReviewTester:
                 end_time = time.time()
                 response_time = (end_time - start_time) * 1000
                 
-                success = response.status_code == 200 and response_time < 2000
+                tts_success = response.status_code == 200 and response_time < 2000
                 
                 self.log_test(
                     "/api/tts/settings endpoint responds quickly",
-                    success,
+                    tts_success,
                     f"Response time: {response_time:.0f}ms, Status: {response.status_code}"
                 )
                 
@@ -177,6 +180,8 @@ class SixSevenTambolaReviewTester:
             games_fast,
             f"Games query completed in {response_time:.0f}ms {'(excellent)' if games_fast else '(acceptable but could be faster)'}"
         )
+        
+        return games_success and tts_success
 
     def test_core_functionality(self):
         """Test 3: Core Functionality - Create admin game, verify tickets, test TTS"""
