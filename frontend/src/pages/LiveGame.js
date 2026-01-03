@@ -389,12 +389,11 @@ export default function LiveGame() {
 
           {/* CENTER: Caller Ball with Spin Animation */}
           <div className="col-span-5 bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10 flex flex-col items-center justify-center">
-            <div className={`relative transition-transform duration-500 ${lastPlayedNumber !== session.current_number ? 'animate-spin' : ''}`}>
+            <div className={`relative ${isSpinning ? 'ball-spin' : 'ball-pulse'}`}>
               <div 
-                className={`w-20 h-20 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-2xl`}
+                className={`w-20 h-20 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center`}
                 style={{ 
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 -6px 15px rgba(0,0,0,0.4), inset 0 6px 15px rgba(255,255,255,0.3)',
-                  animation: lastPlayedNumber !== session.current_number ? 'spin 0.5s ease-out' : 'none'
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 -6px 15px rgba(0,0,0,0.4), inset 0 6px 15px rgba(255,255,255,0.3)'
                 }}
               >
                 <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-inner">
