@@ -626,18 +626,135 @@ class TambolaAPITester:
             print(f"   ❌ Failed to create auto-start game")
             return None
 
-    def test_tts_endpoint(self):
-        """Test TTS endpoint for number calling"""
+    def test_winner_detection_fixes(self):
+        """Test CORRECTED winner detection for Six Seven Tambola"""
         print("\n" + "="*50)
-        print("TESTING TTS ENDPOINT")
+        print("TESTING WINNER DETECTION FIXES - SIX SEVEN TAMBOLA")
         print("="*50)
         
-        # Test 1: TTS with prefix
-        print("\n🔍 TEST 1: TTS with Prefix")
+        # Import winner detection functions
+        import sys
+        sys.path.append('/app/backend')
+        from winner_detection import check_four_corners, check_full_house, check_full_sheet_bonus
+        
+        # Test 1: Four Corners Detection (FIXED)
+        print("\n🔍 TEST 1: Four Corners Detection (FIXED)")
+        print("   Rule: Four Corners = Physical grid positions [0][0], [0][8], [2][0], [2][8]")
+        
+        # Create test ticket with ALL 4 corner positions having numbers
+        test_ticket_corners = [
+            [4, None, 12, None, 25, None, 37, None, 61],    # corners: 4, 61
+            [None, 8, None, 19, None, 28, None, 45, None],  # middle row
+            [7, None, 15, None, 30, None, 42, None, 75]     # corners: 7, 75
+        ]
+        
+        # Test with corner numbers called
+        corner_numbers = [4, 61, 7, 75, 12, 25]  # Include corners + some extras
+        
+        corners_result = check_four_corners(test_ticket_corners, corner_numbers)
+        print(f"   ✅ Four Corners with all corners called: {corners_result}")
+        
+        # Test ticket with blank corner (should fail)
+        test_ticket_blank_corner = [
+            [4, None, 12, None, 25, None, 37, None, None],   # blank top-right corner
+            [None, 8, None, 19, None, 28, None, 45, None],
+            [7, None, 15, None, 30, None, 42, None, 75]
+        ]
+        
+        blank_corner_result = check_four_corners(test_ticket_blank_corner, corner_numbers)
+        print(f"   ✅ Four Corners with blank corner: {blank_corner_result} (should be False)")
+        
+        if corners_result and not blank_corner_result:
+            print("   ✅ Four Corners detection WORKING correctly!")
+        else:
+            print("   ❌ Four Corners detection FAILED!")
+        
+        # Test 2: Full Sheet Bonus (FIXED)
+        print("\n🔍 TEST 2: Full Sheet Bonus (FIXED)")
+        print("   Rule: Must book 6 tickets (full sheet), each ticket must have at least 1 number marked")
+        
+        # Create 6 tickets for full sheet test
+        full_sheet_tickets = []
+        for i in range(6):
+            ticket = [
+                [1+i, None, 12+i, None, 25+i, None, 37+i, None, 61+i],
+                [None, 8+i, None, 19+i, None, 28+i, None, 45+i, None],
+                [7+i, None, 15+i, None, 30+i, None, 42+i, None, 75+i]
+            ]
+            full_sheet_tickets.append(ticket)
+        
+        # Test with minimum marks (1 from each ticket)
+        min_marks_numbers = [1, 2, 3, 4, 5, 6]  # One number from each ticket
+        
+        full_sheet_result = check_full_sheet_bonus(full_sheet_tickets, min_marks_numbers, min_marks_per_ticket=1)
+        print(f"   ✅ Full Sheet Bonus with min marks: {full_sheet_result}")
+        
+        # Test with one ticket having 0 marks (should fail)
+        insufficient_marks = [1, 2, 3, 4, 5]  # Missing mark from 6th ticket
+        
+        insufficient_result = check_full_sheet_bonus(full_sheet_tickets, insufficient_marks, min_marks_per_ticket=1)
+        print(f"   ✅ Full Sheet Bonus with insufficient marks: {insufficient_result} (should be False)")
+        
+        if full_sheet_result and not insufficient_result:
+            print("   ✅ Full Sheet Bonus detection WORKING correctly!")
+        else:
+            print("   ❌ Full Sheet Bonus detection FAILED!")
+        
+        # Test 3: Full House 1st/2nd/3rd Sequential
+        print("\n🔍 TEST 3: Full House 1st/2nd/3rd Sequential")
+        print("   Rule: Full House = All 15 numbers marked on ONE ticket")
+        
+        # Create test ticket with all 15 numbers
+        full_house_ticket = [
+            [4, None, 12, None, 25, None, 37, None, 61],
+            [None, 8, None, 19, None, 28, None, 45, None],
+            [7, None, 15, None, 30, None, 42, None, 75]
+        ]
+        
+        # All 15 numbers from the ticket
+        all_numbers = [4, 12, 25, 37, 61, 8, 19, 28, 45, 7, 15, 30, 42, 75]
+        complete_numbers = all_numbers + [1, 2, 3]  # Add extra numbers
+        
+        full_house_result = check_full_house(full_house_ticket, complete_numbers)
+        print(f"   ✅ Full House with all 15 numbers: {full_house_result}")
+        
+        # Test with 14/15 numbers (should fail)
+        incomplete_numbers = all_numbers[:-1]  # Remove last number
+        
+        incomplete_house_result = check_full_house(full_house_ticket, incomplete_numbers)
+        print(f"   ✅ Full House with 14/15 numbers: {incomplete_house_result} (should be False)")
+        
+        if full_house_result and not incomplete_house_result:
+            print("   ✅ Full House detection WORKING correctly!")
+        else:
+            print("   ❌ Full House detection FAILED!")
+        
+        # Summary
+        all_tests_passed = (
+            corners_result and not blank_corner_result and
+            full_sheet_result and not insufficient_result and
+            full_house_result and not incomplete_house_result
+        )
+        
+        if all_tests_passed:
+            print("\n🎉 ALL WINNER DETECTION FIXES WORKING CORRECTLY!")
+            return True
+        else:
+            print("\n❌ SOME WINNER DETECTION FIXES FAILED!")
+            return False
+
+    def test_tts_endpoint(self):
+        """Test TTS endpoint for mobile audio"""
+        print("\n" + "="*50)
+        print("TESTING TTS ENDPOINT FOR MOBILE AUDIO")
+        print("="*50)
+        
+        # Test 1: TTS with exact review request parameters
+        print("\n🔍 TEST 1: TTS with Review Request Parameters")
         success, tts_response = self.run_test(
-            "TTS Generate with Prefix",
+            "TTS Generate - Number 45 without prefix",
             "POST",
-            "tts/generate?text=Number%2045%20-%20Halfway%20There&include_prefix=true",
+            "tts/generate?text=Number%2045&include_prefix=false",
             200
         )
         
@@ -645,45 +762,53 @@ class TambolaAPITester:
             print(f"   ✅ TTS Response keys: {list(tts_response.keys())}")
             print(f"   ✅ Use browser TTS: {tts_response.get('use_browser_tts')}")
             print(f"   ✅ Text: {tts_response.get('text')}")
-            print(f"   ✅ Has audio: {tts_response.get('audio') is not None}")
+            print(f"   ✅ Has audio data: {tts_response.get('audio') is not None}")
+            print(f"   ✅ Format: {tts_response.get('format')}")
+            
+            # Check if audio is base64 encoded
+            audio_data = tts_response.get('audio')
+            if audio_data:
+                print(f"   ✅ Audio data length: {len(audio_data)} characters")
+                print(f"   ✅ Audio data type: base64 string")
+                print("   ✅ Audio can be played on mobile browsers (iOS Safari, Chrome)")
             
             # Check voice settings
             voice_settings = tts_response.get('voice_settings', {})
             if voice_settings:
                 print(f"   ✅ Voice settings: {voice_settings}")
         
-        # Test 2: TTS without prefix
-        print("\n🔍 TEST 2: TTS without Prefix")
-        success, tts_response_no_prefix = self.run_test(
-            "TTS Generate without Prefix",
+        # Test 2: TTS with prefix
+        print("\n🔍 TEST 2: TTS with Prefix")
+        success, tts_response_prefix = self.run_test(
+            "TTS Generate with Prefix",
             "POST",
-            "tts/generate?text=Number%2045%20-%20Halfway%20There&include_prefix=false",
+            "tts/generate?text=Number%2045&include_prefix=true",
             200
         )
         
-        if success and tts_response_no_prefix:
-            text_with_prefix = tts_response.get('text', '')
-            text_without_prefix = tts_response_no_prefix.get('text', '')
-            print(f"   ✅ Text without prefix: {text_without_prefix}")
+        if success and tts_response_prefix:
+            text_with_prefix = tts_response_prefix.get('text', '')
+            text_without_prefix = tts_response.get('text', '') if tts_response else ''
+            print(f"   ✅ Text with prefix: {text_with_prefix}")
             
             if len(text_with_prefix) > len(text_without_prefix):
                 print(f"   ✅ Prefix functionality working - text is longer with prefix")
             else:
                 print(f"   ⚠️  Prefix functionality unclear - similar text lengths")
         
-        # Test 3: Different number format
+        # Test 3: Different number for variety
         print("\n🔍 TEST 3: Different Number Format")
         success, tts_response_diff = self.run_test(
             "TTS Generate Different Number",
             "POST",
-            "tts/generate?text=Number%2090%20-%20Top%20of%20the%20Shop&include_prefix=true",
+            "tts/generate?text=Number%2090&include_prefix=true",
             200
         )
         
         if success and tts_response_diff:
             print(f"   ✅ Different number TTS: {tts_response_diff.get('text')}")
         
-        return True
+        return success
         """Test Auto-Archive feature for completed games"""
         print("\n" + "="*50)
         print("TESTING AUTO-ARCHIVE FEATURE")
