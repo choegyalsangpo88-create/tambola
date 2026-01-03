@@ -23,9 +23,37 @@ export default function LiveGame() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [showAudioPrompt, setShowAudioPrompt] = useState(true);
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
   const ttsAudioRef = useRef(null);
+  const audioContextRef = useRef(null);
+
+  // Enable audio on user interaction (required for mobile)
+  const enableAudio = async () => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      await audioContextRef.current.resume();
+      
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance('');
+        utterance.volume = 0;
+        window.speechSynthesis.speak(utterance);
+      }
+      
+      const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+0DEAAAHAAGgAAAANIAAANIAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+0LEJgAAA0gAAAAADSAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
+      await silentAudio.play().catch(() => {});
+      
+      setAudioEnabled(true);
+      setShowAudioPrompt(false);
+    } catch (error) {
+      console.error('Failed to enable audio:', error);
+    }
+  };
 
   const celebrateWinner = (prizeType) => {
     confetti({
