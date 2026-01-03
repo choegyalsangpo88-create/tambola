@@ -14,8 +14,8 @@ import httpx
 import random
 import base64
 import hashlib
-from openai import OpenAI
 import asyncio
+from emergentintegrations.llm.openai import OpenAITextToSpeech
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
