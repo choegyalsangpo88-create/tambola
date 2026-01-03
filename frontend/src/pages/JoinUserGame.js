@@ -121,7 +121,7 @@ export default function JoinUserGame() {
             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-green-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">You're In!</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">You&apos;re In!</h1>
             <p className="text-gray-400">Welcome to {game.name}, {joinedData.player_name}!</p>
           </div>
 
