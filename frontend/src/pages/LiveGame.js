@@ -444,46 +444,71 @@ export default function LiveGame() {
 
           {/* CENTER: Premium 3D Caller Ball */}
           <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10 flex flex-col items-center justify-center">
-            <div className={`relative ${isSpinning && game?.status !== 'completed' ? 'ball-spin' : ''}`}>
-              {/* 3D Premium Ball */}
+            <div className="sphere-3d" style={{ perspective: '1000px' }}>
               <div 
-                className="w-24 h-24 rounded-full relative"
-                style={{
-                  background: 'radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000 50%, #990000 80%, #660000)',
-                  boxShadow: `
-                    0 15px 35px rgba(0,0,0,0.6),
-                    0 5px 15px rgba(0,0,0,0.4),
-                    inset 0 -8px 20px rgba(0,0,0,0.5),
-                    inset 0 8px 20px rgba(255,255,255,0.2),
-                    inset 0 0 30px rgba(0,0,0,0.3)
-                  `
-                }}
+                className={`sphere-3d-inner relative ${isSpinning && game?.status !== 'completed' ? 'ball-spin' : ''}`}
+                style={{ transformStyle: 'preserve-3d' }}
               >
-                {/* Highlight shine */}
+                {/* Front Face of 3D Ball */}
                 <div 
-                  className="absolute top-2 left-4 w-6 h-4 rounded-full opacity-60"
-                  style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.8), transparent)' }}
-                />
-                {/* White center circle */}
-                <div 
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full flex items-center justify-center"
+                  className="w-28 h-28 rounded-full relative ball-face-front"
                   style={{
-                    background: 'radial-gradient(circle at 40% 40%, #ffffff, #f0f0f0 60%, #e0e0e0)',
-                    boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2), 0 1px 2px rgba(255,255,255,0.5)'
+                    background: 'radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000 50%, #990000 80%, #660000)',
+                    boxShadow: `
+                      0 15px 35px rgba(0,0,0,0.6),
+                      0 5px 15px rgba(0,0,0,0.4),
+                      inset 0 -10px 25px rgba(0,0,0,0.5),
+                      inset 0 10px 25px rgba(255,255,255,0.25),
+                      inset 0 0 40px rgba(0,0,0,0.3)
+                    `,
+                    backfaceVisibility: 'visible'
                   }}
                 >
-                  <span className="text-4xl font-black text-gray-900" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>
-                    {session.current_number || '?'}
-                  </span>
+                  {/* Top highlight shine */}
+                  <div 
+                    className="absolute top-2 left-5 w-8 h-5 rounded-full opacity-70"
+                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.9), transparent)' }}
+                  />
+                  {/* Secondary shine */}
+                  <div 
+                    className="absolute top-4 left-8 w-3 h-2 rounded-full opacity-40"
+                    style={{ background: 'rgba(255,255,255,0.8)' }}
+                  />
+                  {/* White center circle with number */}
+                  <div 
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-18 h-18 rounded-full flex items-center justify-center"
+                    style={{
+                      width: '72px',
+                      height: '72px',
+                      background: 'radial-gradient(circle at 40% 40%, #ffffff, #f5f5f5 50%, #e8e8e8 80%, #ddd)',
+                      boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.15), 0 2px 4px rgba(255,255,255,0.5), inset 0 -2px 6px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <span 
+                      className="text-5xl font-black text-gray-900" 
+                      style={{ 
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+                        fontFamily: 'Arial Black, sans-serif'
+                      }}
+                    >
+                      {session.current_number || '?'}
+                    </span>
+                  </div>
+                  {/* Bottom reflection */}
+                  <div 
+                    className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-3 rounded-full opacity-20"
+                    style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.4), transparent)' }}
+                  />
                 </div>
+                
+                {/* Ball shadow on surface */}
+                <div 
+                  className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-5 rounded-full opacity-50"
+                  style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.7), transparent 70%)' }}
+                />
               </div>
-              {/* Ball shadow on surface */}
-              <div 
-                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-4 rounded-full opacity-40"
-                style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.6), transparent 70%)' }}
-              />
             </div>
-            <p className="text-sm text-amber-400 font-bold mt-3">{session.called_numbers?.length || 0} / 90</p>
+            <p className="text-sm text-amber-400 font-bold mt-4">{session.called_numbers?.length || 0} / 90</p>
           </div>
 
           {/* RIGHT: Dividends List with Winner Names */}
