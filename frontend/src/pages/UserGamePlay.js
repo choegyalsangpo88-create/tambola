@@ -35,12 +35,12 @@ export default function UserGamePlay() {
   }, [userGameId]);
 
   useEffect(() => {
-    if (game && !isHost) {
-      // Poll for updates if not host
+    // Poll for ALL users (host and non-host) since auto-call is enabled
+    if (game && game.status === 'live') {
       pollIntervalRef.current = setInterval(fetchSession, 2000);
       return () => clearInterval(pollIntervalRef.current);
     }
-  }, [game, isHost]);
+  }, [game]);
 
   const fetchInitialData = async () => {
     try {
@@ -74,9 +74,14 @@ export default function UserGamePlay() {
       const response = await axios.get(`${API}/user-games/${userGameId}/session`);
       const newSession = response.data;
       
-      // Check for new number
-      if (newSession.current_number !== session?.current_number) {
+      // Check for new number - show animation and play TTS
+      if (newSession.current_number && newSession.current_number !== session?.current_number) {
         showNewNumber(newSession.current_number);
+      }
+      
+      // Update game status if changed
+      if (newSession.status && game?.status !== newSession.status) {
+        setGame(prev => ({ ...prev, status: newSession.status }));
       }
       
       setSession(newSession);
@@ -85,16 +90,43 @@ export default function UserGamePlay() {
     }
   };
 
-  const showNewNumber = (number) => {
+  const showNewNumber = async (number) => {
     if (!number) return;
     setCurrentBall(number);
     setShowBallAnimation(true);
     
     if (soundEnabled) {
-      playSound();
+      // Play TTS announcement
+      await playTTSAnnouncement(number);
     }
     
     setTimeout(() => setShowBallAnimation(false), 3000);
+  };
+
+  const playTTSAnnouncement = async (number) => {
+    try {
+      const callName = getCallName(number);
+      const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=true`);
+      
+      if (response.data.enabled) {
+        if (response.data.audio && !response.data.use_browser_tts) {
+          // Use API-generated audio
+          const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
+          await audio.play().catch(() => {});
+        } else if (response.data.use_browser_tts && response.data.text) {
+          // Use browser's built-in speech synthesis
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(response.data.text);
+            utterance.rate = response.data.voice_settings?.speed || 1.0;
+            window.speechSynthesis.speak(utterance);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('TTS failed:', error);
+      playSound(); // Fallback to beep
+    }
   };
 
   const playSound = () => {
