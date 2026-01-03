@@ -180,6 +180,49 @@ export default function UserGamePlay() {
     );
   }
 
+  // Check if game is completed
+  const isGameCompleted = game.status === 'completed';
+  const allWinners = game.winners || session?.winners || {};
+  const dividends = game.dividends || {};
+
+  // Game Ended Screen
+  if (isGameCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0a3d2c] to-[#0a0a0c] flex flex-col items-center justify-center p-4">
+        <div className="glass-card p-8 max-w-lg w-full text-center">
+          <div className="text-6xl mb-4">🎉</div>
+          <h1 className="text-3xl font-bold text-white mb-2">Game Ended!</h1>
+          <p className="text-gray-400 mb-6">Congratulations to all winners!</p>
+          
+          <div className="space-y-3 mb-6">
+            {Object.entries(allWinners).map(([prize, winner]) => (
+              <div key={prize} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-400 font-bold">{prize}</span>
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                </div>
+                <p className="text-white text-sm mt-1">
+                  Winner: {winner.name || winner.ticket_number || 'Winner'}
+                </p>
+              </div>
+            ))}
+          </div>
+          
+          <p className="text-gray-500 text-sm mb-4">
+            Total numbers called: {game.called_numbers?.length || session?.called_numbers?.length || 0}/90
+          </p>
+          
+          <Button 
+            onClick={() => navigate(isHost ? '/my-games' : '/')} 
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          >
+            Back to {isHost ? 'My Games' : 'Home'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0c]">
       {/* Header */}
@@ -196,7 +239,10 @@ export default function UserGamePlay() {
             </Button>
             <div>
               <h1 className="text-lg font-bold text-white">{game.name}</h1>
-              <p className="text-xs text-red-400 animate-pulse">● LIVE</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-400 animate-pulse">● LIVE</span>
+                <span className="text-xs text-emerald-400">Auto-calling</span>
+              </div>
             </div>
           </div>
           <Button
