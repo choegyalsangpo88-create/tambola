@@ -436,29 +436,35 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 })
     
     # Check Full Sheet Bonus (requires booked full sheet with 1+ mark on each of 6 tickets)
-    if "Full Sheet Bonus" in prizes_to_check and "Full Sheet Bonus" not in existing_winners and "Full Sheet Bonus" not in new_winners:
-        for user_id, sheets in user_sheets.items():
-            for sheet_id, sheet_data in sheets.items():
-                if len(sheet_data["tickets"]) == 6:
-                    # Check if all 6 tickets have at least 1 mark
-                    all_have_marks = True
-                    for t in sheet_data["tickets"]:
-                        marks = get_marked_count(t.get("numbers", []), called_set)
-                        if marks < 1:
-                            all_have_marks = False
+    # A full sheet is when a user has booked all 6 tickets with the same full_sheet_id
+    for prize_check in ["Full Sheet Bonus", "Fullsheet Bonus", "Full Sheet"]:
+        if prize_check in prizes_to_check and prize_check not in existing_winners and prize_check not in new_winners:
+            for user_id, sheets in user_sheets.items():
+                for sheet_id, sheet_data in sheets.items():
+                    if sheet_id and len(sheet_data["tickets"]) == 6:
+                        # Check if all 6 tickets have at least 1 mark
+                        all_have_marks = True
+                        marks_per_ticket = []
+                        for t in sheet_data["tickets"]:
+                            marks = get_marked_count(t.get("numbers", []), called_set)
+                            marks_per_ticket.append(marks)
+                            if marks < 1:
+                                all_have_marks = False
+                        
+                        logger.info(f"Full Sheet Check - User: {user_id}, Sheet: {sheet_id}, Tickets: {len(sheet_data['tickets'])}, Marks: {marks_per_ticket}, All have marks: {all_have_marks}")
+                        
+                        if all_have_marks:
+                            new_winners[prize_check] = {
+                                "user_id": user_id,
+                                "full_sheet_id": sheet_id,
+                                "holder_name": sheet_data["holder_name"],
+                                "pattern": "Full Sheet Bonus"
+                            }
+                            logger.info(f"🎉 Winner: {sheet_data['holder_name'] or user_id} - Full Sheet Bonus")
                             break
-                    
-                    if all_have_marks:
-                        new_winners["Full Sheet Bonus"] = {
-                            "user_id": user_id,
-                            "full_sheet_id": sheet_id,
-                            "holder_name": sheet_data["holder_name"],
-                            "pattern": "Full Sheet Bonus"
-                        }
-                        logger.info(f"🎉 Winner: {sheet_data['holder_name'] or user_id} - Full Sheet Bonus")
-                        break
-            if "Full Sheet Bonus" in new_winners:
-                break
+                if prize_check in new_winners:
+                    break
+            break  # Only check one variant
     
     # Assign Full House prizes in order (1st, 2nd, 3rd)
     house_prizes = ["1st Full House", "2nd Full House", "3rd Full House"]
