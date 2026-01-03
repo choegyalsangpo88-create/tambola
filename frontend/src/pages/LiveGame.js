@@ -51,15 +51,50 @@ export default function LiveGame() {
     });
   }, []);
 
-  // Celebrate winner
-  const celebrateWinner = (prize, winnerName) => {
+  // Celebrate winner with name and prize
+  const celebrateWinner = async (prize, winnerName) => {
+    // Big confetti burst
     confetti({
-      particleCount: 80,
-      spread: 60,
-      origin: { y: 0.7 },
-      colors: ['#FFD700', '#FFA500', '#FF6347', '#00FF00']
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: ['#FFD700', '#FFA500', '#FF6347', '#00FF00', '#FF69B4']
     });
-    toast.success(`🏆 ${prize} Winner: ${winnerName}!`, { duration: 5000 });
+    
+    // Second burst
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.7, x: 0.3 },
+        colors: ['#FFD700', '#FFA500', '#00FF00']
+      });
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.7, x: 0.7 },
+        colors: ['#FFD700', '#FFA500', '#00FF00']
+      });
+    }, 300);
+    
+    // Show toast with winner info
+    toast.success(
+      <div className="text-center">
+        <p className="text-lg font-bold">🏆 {prize}</p>
+        <p className="text-xl font-black text-amber-400">Congratulations {winnerName}!</p>
+      </div>,
+      { duration: 6000 }
+    );
+    
+    // Announce winner via TTS if audio is unlocked
+    if (audioUnlocked && soundEnabled) {
+      try {
+        const text = `Congratulations ${winnerName}! You have won ${prize}!`;
+        await playServerTTS(text);
+      } catch (e) {
+        console.log('Winner announcement error:', e);
+      }
+    }
   };
 
   // Play TTS announcement - uses server TTS for mobile compatibility
