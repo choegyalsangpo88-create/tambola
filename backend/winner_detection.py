@@ -349,9 +349,14 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         prizes_to_check = [
             "Quick Five", "Early Five",
             "Four Corners",
+            "Full Sheet Bonus",
             "Top Line", "Middle Line", "Bottom Line",
             "1st Full House", "2nd Full House", "3rd Full House"
         ]
+    
+    # Always ensure Full Sheet Bonus is checked if present in game prizes
+    if "Full Sheet Bonus" not in prizes_to_check:
+        prizes_to_check.append("Full Sheet Bonus")
     
     # Track Full House winners in order
     full_house_tickets = []
