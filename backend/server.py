@@ -1425,7 +1425,12 @@ async def call_number(game_id: str):
     from notifications import send_winner_email, send_winner_sms
     
     existing_winners = session.get("winners", {})
-    new_winners = await auto_detect_winners(db, game_id, called_numbers + [next_number], existing_winners)
+    
+    # Get game prizes (dividends) for proper detection
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    game_dividends = game.get("prizes", {}) if game else {}
+    
+    new_winners = await auto_detect_winners(db, game_id, called_numbers + [next_number], existing_winners, game_dividends)
     
     # Update winners and send notifications
     if new_winners:
