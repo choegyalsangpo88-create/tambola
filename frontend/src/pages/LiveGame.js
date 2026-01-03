@@ -259,7 +259,10 @@ export default function LiveGame() {
             </Button>
             <div>
               <h1 className="text-sm font-bold text-white">{game.name}</h1>
-              <span className="text-xs text-red-400 animate-pulse">● LIVE</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-400 animate-pulse">● LIVE</span>
+                <span className="text-xs text-emerald-400">Auto-calling</span>
+              </div>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)} className="h-8 w-8 text-white">
