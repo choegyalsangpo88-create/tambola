@@ -138,26 +138,6 @@ export default function LiveGame() {
       console.error('Browser TTS failed:', error);
     }
   };
-            
-            if (indianVoice) {
-              utterance.voice = indianVoice;
-            } else if (genderVoice) {
-              utterance.voice = genderVoice;
-            }
-            
-            window.speechSynthesis.speak(utterance);
-          }
-        }
-        setLastPlayedNumber(number);
-      } else {
-        // Fallback to beep sound
-        playNumberSound();
-      }
-    } catch (error) {
-      console.error('TTS failed:', error);
-      playNumberSound();
-    }
-  };
 
   useEffect(() => {
     fetchGameData();
