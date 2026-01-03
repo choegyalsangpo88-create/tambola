@@ -1360,8 +1360,8 @@ class TambolaAPITester:
         return all([completed_games, test_game, tts_response, avg_response_time < 1000])
 
     def run_all_tests(self):
-        """Run all API tests with focus on Six Seven Tambola review request"""
-        print("🚀 Starting Tambola API Tests - SIX SEVEN TAMBOLA REVIEW REQUEST")
+        """Run all API tests with focus on Join User Game functionality"""
+        print("🚀 Starting Tambola API Tests - JOIN USER GAME FUNCTIONALITY")
         print(f"🔗 Base URL: {self.base_url}")
         print(f"👤 Test User ID: {self.user_id}")
         print(f"🔑 Session Token: {self.session_token[:20]}...")
@@ -1372,9 +1372,17 @@ class TambolaAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
-        # PRIORITY: Six Seven Tambola Review Request Testing
+        # PRIORITY 1: Join User Game Functionality Testing
         print("\n" + "🎯"*60)
-        print("SIX SEVEN TAMBOLA REVIEW REQUEST TESTING - PRIORITY 1")
+        print("JOIN USER GAME FUNCTIONALITY TESTING - PRIORITY 1")
+        print("🎯"*60)
+        
+        # Test the specific join functionality from review request
+        join_functionality_success = self.test_join_user_game_functionality()
+        
+        # PRIORITY 2: Six Seven Tambola Review Request Testing
+        print("\n" + "🎯"*60)
+        print("SIX SEVEN TAMBOLA REVIEW REQUEST TESTING - PRIORITY 2")
         print("🎯"*60)
         
         # Test the specific review request items
