@@ -1555,6 +1555,188 @@ class TambolaAPITester:
         
         return all([completed_games, test_game, tts_response, avg_response_time < 1000])
 
+    def test_full_sheet_bonus_detection(self):
+        """Test Full Sheet Bonus detection for Six Seven Tambola as per review request"""
+        print("\n" + "="*50)
+        print("TESTING FULL SHEET BONUS DETECTION - REVIEW REQUEST")
+        print("="*50)
+        
+        # Test 1: Use game with share code WQFMR6 (already has Full Sheet Bonus won)
+        print("\n🔍 TEST 1: Get Game with Full Sheet Bonus Winner")
+        share_code = "WQFMR6"
+        
+        success, game_details = self.run_test(
+            f"GET /api/user-games/code/{share_code} (Full Sheet Bonus)",
+            "GET",
+            f"user-games/code/{share_code}",
+            200,
+            headers={}  # No authentication required for public endpoint
+        )
+        
+        if success and game_details:
+            print(f"   ✅ Game found with share code: {share_code}")
+            print(f"   ✅ Game name: {game_details.get('name', 'N/A')}")
+            print(f"   ✅ Game status: {game_details.get('status', 'N/A')}")
+            print(f"   ✅ Host name: {game_details.get('host_name', 'N/A')}")
+            
+            # Check for winners with Full Sheet Bonus
+            winners = game_details.get('winners', {})
+            print(f"   ✅ Winners found: {list(winners.keys()) if winners else 'None'}")
+            
+            # Look for Full Sheet Bonus winner
+            full_sheet_bonus_winner = winners.get('Full Sheet Bonus')
+            if full_sheet_bonus_winner:
+                print(f"   ✅ Full Sheet Bonus winner found!")
+                print(f"   ✅ Winner details: {full_sheet_bonus_winner}")
+                
+                # Verify expected winner details from review request
+                holder_name = full_sheet_bonus_winner.get('holder_name')
+                pattern = full_sheet_bonus_winner.get('pattern')
+                full_sheet_id = full_sheet_bonus_winner.get('full_sheet_id')
+                
+                print(f"   📋 Holder name: {holder_name}")
+                print(f"   📋 Pattern: {pattern}")
+                print(f"   📋 Full sheet ID: {full_sheet_id}")
+                
+                # Check if matches expected values from review request
+                expected_holder = "FullSheetPlayer"
+                expected_pattern = "Full Sheet Bonus"
+                expected_sheet_id = "FS001"
+                
+                holder_match = holder_name == expected_holder
+                pattern_match = pattern == expected_pattern
+                sheet_match = full_sheet_id == expected_sheet_id
+                
+                print(f"   {'✅' if holder_match else '❌'} Holder name match: {holder_name} == {expected_holder}")
+                print(f"   {'✅' if pattern_match else '❌'} Pattern match: {pattern} == {expected_pattern}")
+                print(f"   {'✅' if sheet_match else '❌'} Sheet ID match: {full_sheet_id} == {expected_sheet_id}")
+                
+                full_sheet_test_passed = holder_match and pattern_match and sheet_match
+            else:
+                print(f"   ❌ Full Sheet Bonus winner not found in winners")
+                full_sheet_test_passed = False
+        else:
+            print(f"   ❌ Failed to get game details for share code: {share_code}")
+            full_sheet_test_passed = False
+        
+        # Test 2: Test ticket selection endpoint for 7PZP3C
+        print(f"\n🔍 TEST 2: Ticket Selection Endpoint")
+        ticket_share_code = "7PZP3C"
+        
+        success, tickets_response = self.run_test(
+            f"GET /api/user-games/code/{ticket_share_code}/tickets",
+            "GET",
+            f"user-games/code/{ticket_share_code}/tickets",
+            200,
+            headers={}  # No authentication required for public endpoint
+        )
+        
+        if success and tickets_response:
+            print(f"   ✅ Ticket selection endpoint working for {ticket_share_code}")
+            
+            tickets = tickets_response.get('tickets', [])
+            total_tickets = tickets_response.get('total', 0)
+            
+            print(f"   ✅ Total tickets: {total_tickets}")
+            print(f"   ✅ Tickets array length: {len(tickets)}")
+            
+            # Verify we have 12 tickets as expected from review request
+            expected_ticket_count = 12
+            ticket_count_match = len(tickets) == expected_ticket_count
+            print(f"   {'✅' if ticket_count_match else '❌'} Ticket count: {len(tickets)} == {expected_ticket_count}")
+            
+            # Verify each ticket has required structure
+            if tickets:
+                print(f"   📋 Verifying ticket structure...")
+                
+                required_fields = ['ticket_id', 'ticket_number', 'full_sheet_id', 'ticket_position_in_sheet', 'numbers', 'assigned_to']
+                structure_valid = True
+                
+                for i, ticket in enumerate(tickets[:3]):  # Check first 3 tickets
+                    print(f"   🎫 Ticket {i+1}:")
+                    
+                    # Check required fields
+                    missing_fields = [field for field in required_fields if field not in ticket]
+                    if missing_fields:
+                        print(f"       ❌ Missing fields: {missing_fields}")
+                        structure_valid = False
+                    else:
+                        print(f"       ✅ All required fields present")
+                    
+                    # Verify specific field values
+                    ticket_id = ticket.get('ticket_id', 'N/A')
+                    ticket_number = ticket.get('ticket_number', 'N/A')
+                    full_sheet_id = ticket.get('full_sheet_id', 'N/A')
+                    position = ticket.get('ticket_position_in_sheet', 0)
+                    assigned_to = ticket.get('assigned_to')
+                    
+                    print(f"       ticket_id: {ticket_id}")
+                    print(f"       ticket_number: {ticket_number}")
+                    print(f"       full_sheet_id: {full_sheet_id}")
+                    print(f"       ticket_position_in_sheet: {position}")
+                    print(f"       assigned_to: {assigned_to}")
+                    
+                    # Verify full_sheet_id format (FS001 or FS002)
+                    if full_sheet_id in ['FS001', 'FS002']:
+                        print(f"       ✅ Valid full_sheet_id: {full_sheet_id}")
+                    else:
+                        print(f"       ❌ Invalid full_sheet_id: {full_sheet_id}")
+                        structure_valid = False
+                    
+                    # Verify position is 1-6
+                    if 1 <= position <= 6:
+                        print(f"       ✅ Valid position: {position}")
+                    else:
+                        print(f"       ❌ Invalid position: {position}")
+                        structure_valid = False
+                    
+                    # Verify numbers is 3x9 grid
+                    numbers = ticket.get('numbers', [])
+                    if len(numbers) == 3 and all(len(row) == 9 for row in numbers):
+                        non_null_count = sum(1 for row in numbers for cell in row if cell is not None)
+                        print(f"       ✅ Valid 3x9 grid with {non_null_count} numbers")
+                    else:
+                        print(f"       ❌ Invalid numbers structure")
+                        structure_valid = False
+                    
+                    # Verify assigned_to should be null for available tickets
+                    if assigned_to is None:
+                        print(f"       ✅ Ticket available (assigned_to is null)")
+                    else:
+                        print(f"       ℹ️  Ticket assigned to: {assigned_to}")
+                
+                ticket_structure_test_passed = structure_valid and ticket_count_match
+            else:
+                print(f"   ❌ No tickets found in response")
+                ticket_structure_test_passed = False
+        else:
+            print(f"   ❌ Failed to get tickets for share code: {ticket_share_code}")
+            ticket_structure_test_passed = False
+        
+        # Test Summary
+        print(f"\n📋 FULL SHEET BONUS DETECTION TEST SUMMARY:")
+        test_results = [
+            ("Full Sheet Bonus Winner Detection", full_sheet_test_passed),
+            ("Ticket Selection Endpoint Structure", ticket_structure_test_passed)
+        ]
+        
+        for test_name, passed in test_results:
+            status = "✅ PASS" if passed else "❌ FAIL"
+            print(f"   {test_name}: {status}")
+        
+        # Overall result
+        all_tests_passed = all(result for _, result in test_results)
+        
+        if all_tests_passed:
+            print(f"\n🎉 FULL SHEET BONUS DETECTION: ✅ WORKING")
+            print(f"   All review request requirements verified!")
+        else:
+            print(f"\n⚠️  FULL SHEET BONUS DETECTION: ❌ ISSUES FOUND")
+            failed_tests = [name for name, result in test_results if not result]
+            print(f"   Failed tests: {failed_tests}")
+        
+        return all_tests_passed
+
     def run_all_tests(self):
         """Run all API tests with focus on User Game Ticket Selection Features"""
         print("🚀 Starting Tambola API Tests - USER GAME TICKET SELECTION FEATURES")
