@@ -240,45 +240,6 @@ export default function UserGamePlay() {
   };
 
   const playSound = () => {
-    // Simple beep fallback
-  };
-
-  // Browser speech synthesis - reliable fallback
-  const speakWithBrowserTTS = (text) => {
-    return new Promise((resolve) => {
-      if (!('speechSynthesis' in window) || !audioEnabled) {
-        resolve();
-        return;
-      }
-      
-      try {
-        // Cancel any ongoing speech
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9; // Slightly slower for clarity
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        
-        // Use pre-loaded voice if available
-        if (speechSynthRef.current) {
-          utterance.voice = speechSynthRef.current;
-        }
-        
-        utterance.onend = resolve;
-        utterance.onerror = resolve;
-        
-        window.speechSynthesis.speak(utterance);
-        
-        // Timeout fallback (max 10 seconds)
-        setTimeout(resolve, 10000);
-      } catch (e) {
-        resolve();
-      }
-    });
-  };
-
-  const playSound = () => {
     try {
       const audio = new Audio('/sounds/ball-drop.mp3');
       audio.volume = 0.5;
