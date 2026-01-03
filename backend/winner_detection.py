@@ -331,9 +331,9 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     called_set = set(called_numbers)
     new_winners = {}
     
-    # Get all confirmed booked tickets
+    # Get all booked tickets (both pending and confirmed)
     tickets = await db.tickets.find(
-        {"game_id": game_id, "is_booked": True, "booking_status": "confirmed"},
+        {"game_id": game_id, "is_booked": True},
         {"_id": 0}
     ).to_list(1000)
     
