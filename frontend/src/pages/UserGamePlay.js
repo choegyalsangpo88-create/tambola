@@ -76,12 +76,30 @@ export default function UserGamePlay() {
       
       // Check for new number - show animation and play TTS
       if (newSession.current_number && newSession.current_number !== session?.current_number) {
-        showNewNumber(newSession.current_number);
+        // Only show new number if game is still live
+        if (newSession.status === 'live') {
+          showNewNumber(newSession.current_number);
+        }
       }
       
       // Update game status if changed
       if (newSession.status && game?.status !== newSession.status) {
         setGame(prev => ({ ...prev, status: newSession.status }));
+        
+        // Stop polling and sounds when game ends
+        if (newSession.status === 'completed') {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          // Cancel any ongoing speech
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+          }
+          // Show game completed message
+          toast.success('🎉 Game Completed! All prizes have been claimed.');
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
       }
       
       setSession(newSession);
@@ -91,11 +109,11 @@ export default function UserGamePlay() {
   };
 
   const showNewNumber = async (number) => {
-    if (!number) return;
+    if (!number || game?.status === 'completed') return;
     setCurrentBall(number);
     setShowBallAnimation(true);
     
-    if (soundEnabled) {
+    if (soundEnabled && game?.status === 'live') {
       // Play TTS announcement
       await playTTSAnnouncement(number);
     }
@@ -104,14 +122,18 @@ export default function UserGamePlay() {
   };
 
   const playTTSAnnouncement = async (number) => {
+    // Don't play if game ended
+    if (game?.status === 'completed') return;
+    
     try {
       const callName = getCallName(number);
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=true`);
       
-      if (response.data.enabled) {
+      if (response.data.enabled && game?.status === 'live') {
         if (response.data.audio && !response.data.use_browser_tts) {
           // Use API-generated audio
           const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
+          audioRef.current = audio;
           await audio.play().catch(() => {});
         } else if (response.data.use_browser_tts && response.data.text) {
           // Use browser's built-in speech synthesis
@@ -125,7 +147,10 @@ export default function UserGamePlay() {
       }
     } catch (error) {
       console.error('TTS failed:', error);
-      playSound(); // Fallback to beep
+      // Only play beep if game is still live
+      if (game?.status === 'live') {
+        playSound();
+      }
     }
   };
 
