@@ -704,12 +704,15 @@ class TambolaAPITester:
         print("\n🔍 TEST 3: Full House 1st/2nd/3rd Sequential")
         print("   Rule: Full House = All 15 numbers marked on ONE ticket")
         
-        # Create test ticket with all 15 numbers
+        # Create test ticket with exactly 15 numbers (5 per row)
         full_house_ticket = [
-            [4, None, 12, None, 25, None, 37, None, 61],
-            [None, 8, None, 19, None, 28, None, 45, None],
-            [7, None, 15, None, 30, None, 42, None, 75]
+            [4, None, 12, None, 25, None, 37, None, 61],    # 5 numbers: 4, 12, 25, 37, 61
+            [None, 8, None, 19, None, 28, None, 45, None],  # 4 numbers: 8, 19, 28, 45
+            [7, None, 15, None, 30, None, 42, None, 75]     # 5 numbers: 7, 15, 30, 42, 75
         ]
+        
+        # Fix: Add one more number to middle row to make it exactly 15
+        full_house_ticket[1][8] = 89  # Add 89 to make it 5 numbers in middle row
         
         # Extract all non-None numbers from the ticket
         all_numbers = []
