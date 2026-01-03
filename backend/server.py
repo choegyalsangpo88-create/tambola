@@ -1692,6 +1692,26 @@ async def get_user_game_by_code(share_code: str):
         raise HTTPException(status_code=404, detail="Game not found")
     return game
 
+@api_router.get("/user-games/code/{share_code}/tickets")
+async def get_user_game_tickets_by_code(share_code: str):
+    """Get all tickets for a user game by share code (for ticket selection)"""
+    game = await db.user_games.find_one(
+        {"share_code": share_code.upper()},
+        {"_id": 0}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    tickets = game.get("tickets", [])
+    return {
+        "user_game_id": game.get("user_game_id"),
+        "name": game.get("name"),
+        "status": game.get("status"),
+        "tickets": tickets,
+        "total": len(tickets),
+        "available": len([t for t in tickets if not t.get("assigned_to")])
+    }
+
 @api_router.get("/user-games/{user_game_id}")
 async def get_user_game(user_game_id: str):
     """Get full game details including tickets"""
