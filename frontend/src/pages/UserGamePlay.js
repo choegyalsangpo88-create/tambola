@@ -75,7 +75,6 @@ export default function UserGamePlay() {
       return () => clearInterval(pollIntervalRef.current);
     }
   }, [game]);
-  }, [game]);
 
   const fetchInitialData = async () => {
     try {
@@ -85,15 +84,21 @@ export default function UserGamePlay() {
         axios.get(`${API}/auth/me`, { withCredentials: true }).catch(() => null)
       ]);
       
-      setGame(gameRes.data);
+      const gameData = gameRes.data;
+      setGame(gameData);
       setPlayers(playersRes.data.players || []);
+      setDividends(gameData.dividends || {});
+      setAllWinners(gameData.winners || {});
+      previousWinnersRef.current = gameData.winners || {};
+      
       setSession({
-        called_numbers: gameRes.data.called_numbers || [],
-        current_number: gameRes.data.current_number,
-        winners: gameRes.data.winners || {}
+        called_numbers: gameData.called_numbers || [],
+        current_number: gameData.current_number,
+        winners: gameData.winners || {},
+        status: gameData.status
       });
       
-      if (userRes?.data && gameRes.data.host_user_id === userRes.data.user_id) {
+      if (userRes?.data && gameData.host_user_id === userRes.data.user_id) {
         setIsHost(true);
       }
     } catch (error) {
@@ -109,9 +114,20 @@ export default function UserGamePlay() {
       const response = await axios.get(`${API}/user-games/${userGameId}/session`);
       const newSession = response.data;
       
+      // Check for new winners and celebrate
+      if (newSession.winners) {
+        Object.keys(newSession.winners).forEach(prize => {
+          if (!previousWinnersRef.current[prize]) {
+            const winner = newSession.winners[prize];
+            celebrateWinner(prize, winner.holder_name || winner.name || 'Player');
+          }
+        });
+        previousWinnersRef.current = newSession.winners;
+        setAllWinners(newSession.winners);
+      }
+      
       // Check for new number - show animation and play TTS
       if (newSession.current_number && newSession.current_number !== session?.current_number) {
-        // Only show new number if game is still live
         if (newSession.status === 'live') {
           showNewNumber(newSession.current_number);
         }
