@@ -19,34 +19,36 @@ export default function LiveGame() {
   const [allBookedTickets, setAllBookedTickets] = useState([]);
   const [markedNumbers, setMarkedNumbers] = useState(new Set());
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const speechSynthRef = useRef(null);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
   const previousWinnersRef = useRef({});
 
-  // Initialize audio
-  const initAudio = useCallback(() => {
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+  // Unlock audio on iOS/mobile - MUST be triggered by user gesture
+  const unlockAudio = useCallback(() => {
+    const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////");
+    silentAudio.volume = 0.01;
+    silentAudio.play().then(() => {
+      setAudioUnlocked(true);
+      toast.success('🔊 Sound enabled!');
+    }).catch(() => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        setAudioUnlocked(true);
+        toast.success('🔊 Sound enabled!');
+      } catch (e) {
+        console.log('Audio unlock failed:', e);
       }
-      if ('speechSynthesis' in window) {
-        const voices = window.speechSynthesis.getVoices();
-        speechSynthRef.current = voices.find(v => v.lang.includes('en-IN')) || 
-                                  voices.find(v => v.lang.includes('en')) || voices[0];
-        window.speechSynthesis.onvoiceschanged = () => {
-          const v = window.speechSynthesis.getVoices();
-          speechSynthRef.current = v.find(x => x.lang.includes('en-IN')) || v.find(x => x.lang.includes('en')) || v[0];
-        };
-      }
-    } catch (e) {
-      console.log('Audio init:', e);
-    }
+    });
   }, []);
 
   // Celebrate winner
@@ -60,9 +62,9 @@ export default function LiveGame() {
     toast.success(`🏆 ${prize} Winner: ${winnerName}!`, { duration: 5000 });
   };
 
-  // Play TTS announcement - uses server TTS for iOS compatibility
+  // Play TTS announcement - uses server TTS for mobile compatibility
   const playTTSAnnouncement = async (number) => {
-    if (!soundEnabled || isAnnouncingRef.current || game?.status === 'completed') return;
+    if (!soundEnabled || !audioUnlocked || isAnnouncingRef.current || game?.status === 'completed') return;
     if (lastAnnouncedRef.current === number) return;
     
     lastAnnouncedRef.current = number;
@@ -72,11 +74,7 @@ export default function LiveGame() {
     const callName = getCallName(number);
     
     try {
-      if (audioContextRef.current?.state === 'suspended') {
-        await audioContextRef.current.resume();
-      }
-      
-      // Try server-side TTS first (works on iOS)
+      // Try server-side TTS first (most reliable for mobile)
       const played = await playServerTTS(callName);
       
       // Fallback to browser TTS if server TTS fails
