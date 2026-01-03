@@ -2373,24 +2373,15 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
                         break
         
         # Auto-end game if all prizes won
-        if len(current_winners) >= len(dividends) and len(dividends) > 0:
+        # Filter out Full Sheet Bonus from check
+        actual_dividends = {k: v for k, v in dividends.items() if "Full Sheet" not in k and "Bonus" not in k}
+        
+        if actual_dividends and len(current_winners) >= len(actual_dividends):
             await db.user_games.update_one(
                 {"user_game_id": user_game_id},
                 {"$set": {
                     "status": "completed",
                     "ended_at": datetime.now(timezone.utc).isoformat(),
-                    "auto_call_enabled": False
-                }}
-            )
-            logger.info(f"User game {user_game_id} auto-ended - all prizes won!")
-        
-        # Auto-end if all prizes won
-        if len(current_winners) >= len(dividends) and len(dividends) > 0:
-            await db.user_games.update_one(
-                {"user_game_id": user_game_id},
-                {"$set": {
-                    "status": "completed",
-                    "completed_at": datetime.now(timezone.utc).isoformat(),
                     "auto_call_enabled": False
                 }}
             )
