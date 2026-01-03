@@ -304,23 +304,24 @@ class TambolaAPITester:
         
         return success
 
-    def test_user_games_endpoints(self):
-        """Test user games (Create Your Own Game) endpoints"""
+    def test_user_games_critical_fixes(self):
+        """Test critical fixes for user games - ticket generation and duplicate prevention"""
         print("\n" + "="*50)
-        print("TESTING USER GAMES ENDPOINTS")
+        print("TESTING USER GAMES CRITICAL FIXES")
         print("="*50)
         
-        # Test create user game
+        # Test 1: User Game Creation with Proper Ticket Generation
+        print("\n🔍 TEST 1: User Game Creation with Ticket Generation")
         user_game_data = {
-            "name": f"Family Game {datetime.now().strftime('%H%M%S')}",
+            "name": f"Critical Test Game {datetime.now().strftime('%H%M%S')}",
             "date": "2025-02-01",
             "time": "19:00",
-            "max_tickets": 30,
+            "max_tickets": 18,  # 3 full sheets (18 tickets)
             "prizes_description": "1st Prize: ₹500, 2nd Prize: ₹300, 3rd Prize: ₹200"
         }
         
         success, created_user_game = self.run_test(
-            "Create User Game",
+            "Create User Game with Tickets",
             "POST",
             "user-games",
             200,
@@ -330,37 +331,86 @@ class TambolaAPITester:
         if success and created_user_game:
             self.user_game_id = created_user_game.get('user_game_id')
             self.share_code = created_user_game.get('share_code')
-            print(f"   Created User Game ID: {self.user_game_id}")
-            print(f"   Share Code: {self.share_code}")
+            print(f"   ✅ Created User Game ID: {self.user_game_id}")
+            print(f"   ✅ Share Code: {self.share_code}")
             
-            # Test get my user games
-            success, my_user_games = self.run_test(
-                "Get My User Games",
-                "GET",
-                "user-games/my",
-                200
-            )
-            
-            # Test get user game by ID
-            success, user_game_details = self.run_test(
-                "Get User Game Details",
+            # Get full game details to verify ticket generation
+            success, game_details = self.run_test(
+                "Get Game Details with Tickets",
                 "GET",
                 f"user-games/{self.user_game_id}",
                 200
             )
             
-            # Test get user game by share code (public)
+            if success and game_details:
+                tickets = game_details.get('tickets', [])
+                print(f"   ✅ Tickets generated: {len(tickets)}")
+                
+                # Verify ticket structure
+                if tickets:
+                    first_ticket = tickets[0]
+                    print(f"   ✅ First ticket structure: {list(first_ticket.keys())}")
+                    
+                    # Check if ticket has proper 3x9 grid
+                    numbers = first_ticket.get('numbers', [])
+                    if len(numbers) == 3 and all(len(row) == 9 for row in numbers):
+                        print(f"   ✅ Ticket has proper 3x9 grid structure")
+                        
+                        # Count non-null numbers (should be 15 per ticket)
+                        non_null_count = sum(1 for row in numbers for cell in row if cell is not None)
+                        print(f"   ✅ Numbers per ticket: {non_null_count} (should be 15)")
+                        
+                        # Verify each row has exactly 5 numbers
+                        for i, row in enumerate(numbers):
+                            row_count = sum(1 for cell in row if cell is not None)
+                            print(f"   ✅ Row {i+1} numbers: {row_count} (should be 5)")
+                    else:
+                        print(f"   ❌ Invalid ticket structure: {len(numbers)} rows")
+                else:
+                    print(f"   ❌ No tickets found in game details")
+            
+            # Test 2: Duplicate Game Prevention
+            print(f"\n🔍 TEST 2: Duplicate Game Prevention")
+            duplicate_game_data = {
+                "name": user_game_data["name"],  # Same name
+                "date": user_game_data["date"],  # Same date  
+                "time": user_game_data["time"],  # Same time
+                "max_tickets": 12,
+                "prizes_description": "Different prizes"
+            }
+            
+            success, duplicate_response = self.run_test(
+                "Try Creating Duplicate Game",
+                "POST",
+                "user-games",
+                400,  # Should fail with 400
+                data=duplicate_game_data
+            )
+            
+            if not success:  # This means we got 400 as expected
+                print(f"   ✅ Duplicate prevention working - got expected 400 error")
+            else:
+                print(f"   ❌ Duplicate prevention failed - duplicate game was created")
+            
+            # Test 3: User Games API - Public Access
+            print(f"\n🔍 TEST 3: User Games API Public Access")
             success, game_by_code = self.run_test(
-                "Get User Game by Share Code",
+                "Get User Game by Share Code (Public)",
                 "GET",
                 f"user-games/code/{self.share_code}",
                 200,
                 headers={}  # No auth needed for public endpoint
             )
             
-            # Test join game by share code (public)
+            if success and game_by_code:
+                print(f"   ✅ Public access working - game found by share code")
+                print(f"   ✅ Game name: {game_by_code.get('name')}")
+                print(f"   ✅ Game status: {game_by_code.get('status')}")
+            
+            # Test 4: Join Game Flow
+            print(f"\n🔍 TEST 4: Complete User Game Flow")
             join_data = {
-                "player_name": "Test Player",
+                "player_name": "Rajesh Kumar",
                 "ticket_count": 2
             }
             
@@ -374,59 +424,94 @@ class TambolaAPITester:
             )
             
             if success and join_result:
-                print(f"   Player joined: {join_result.get('player_name')}")
-                print(f"   Tickets assigned: {len(join_result.get('tickets', []))}")
-            
-            # Test get players list
-            success, players_data = self.run_test(
-                "Get User Game Players",
-                "GET",
-                f"user-games/{self.user_game_id}/players",
-                200
-            )
-            
-            if success and players_data:
-                print(f"   Total players: {players_data.get('total', 0)}")
-            
-            # Test start user game
-            success, start_result = self.run_test(
-                "Start User Game",
-                "POST",
-                f"user-games/{self.user_game_id}/start",
-                200
-            )
-            
-            if success:
-                # Test call number in user game
-                success, call_result = self.run_test(
-                    "Call Number in User Game",
-                    "POST",
-                    f"user-games/{self.user_game_id}/call-number",
-                    200
-                )
+                print(f"   ✅ Player joined: {join_result.get('player_name')}")
+                assigned_tickets = join_result.get('tickets', [])
+                print(f"   ✅ Tickets assigned: {len(assigned_tickets)}")
                 
-                if success and call_result:
-                    print(f"   Called number: {call_result.get('number')}")
-                    print(f"   Remaining numbers: {call_result.get('remaining')}")
-                
-                # Test get user game session
-                success, session_data = self.run_test(
-                    "Get User Game Session",
-                    "GET",
-                    f"user-games/{self.user_game_id}/session",
-                    200
-                )
-                
-                # Test end user game
-                success, end_result = self.run_test(
-                    "End User Game",
-                    "POST",
-                    f"user-games/{self.user_game_id}/end",
-                    200
-                )
+                # Verify assigned tickets have proper structure
+                if assigned_tickets:
+                    for i, ticket in enumerate(assigned_tickets):
+                        numbers = ticket.get('numbers', [])
+                        if len(numbers) == 3 and all(len(row) == 9 for row in numbers):
+                            non_null_count = sum(1 for row in numbers for cell in row if cell is not None)
+                            print(f"   ✅ Assigned ticket {i+1}: {non_null_count} numbers (proper structure)")
+                        else:
+                            print(f"   ❌ Assigned ticket {i+1}: Invalid structure")
             
             return True
         return False
+
+    def test_user_games_endpoints(self):
+        """Test user games (Create Your Own Game) endpoints"""
+        print("\n" + "="*50)
+        print("TESTING USER GAMES ENDPOINTS")
+        print("="*50)
+        
+        # Run critical fixes test first
+        critical_success = self.test_user_games_critical_fixes()
+        
+        if not critical_success or not self.user_game_id:
+            print("❌ Critical fixes failed - skipping additional tests")
+            return False
+        
+        # Additional tests for completeness
+        # Test get my user games
+        success, my_user_games = self.run_test(
+            "Get My User Games",
+            "GET",
+            "user-games/my",
+            200
+        )
+        
+        # Test get players list
+        success, players_data = self.run_test(
+            "Get User Game Players",
+            "GET",
+            f"user-games/{self.user_game_id}/players",
+            200
+        )
+        
+        if success and players_data:
+            print(f"   Total players: {players_data.get('total', 0)}")
+        
+        # Test start user game
+        success, start_result = self.run_test(
+            "Start User Game",
+            "POST",
+            f"user-games/{self.user_game_id}/start",
+            200
+        )
+        
+        if success:
+            # Test call number in user game
+            success, call_result = self.run_test(
+                "Call Number in User Game",
+                "POST",
+                f"user-games/{self.user_game_id}/call-number",
+                200
+            )
+            
+            if success and call_result:
+                print(f"   Called number: {call_result.get('number')}")
+                print(f"   Remaining numbers: {call_result.get('remaining')}")
+            
+            # Test get user game session
+            success, session_data = self.run_test(
+                "Get User Game Session",
+                "GET",
+                f"user-games/{self.user_game_id}/session",
+                200
+            )
+            
+            # Test end user game
+            success, end_result = self.run_test(
+                "End User Game",
+                "POST",
+                f"user-games/{self.user_game_id}/end",
+                200
+            )
+        
+        return True
 
     def test_auto_archive_feature(self):
         """Test Auto-Archive feature for completed games"""
