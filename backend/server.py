@@ -214,6 +214,7 @@ class UpdateUserGameRequest(BaseModel):
 class JoinUserGameRequest(BaseModel):
     player_name: str
     ticket_count: int = 1
+    ticket_ids: Optional[List[str]] = None  # If provided, use these specific tickets
 
 # WhatsApp OTP Models
 class SendOTPRequest(BaseModel):
