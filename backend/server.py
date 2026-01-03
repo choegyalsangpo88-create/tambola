@@ -1576,6 +1576,21 @@ async def create_user_game(
     user: User = Depends(get_current_user)
 ):
     """Create a new user game for family/party"""
+    
+    # Check for duplicate game (same name + date + time by same host)
+    existing = await db.user_games.find_one({
+        "host_user_id": user.user_id,
+        "name": game_data.name,
+        "date": game_data.date,
+        "time": game_data.time
+    })
+    
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail="A game with same name, date and time already exists. Please change at least one."
+        )
+    
     user_game_id = f"ug_{uuid.uuid4().hex[:8]}"
     share_code = generate_share_code()
     
@@ -1583,8 +1598,29 @@ async def create_user_game(
     while await db.user_games.find_one({"share_code": share_code}):
         share_code = generate_share_code()
     
-    # Generate tickets
-    tickets = generate_user_game_tickets(game_data.max_tickets)
+    # Generate tickets with proper structure
+    from ticket_generator import generate_user_game_tickets
+    raw_tickets = generate_user_game_tickets(game_data.max_tickets)
+    
+    tickets = []
+    for i, ticket_numbers in enumerate(raw_tickets):
+        tickets.append({
+            "ticket_id": f"t_{uuid.uuid4().hex[:8]}",
+            "ticket_number": f"T{i+1:02d}",
+            "numbers": ticket_numbers,
+            "assigned_to": None,
+            "assigned_to_id": None,
+            "is_booked": False
+        })
+    
+    # Default dividends for user games
+    dividends = {
+        "Early Five": 0,
+        "Top Line": 0,
+        "Middle Line": 0,
+        "Bottom Line": 0,
+        "Full House": 0
+    }
     
     user_game = {
         "user_game_id": user_game_id,
@@ -1597,19 +1633,21 @@ async def create_user_game(
         "prizes_description": game_data.prizes_description,
         "share_code": share_code,
         "status": "upcoming",
-        "created_at": datetime.now(timezone.utc),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "players": [],
         "tickets": tickets,
+        "dividends": dividends,
         "called_numbers": [],
         "current_number": None,
-        "winners": {}
+        "winners": {},
+        "auto_call_enabled": True
     }
     
     await db.user_games.insert_one(user_game)
     
-    # Remove tickets from response for lighter payload
-    user_game.pop("tickets", None)
+    # Remove _id and tickets from response for lighter payload
     user_game.pop("_id", None)
+    user_game.pop("tickets", None)
     
     return user_game
 
