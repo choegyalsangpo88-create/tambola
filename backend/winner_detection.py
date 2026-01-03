@@ -144,13 +144,6 @@ def check_four_corners(ticket_numbers, called_numbers):
     
     # All four corner numbers must be marked
     return all(corner in called_set for corner in corners)
-    # If any corner is blank, this ticket cannot win Four Corners
-    for corner in corners:
-        if corner is None or corner == 0:
-            return False
-    
-    # All corners must be marked (in called numbers)
-    return all(corner in called_set for corner in corners)
 
 
 # ============ SPECIAL PATTERNS ============
