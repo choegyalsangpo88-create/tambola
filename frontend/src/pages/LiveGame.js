@@ -187,25 +187,6 @@ export default function LiveGame() {
     } catch (error) { console.error('Failed to fetch booked tickets:', error); }
   };
 
-  const calculateTopPlayers = () => {
-    if (!session || !allBookedTickets.length) return;
-    const calledSet = new Set(session.called_numbers);
-    const playerProgress = {};
-    allBookedTickets.forEach(ticket => {
-      const oderId = ticket.user_id || ticket.booked_by_name;
-      if (!oderId) return;
-      let markedCount = 0;
-      ticket.numbers.forEach(row => {
-        row.forEach(num => { if (num && calledSet.has(num)) markedCount++; });
-      });
-      if (!playerProgress[oderId]) {
-        playerProgress[oderId] = { name: ticket.booked_by_name || `Player ${String(oderId).slice(-4)}`, totalMarked: 0 };
-      }
-      playerProgress[oderId].totalMarked += markedCount;
-    });
-    setTopPlayers(Object.values(playerProgress).sort((a, b) => b.totalMarked - a.totalMarked).slice(0, 5));
-  };
-
   const getBallColor = (num) => {
     if (!num) return 'from-gray-400 to-gray-600';
     if (num <= 10) return 'from-red-400 to-red-600';
