@@ -2252,32 +2252,52 @@ async def auto_game_manager():
 async def check_and_start_user_games():
     """Check for user-created games that should start"""
     now = datetime.now(timezone.utc)
-    current_date = now.strftime("%Y-%m-%d")
-    current_time = now.strftime("%H:%M")
     
-    games_to_start = await db.user_games.find({
-        "status": "upcoming",
-        "date": current_date,
-        "time": {"$lte": current_time}
+    # Get all upcoming user games
+    upcoming_games = await db.user_games.find({
+        "status": "upcoming"
     }, {"_id": 0}).to_list(100)
     
-    for game in games_to_start:
+    for game in upcoming_games:
         try:
-            await db.user_games.update_one(
-                {"user_game_id": game["user_game_id"]},
-                {"$set": {
-                    "status": "live",
-                    "started_at": now.isoformat(),
-                    "called_numbers": [],
-                    "current_number": None,
-                    "winners": {},
-                    "auto_call_enabled": True,
-                    "last_call_time": now.isoformat()
-                }}
-            )
-            logger.info(f"Auto-started user game: {game['name']} ({game['user_game_id']})")
+            game_date = game.get("date")  # Format: YYYY-MM-DD
+            game_time = game.get("time")  # Format: HH:MM
+            
+            if not game_date or not game_time:
+                continue
+            
+            # Parse the scheduled datetime (assume IST/local timezone UTC+5:30)
+            # Games are created in user's local time (typically IST for Indian users)
+            scheduled_str = f"{game_date} {game_time}"
+            try:
+                # Parse as naive datetime
+                scheduled_naive = datetime.strptime(scheduled_str, "%Y-%m-%d %H:%M")
+                # Assume IST (UTC+5:30) - convert to UTC for comparison
+                from datetime import timedelta
+                ist_offset = timedelta(hours=5, minutes=30)
+                scheduled_utc = scheduled_naive - ist_offset
+                scheduled_utc = scheduled_utc.replace(tzinfo=timezone.utc)
+                
+                # Check if scheduled time has passed
+                if now >= scheduled_utc:
+                    await db.user_games.update_one(
+                        {"user_game_id": game["user_game_id"]},
+                        {"$set": {
+                            "status": "live",
+                            "started_at": now.isoformat(),
+                            "called_numbers": game.get("called_numbers", []),
+                            "current_number": game.get("current_number"),
+                            "winners": game.get("winners", {}),
+                            "auto_call_enabled": True,
+                            "last_call_time": now.isoformat()
+                        }}
+                    )
+                    logger.info(f"Auto-started user game: {game['name']} ({game['user_game_id']})")
+            except Exception as parse_error:
+                logger.error(f"Date parse error for game {game['user_game_id']}: {parse_error}")
+                
         except Exception as e:
-            logger.error(f"Failed to auto-start user game {game['user_game_id']}: {e}")
+            logger.error(f"Failed to auto-start user game {game.get('user_game_id')}: {e}")
 
 async def auto_call_user_game_numbers():
     """Automatically call numbers for live user games"""
