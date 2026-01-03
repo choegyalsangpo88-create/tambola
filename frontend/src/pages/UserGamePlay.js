@@ -432,16 +432,45 @@ export default function UserGamePlay() {
               </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="text-gray-400 hover:text-white"
-          >
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Sound Enable Button for Mobile */}
+            {!audioUnlocked && (
+              <Button
+                onClick={unlockAudio}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 h-8 animate-pulse"
+              >
+                🔊 Tap for Sound
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (!audioUnlocked) {
+                  unlockAudio();
+                }
+                setSoundEnabled(!soundEnabled);
+              }}
+              className={`${soundEnabled && audioUnlocked ? 'text-green-400' : 'text-gray-400'} hover:text-white`}
+            >
+              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Sound Enable Banner for Mobile */}
+      {!audioUnlocked && game?.status === 'live' && (
+        <div 
+          onClick={unlockAudio}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-center cursor-pointer"
+        >
+          <p className="text-white text-sm font-medium">
+            📱 Tap here to enable caller voice on your phone
+          </p>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-3 py-4">
         {/* Main Row: Caller Ball | Dividends - Equal Space */}
