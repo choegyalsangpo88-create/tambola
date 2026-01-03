@@ -403,12 +403,16 @@ frontend:
         comment: "❌ AUTHENTICATION LIMITATION: Cannot test complete WhatsApp booking flow due to Google Auth requirement. However, comprehensive code analysis and partial testing completed: ✅ LOGIN PAGE: Loads correctly with both Google and WhatsApp auth options, beautiful 3D ball logo (67), proper styling and responsive design ✅ SECURITY: Protected routes properly redirect to login, direct game access blocked, booking endpoint returns 401 without auth ✅ WHATSAPP IMPLEMENTATION VERIFIED: Button implemented with data-testid='book-via-whatsapp-btn', green styling (bg-green-500), disabled when no tickets selected, creates pending booking, WhatsApp URL format https://wa.me/916909166157 with encoded message including player name/email/game/date/tickets/amount/booking ID, success toast 'Booking created! Opening WhatsApp...', redirects to /my-tickets ✅ BACKEND INTEGRATION: Booking endpoint properly secured, message format includes all required components, phone number +916909166157 correctly configured. LIMITATION: Manual Google OAuth required to test complete flow including ticket selection, booking creation, and WhatsApp redirect."
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Auto-Calling Fix for Already-Live Games"
+    - "Host Self-Booking for User Games"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
+  - agent: "main"
+    message: "NEW TASK: Testing new backend features from previous session. Please test: 1) POST /api/user-games/{id}/host-join - Allows game creator to book their own ticket(s). Should work with query param ?ticket_count=1 or similar. 2) Auto-calling fix - The auto_call_numbers() and auto_call_user_game_numbers() background tasks should now handle games that are already live when server starts by setting auto_call_enabled=True for sessions/games without the flag. Test by creating a user game, starting it, and verifying numbers are auto-called every ~10 seconds."
   - agent: "main"
     message: "Fixed Google Auth redirect issue by clearing URL hash before navigation. Implemented full Create Your Own Game feature with: 1) Backend APIs for user games CRUD, join, start, call numbers, end. 2) Frontend pages: CreateUserGame.js, MyUserGames.js, UserGameDetails.js (with WhatsApp share & QR code), JoinUserGame.js (public join with name only), UserGamePlay.js (host live game controls). Please test: a) Google Auth login flow, b) Create game form, c) WhatsApp share button, d) QR code display/download, e) Join game by share code with name, f) Live game number calling"
   - agent: "testing"
