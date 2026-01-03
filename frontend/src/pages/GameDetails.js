@@ -264,29 +264,6 @@ Please approve my booking request. 🙏`;
       setIsBooking(false);
     }
   };
-      const whatsappNumber = '916909166157';
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      
-      toast.success('Booking created! Opening WhatsApp...');
-      window.open(whatsappUrl, '_blank');
-      
-      setSelectedTickets([]);
-      navigate('/my-tickets');
-    } catch (error) {
-      console.error('Booking failed:', error);
-      const errorMsg = error.response?.data?.detail || 'Failed to create booking';
-      toast.error(errorMsg);
-      
-      // If tickets are already booked, refresh the ticket list
-      if (errorMsg.includes('already booked')) {
-        toast.info('Refreshing tickets...');
-        setSelectedTickets([]);
-        fetchAllTickets();
-      }
-    } finally {
-      setIsBooking(false);
-    }
-  };
 
   // Filter sheets - show only fully available sheets when fullsheets filter is active
   const displayedSheets = filterMode === 'fullsheets'
