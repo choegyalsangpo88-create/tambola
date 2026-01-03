@@ -57,67 +57,52 @@ export default function LiveGame() {
     });
     toast.success(`🏆 ${prize} Winner: ${winnerName}!`, { duration: 5000 });
   };
-      
-      setAudioEnabled(true);
-      setShowAudioPrompt(false);
-    } catch (error) {
-      console.error('Failed to enable audio:', error);
-    }
-  };
 
-  const celebrateWinner = (prizeType) => {
-    confetti({
-      particleCount: 150,
-      spread: 100,
-      origin: { y: 0.6 },
-      colors: ['#FCD34D', '#F59E0B', '#D97706', '#10B981']
-    });
-    toast.success(`🎉 ${prizeType} Winner!`, { duration: 5000 });
-  };
-
-  const playNumberSound = () => {
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
-  };
-
-  // Play TTS for number announcement
+  // Play TTS announcement
   const playTTSAnnouncement = async (number) => {
-    // Prevent duplicate announcements and check conditions
-    if (!soundEnabled || !audioEnabled || isAnnouncing || game?.status === 'completed') return;
+    if (!soundEnabled || isAnnouncingRef.current || game?.status === 'completed') return;
     if (lastAnnouncedRef.current === number) return;
     
     lastAnnouncedRef.current = number;
-    setIsAnnouncing(true);
+    isAnnouncingRef.current = true;
     setLastPlayedNumber(number);
     
     const callName = getCallName(number);
     
     try {
-      // Try API-generated audio first
-      const response = await axios.post(
-        `${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=false`,
-        {},
-        { timeout: 5000 }
-      );
-      
-      if (response.data.enabled && response.data.audio && !response.data.use_browser_tts) {
-        await playAudioData(response.data.audio);
-      } else {
-        await speakWithBrowserTTS(callName);
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
       }
-    } catch (error) {
-      console.log('API TTS unavailable, using browser TTS');
       await speakWithBrowserTTS(callName);
+    } catch (error) {
+      console.log('TTS error:', error);
     } finally {
-      setIsAnnouncing(false);
+      isAnnouncingRef.current = false;
     }
   };
 
-  // Play base64 audio data
-  const playAudioData = (base64Audio) => {
+  const speakWithBrowserTTS = (text) => {
     return new Promise((resolve) => {
+      if (!('speechSynthesis' in window)) {
+        resolve();
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        if (speechSynthRef.current) utterance.voice = speechSynthRef.current;
+        utterance.onend = () => resolve();
+        utterance.onerror = () => resolve();
+        window.speechSynthesis.speak(utterance);
+        setTimeout(resolve, 8000);
+      } catch (e) {
+        resolve();
+      }
+    });
+  };
       try {
         if (audioContextRef.current?.state === 'suspended') {
           audioContextRef.current.resume();
