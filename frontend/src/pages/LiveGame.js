@@ -23,6 +23,7 @@ export default function LiveGame() {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
+  const [isSpinning, setIsSpinning] = useState(false);
   const pollInterval = useRef(null);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
