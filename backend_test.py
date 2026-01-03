@@ -7,8 +7,8 @@ class TambolaAPITester:
     def __init__(self, base_url="https://tambola-live-6.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
-        self.session_token = "lYnA2pHIaXdsZ_NSn4jX6i0MjmwN-Fgz3JFKe9y_ZPI"  # Valid session from DB
-        self.user_id = "user_b4186fef9da4"
+        self.session_token = "9740c20a7af441c6be784ececbe13a422a63031193f24b9d80c795d5a461a5d3"  # Valid session from DB
+        self.user_id = "test_user_123"
         self.tests_run = 0
         self.tests_passed = 0
         self.game_id = None
