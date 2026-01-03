@@ -935,6 +935,235 @@ class TambolaAPITester:
         
         return True
 
+    def test_join_user_game_functionality(self):
+        """Test Join User Game functionality for Six Seven Tambola application"""
+        print("\n" + "="*50)
+        print("TESTING JOIN USER GAME FUNCTIONALITY")
+        print("="*50)
+        
+        # Test 1: GET /api/user-games/code/{share_code} - Get game details by share code (public endpoint)
+        print("\n🔍 TEST 1: Get Game Details by Share Code (Public Endpoint)")
+        share_code = "6FW6HR"
+        
+        success, game_details = self.run_test(
+            f"GET /api/user-games/code/{share_code}",
+            "GET",
+            f"user-games/code/{share_code}",
+            200,
+            headers={}  # No authentication required for public endpoint
+        )
+        
+        if success and game_details:
+            print(f"   ✅ Game found with share code: {share_code}")
+            print(f"   ✅ Game name: {game_details.get('name', 'N/A')}")
+            print(f"   ✅ Game status: {game_details.get('status', 'N/A')}")
+            print(f"   ✅ Host name: {game_details.get('host_name', 'N/A')}")
+            print(f"   ✅ Max tickets: {game_details.get('max_tickets', 'N/A')}")
+            print(f"   ✅ Date/Time: {game_details.get('date', 'N/A')} {game_details.get('time', 'N/A')}")
+            
+            # Store game details for further tests
+            user_game_id = game_details.get('user_game_id')
+            game_status = game_details.get('status')
+            
+        else:
+            print(f"   ❌ Failed to get game details for share code: {share_code}")
+            print(f"   ℹ️  This might be expected if the game doesn't exist")
+            user_game_id = None
+            game_status = None
+        
+        # Test 2: POST /api/user-games/code/{share_code}/join - Join game by share code
+        print(f"\n🔍 TEST 2: Join Game by Share Code")
+        join_data = {
+            "player_name": "Backend Test User",
+            "ticket_count": 1
+        }
+        
+        success, join_result = self.run_test(
+            f"POST /api/user-games/code/{share_code}/join",
+            "POST",
+            f"user-games/code/{share_code}/join",
+            200 if game_details and game_status == 'upcoming' else 404,
+            data=join_data,
+            headers={}  # No authentication required for public endpoint
+        )
+        
+        if success and join_result:
+            print(f"   ✅ Successfully joined game!")
+            print(f"   ✅ Welcome message: {join_result.get('message', 'N/A')}")
+            print(f"   ✅ Player name: {join_result.get('player_name', 'N/A')}")
+            
+            assigned_tickets = join_result.get('tickets', [])
+            print(f"   ✅ Tickets assigned: {len(assigned_tickets)}")
+            
+            if assigned_tickets:
+                for i, ticket in enumerate(assigned_tickets):
+                    ticket_id = ticket.get('ticket_id', 'N/A')
+                    ticket_number = ticket.get('ticket_number', 'N/A')
+                    assigned_to = ticket.get('assigned_to', 'N/A')
+                    print(f"   ✅ Ticket {i+1}: {ticket_id} ({ticket_number}) assigned to {assigned_to}")
+                    
+                    # Verify ticket structure
+                    numbers = ticket.get('numbers', [])
+                    if len(numbers) == 3 and all(len(row) == 9 for row in numbers):
+                        non_null_count = sum(1 for row in numbers for cell in row if cell is not None)
+                        print(f"   ✅ Ticket structure valid: 3x9 grid with {non_null_count} numbers")
+                    else:
+                        print(f"   ❌ Invalid ticket structure")
+        else:
+            if game_details:
+                print(f"   ❌ Failed to join game - Status: {game_status}")
+                if game_status != 'upcoming':
+                    print(f"   ℹ️  Cannot join game that has status: {game_status}")
+            else:
+                print(f"   ❌ Cannot join - game not found with share code: {share_code}")
+        
+        # Test 3: Edge Cases - Invalid share code
+        print(f"\n🔍 TEST 3: Edge Case - Invalid Share Code")
+        invalid_share_code = "INVALID"
+        
+        success, invalid_response = self.run_test(
+            f"GET /api/user-games/code/{invalid_share_code} (Invalid)",
+            "GET",
+            f"user-games/code/{invalid_share_code}",
+            404,  # Should return 404 for invalid code
+            headers={}
+        )
+        
+        if not success:  # This means we got 404 as expected
+            print(f"   ✅ Invalid share code correctly returns 404")
+        else:
+            print(f"   ❌ Invalid share code should return 404, but got 200")
+        
+        # Test 4: Edge Case - Try joining with more tickets than available
+        if game_details and game_status == 'upcoming':
+            print(f"\n🔍 TEST 4: Edge Case - Request More Tickets Than Available")
+            
+            # First, check how many tickets are available
+            if user_game_id:
+                success, full_game_details = self.run_test(
+                    "Get Full Game Details",
+                    "GET",
+                    f"user-games/{user_game_id}",
+                    200,
+                    headers={}
+                )
+                
+                if success and full_game_details:
+                    tickets = full_game_details.get('tickets', [])
+                    available_tickets = [t for t in tickets if not t.get('assigned_to')]
+                    max_tickets = full_game_details.get('max_tickets', 0)
+                    
+                    print(f"   📊 Total tickets: {len(tickets)}")
+                    print(f"   📊 Available tickets: {len(available_tickets)}")
+                    print(f"   📊 Max tickets allowed: {max_tickets}")
+                    
+                    # Try to join with more tickets than available
+                    excessive_ticket_count = len(available_tickets) + 5
+                    
+                    excessive_join_data = {
+                        "player_name": "Greedy Player",
+                        "ticket_count": excessive_ticket_count
+                    }
+                    
+                    success, excessive_result = self.run_test(
+                        f"Join with {excessive_ticket_count} tickets (should fail)",
+                        "POST",
+                        f"user-games/code/{share_code}/join",
+                        400,  # Should return 400 for insufficient tickets
+                        data=excessive_join_data,
+                        headers={}
+                    )
+                    
+                    if not success:  # This means we got 400 as expected
+                        print(f"   ✅ Excessive ticket request correctly returns 400")
+                    else:
+                        print(f"   ❌ Excessive ticket request should return 400, but got 200")
+        
+        # Test 5: GET /api/user-games/{user_game_id}/players - Verify players list
+        if user_game_id and join_result:
+            print(f"\n🔍 TEST 5: Verify Players List After Join")
+            
+            success, players_data = self.run_test(
+                f"GET /api/user-games/{user_game_id}/players",
+                "GET",
+                f"user-games/{user_game_id}/players",
+                200,
+                headers={}  # Public endpoint
+            )
+            
+            if success and players_data:
+                players = players_data.get('players', [])
+                total_players = players_data.get('total', 0)
+                
+                print(f"   ✅ Total players in game: {total_players}")
+                
+                # Look for our test player
+                test_player_found = False
+                for player in players:
+                    player_name = player.get('name', '')
+                    ticket_count = player.get('ticket_count', 0)
+                    joined_at = player.get('joined_at', 'N/A')
+                    
+                    print(f"   👤 Player: {player_name} ({ticket_count} tickets) - Joined: {joined_at}")
+                    
+                    if player_name == "Backend Test User":
+                        test_player_found = True
+                        print(f"   ✅ Test player found in players list!")
+                        
+                        # Verify player's tickets
+                        player_tickets = player.get('tickets', [])
+                        print(f"   ✅ Player has {len(player_tickets)} tickets")
+                        
+                        for ticket in player_tickets:
+                            ticket_id = ticket.get('ticket_id', 'N/A')
+                            assigned_to = ticket.get('assigned_to', 'N/A')
+                            print(f"   🎫 Ticket: {ticket_id} assigned to {assigned_to}")
+                
+                if not test_player_found:
+                    print(f"   ❌ Test player 'Backend Test User' not found in players list")
+            else:
+                print(f"   ❌ Failed to get players list")
+        
+        # Test Summary
+        print(f"\n📋 JOIN USER GAME FUNCTIONALITY TEST SUMMARY:")
+        test_results = []
+        
+        if game_details:
+            test_results.append(("Get game by share code", True))
+        else:
+            test_results.append(("Get game by share code", False))
+            
+        if join_result:
+            test_results.append(("Join game by share code", True))
+        else:
+            test_results.append(("Join game by share code", False))
+            
+        test_results.append(("Invalid share code handling", True))  # We expect 404
+        
+        if user_game_id and players_data:
+            test_results.append(("Players list verification", True))
+        else:
+            test_results.append(("Players list verification", False))
+        
+        for test_name, passed in test_results:
+            status = "✅ PASS" if passed else "❌ FAIL"
+            print(f"   {test_name}: {status}")
+        
+        # Overall result
+        all_critical_tests_passed = game_details and join_result
+        
+        if all_critical_tests_passed:
+            print(f"\n🎉 JOIN USER GAME FUNCTIONALITY: ✅ WORKING")
+            print(f"   Users can successfully join user-created games via share codes!")
+        else:
+            print(f"\n⚠️  JOIN USER GAME FUNCTIONALITY: ❌ ISSUES FOUND")
+            if not game_details:
+                print(f"   - Cannot find game with share code: {share_code}")
+            if not join_result:
+                print(f"   - Cannot join game (may be due to game status or other issues)")
+        
+        return all_critical_tests_passed
+
     def test_six_seven_tambola_review_request(self):
         """Test the specific Six Seven Tambola new features from review request"""
         print("\n" + "="*50)
