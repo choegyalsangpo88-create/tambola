@@ -257,7 +257,7 @@ class WinnerDetectionTester:
                 self.log("✅ FIX VERIFIED: Full Sheet Bonus requires 2+ numbers marked on each of 6 tickets")
                 
                 # Test with one ticket having only 1 mark (should fail)
-                called_numbers_insufficient = [1, 2, 3, 4, 5, 11, 12, 13, 14, 15]  # Ticket 6 has only 1 mark
+                called_numbers_insufficient = [1, 11]  # Only first 2 numbers - ticket 6 will have only 1 mark
                 result_insufficient = check_full_sheet_bonus(sheet_tickets, called_numbers_insufficient, min_marks_per_ticket=2)
                 
                 if not result_insufficient:
