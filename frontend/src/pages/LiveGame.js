@@ -88,26 +88,34 @@ export default function LiveGame() {
     }
   };
 
-  // Server-side TTS - works better on iOS
+  // Server-side TTS - most reliable for iOS/Android
   const playServerTTS = async (text) => {
     try {
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
       const data = response.data;
       
       if (data.audio) {
-        // Play base64 audio
-        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
-        audio.volume = 1.0;
-        
         return new Promise((resolve) => {
-          audio.onended = () => resolve(true);
-          audio.onerror = () => resolve(false);
-          audio.play().then(() => {
-            // Audio started playing
-          }).catch(() => resolve(false));
+          const audio = new Audio();
+          audio.src = `data:audio/mp3;base64,${data.audio}`;
+          audio.volume = 1.0;
+          audio.preload = 'auto';
           
-          // Timeout safety
-          setTimeout(() => resolve(true), 5000);
+          audio.onended = () => resolve(true);
+          audio.onerror = (e) => {
+            console.log('Audio error:', e);
+            resolve(false);
+          };
+          
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((e) => {
+              console.log('Play failed:', e);
+              resolve(false);
+            });
+          }
+          
+          setTimeout(() => resolve(true), 6000);
         });
       }
       
@@ -130,7 +138,7 @@ export default function LiveGame() {
         utterance.rate = 0.9;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
-        if (speechSynthRef.current) utterance.voice = speechSynthRef.current;
+        utterance.lang = 'en-US';
         utterance.onend = () => resolve();
         utterance.onerror = () => resolve();
         window.speechSynthesis.speak(utterance);
@@ -142,7 +150,6 @@ export default function LiveGame() {
   };
 
   useEffect(() => {
-    initAudio();
     fetchGameData();
     fetchMyTickets();
     fetchAllBookedTickets();
