@@ -158,8 +158,12 @@ export default function LiveGame() {
         previousWinnersRef.current = session.winners;
       }
       
-      // Play TTS for new number
+      // Play TTS for new number with spin animation
       if (session.current_number && session.current_number !== lastPlayedNumber) {
+        // Trigger spin animation
+        setIsSpinning(true);
+        setTimeout(() => setIsSpinning(false), 600);
+        
         playTTSAnnouncement(session.current_number);
       }
     }
