@@ -177,28 +177,23 @@ export default function UserGamePlay() {
     setCurrentBall(number);
     setShowBallAnimation(true);
     
-    // Play announcement if sound is on
-    if (soundEnabled && game?.status === 'live') {
+    // Play announcement if sound is on and audio is unlocked
+    if (soundEnabled && audioUnlocked && game?.status === 'live') {
       await announceNumber(number);
     }
     
     setTimeout(() => setShowBallAnimation(false), 3000);
   };
 
-  // Main announcement function - uses server TTS for iOS compatibility
+  // Main announcement function - uses server TTS for mobile compatibility
   const announceNumber = async (number) => {
-    if (isAnnouncingRef.current || game?.status === 'completed') return;
+    if (isAnnouncingRef.current || game?.status === 'completed' || !audioUnlocked) return;
     isAnnouncingRef.current = true;
     
     const callName = getCallName(number);
     
     try {
-      // Resume audio context for mobile
-      if (audioContextRef.current?.state === 'suspended') {
-        await audioContextRef.current.resume();
-      }
-      
-      // Try server-side TTS first (works on iOS)
+      // Try server-side TTS first (most reliable for mobile)
       const played = await playServerTTS(callName);
       
       // Fallback to browser TTS if server TTS fails
@@ -212,26 +207,41 @@ export default function UserGamePlay() {
     }
   };
 
-  // Server-side TTS - works better on iOS
+  // Server-side TTS - most reliable for iOS/Android
   const playServerTTS = async (text) => {
     try {
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
       const data = response.data;
       
       if (data.audio) {
-        // Play base64 audio
-        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
-        audio.volume = 1.0;
-        
         return new Promise((resolve) => {
+          // Create audio element
+          const audio = new Audio();
+          audio.src = `data:audio/mp3;base64,${data.audio}`;
+          audio.volume = 1.0;
+          audio.preload = 'auto';
+          
           audio.onended = () => resolve(true);
-          audio.onerror = () => resolve(false);
-          audio.play().then(() => {
-            // Audio started playing
-          }).catch(() => resolve(false));
+          audio.onerror = (e) => {
+            console.log('Audio error:', e);
+            resolve(false);
+          };
+          
+          // Play with promise handling
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                // Playing
+              })
+              .catch((e) => {
+                console.log('Play failed:', e);
+                resolve(false);
+              });
+          }
           
           // Timeout safety
-          setTimeout(() => resolve(true), 5000);
+          setTimeout(() => resolve(true), 6000);
         });
       }
       
@@ -242,7 +252,7 @@ export default function UserGamePlay() {
     }
   };
 
-  // Browser speech synthesis - fallback for when server TTS is unavailable
+  // Browser speech synthesis - fallback
   const speakWithBrowserTTS = (text) => {
     return new Promise((resolve) => {
       if (!('speechSynthesis' in window)) {
@@ -257,10 +267,7 @@ export default function UserGamePlay() {
         utterance.rate = 0.9;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
-        
-        if (speechSynthRef.current) {
-          utterance.voice = speechSynthRef.current;
-        }
+        utterance.lang = 'en-US';
         
         utterance.onend = () => resolve();
         utterance.onerror = () => resolve();
