@@ -107,27 +107,33 @@ user_problem_statement: Build a full-stack Tambola (Housie) game with Google Aut
 backend:
   - task: "Auto-Calling Fix for Already-Live Games"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented fix for auto-calling background task to handle games that are already live when server starts. The auto_call_numbers() and auto_call_user_game_numbers() functions now check for sessions/games without auto_call_enabled flag and set it to True. Needs testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Auto-calling fix working perfectly! Created test user game, started it, and verified numbers are automatically called every ~8 seconds by background task. Confirmed: 1) Background task runs every 5 seconds ✅, 2) Games without auto_call_enabled flag get it set to True automatically ✅, 3) Numbers are called automatically for live games ✅, 4) last_call_time is properly tracked ✅, 5) Backend logs show 'Auto-called number X for user game' messages ✅. The fix successfully handles already-live games when server starts by enabling auto-calling for them."
 
   - task: "Host Self-Booking for User Games"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented POST /api/user-games/{id}/host-join endpoint that allows the game creator to book their own tickets. Returns abbreviated name (e.g., 'A. Sharma'). Needs testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Host self-booking working perfectly! Comprehensive testing verified: 1) POST /api/user-games/{id}/host-join?ticket_count=1 works correctly ✅, 2) Host can book multiple tickets (tested 1 + 2 more = 3 total) ✅, 3) Abbreviated name format correct ('Anil Sharma' → 'A. Sharma') ✅, 4) Host appears in players list with is_host: true flag ✅, 5) Tickets properly assigned to host ✅, 6) Cannot join after game starts (returns 400 error) ✅, 7) Only host can use this endpoint (403 for others) ✅. All authentication, authorization, and ticket assignment working correctly."
 
   - task: "Google Auth Session Exchange"
     implemented: true
