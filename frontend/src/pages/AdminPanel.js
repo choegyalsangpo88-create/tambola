@@ -553,17 +553,24 @@ export default function AdminPanel() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 block mb-2">Total Tickets</label>
+                    <label className="text-sm text-gray-400 block mb-2">Total Tickets (Full Sheets × 6)</label>
                     <Input
                       type="number"
                       value={gameForm.total_tickets}
-                      onChange={(e) => setGameForm({ ...gameForm, total_tickets: parseInt(e.target.value) })}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 6;
+                        // Round to nearest multiple of 6
+                        const rounded = Math.ceil(value / 6) * 6;
+                        setGameForm({ ...gameForm, total_tickets: rounded });
+                      }}
                       min="6"
                       step="6"
                       required
                       className="bg-black/20 border-white/10 focus:border-amber-500 text-white h-12"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Must be multiple of 6 (Full Sheets)</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {gameForm.total_tickets / 6} Full Sheets × 6 = {gameForm.total_tickets} tickets
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-2">Ticket Price (₹)</label>
