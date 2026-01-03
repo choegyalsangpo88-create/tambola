@@ -8,8 +8,8 @@ class GameAutomationTester:
     def __init__(self, base_url="https://tambola-fun.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
-        self.session_token = "lYnA2pHIaXdsZ_NSn4jX6i0MjmwN-Fgz3JFKe9y_ZPI"  # Valid session from DB
-        self.user_id = "user_b4186fef9da4"
+        self.session_token = None  # Will try to get valid session
+        self.user_id = None
         self.admin_token = None
         self.tests_run = 0
         self.tests_passed = 0
