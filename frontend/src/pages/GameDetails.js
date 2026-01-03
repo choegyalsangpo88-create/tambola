@@ -11,6 +11,13 @@ const API = `${BACKEND_URL}/api`;
 // Wide compact ticket component
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
+  const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
+  // Format name: "A. Sharma" style
+  const shortName = holderName ? (
+    holderName.split(' ').length > 1 
+      ? holderName.split(' ')[0][0] + '. ' + holderName.split(' ')[1].slice(0, 6)
+      : holderName.slice(0, 8)
+  ) : null;
   
   return (
     <div
@@ -25,12 +32,14 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
     >
       {/* Ticket number and booked by - positioned just above ticket */}
       <div className="flex items-center justify-between px-1 mb-0.5">
-        <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
-          {ticket.ticket_number}
-        </span>
-        {bookedBy && (
-          <span className="text-[9px] text-gray-500 truncate max-w-[60px]">{bookedBy}</span>
-        )}
+        <div className="flex items-center gap-1">
+          <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
+            {ticket.ticket_number}
+          </span>
+          {shortName && (
+            <span className="text-[8px] text-purple-400 truncate max-w-[50px]">• {shortName}</span>
+          )}
+        </div>
         {isSelected && (
           <span className="text-[10px] text-amber-400">✓</span>
         )}
