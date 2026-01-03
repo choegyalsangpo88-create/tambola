@@ -525,17 +525,7 @@ frontend:
         agent: "testing"
         comment: "✅ CRITICAL FIX VERIFIED: User Games API public access working perfectly! Testing confirmed: 1) GET /api/user-games/code/{share_code} works without authentication ✅, 2) Returns game details for valid share codes ✅, 3) POST /api/user-games/code/{share_code}/join allows public joining ✅, 4) Players can join with just name, no auth required ✅, 5) Ticket assignment works correctly ✅, 6) Complete user game flow functional ✅. Public API enables family/party game sharing."
 
-  - task: "Critical Fixes - Admin Game Auto-Start (BLOCKED)"
-    implemented: true
-    working: false
-    file: "/app/backend/server.py"
-    stuck_count: 1
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: false
-        agent: "testing"
-        comment: "❌ CRITICAL ISSUE FOUND: Admin game auto-start blocked by RecursionError in ticket_generator.py! Error details: 1) POST /api/games fails with 500 Internal Server Error ✅, 2) Backend logs show 'RecursionError: maximum recursion depth exceeded' in generate_full_sheet() function ✅, 3) Line 336 in ticket_generator.py calls itself recursively without proper exit condition ✅, 4) This prevents admin game creation entirely ✅. REQUIRES IMMEDIATE FIX: Main agent must fix the infinite recursion in generate_full_sheet() function before admin game auto-start can be tested."
+  - task: "Critical Fixes - Admin Game Auto-Start (FIXED)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -543,12 +533,15 @@ frontend:
     priority: "high"
     needs_retesting: false
     status_history:
-      - working: true
+      - working: false
         agent: "testing"
-        comment: "✅ TTS ENDPOINT TESTING COMPLETE: POST /api/tts/generate working perfectly! TESTED: 1) TTS with prefix (include_prefix=true) returns proper response ✅, 2) use_browser_tts: true as expected ✅, 3) Text properly formatted with prefix line: 'Get ready to mark... Number 45 - Halfway There' ✅, 4) TTS without prefix (include_prefix=false) works correctly ✅, 5) Voice settings included (voice: shimmer, speed: 1.3, gender: female) ✅. Endpoint responds correctly to exact review request parameters: text=Number%2045%20-%20Halfway%20There&include_prefix=true."
+        comment: "❌ CRITICAL ISSUE FOUND: Admin game auto-start blocked by RecursionError in ticket_generator.py! Error details: 1) POST /api/games fails with 500 Internal Server Error ✅, 2) Backend logs show 'RecursionError: maximum recursion depth exceeded' in generate_full_sheet() function ✅, 3) Line 336 in ticket_generator.py calls itself recursively without proper exit condition ✅, 4) This prevents admin game creation entirely ✅. REQUIRES IMMEDIATE FIX: Main agent must fix the infinite recursion in generate_full_sheet() function before admin game auto-start can be tested."
       - working: true
         agent: "main"
         comment: "✅ FIXED: Updated TTS integration from broken openai SDK to emergentintegrations library. Now correctly generates audio using OpenAITextToSpeech with EMERGENT_LLM_KEY. Test confirmed: Has Audio: True, Use Browser TTS: False."
+      - working: true
+        agent: "testing"
+        comment: "✅ CRITICAL FIXES TESTING COMPLETE: RecursionError FIXED! Comprehensive testing verified all critical fixes working perfectly: 1) ADMIN GAME AUTO-START ✅ - Created admin game with past start time (5 mins ago), game automatically transitioned from 'upcoming' to 'live' status within 10 seconds, game session created with auto_call_enabled: true, auto number calling verified (numbers called automatically every ~10 seconds) ✅, 2) USER GAME CREATION WITH TICKETS ✅ - generates proper 3x9 Tambola grids with 15 numbers per ticket, 5 numbers per row, proper ticket structure with ticket_id/numbers/assigned_to fields ✅, 3) DUPLICATE GAME PREVENTION ✅ - blocks same name/date/time games with clear error message 'A game with same name, date and time already exists. Please change at least one.' ✅, 4) TTS ENDPOINT ✅ - POST /api/tts/generate working perfectly with exact review request parameters (text=Number%2045&include_prefix=true), returns audio data with prefix functionality, use_browser_tts: false, proper voice settings ✅. All critical fixes are now WORKING and production-ready!"
 
 test_plan:
   current_focus:
