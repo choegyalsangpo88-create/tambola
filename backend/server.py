@@ -2232,6 +2232,26 @@ async def auto_call_user_game_numbers():
             continue
             
         try:
+            # Check if all dividends (prizes) are already claimed
+            dividends = game.get("dividends", {})
+            winners = game.get("winners", {})
+            
+            # Filter out Full Sheet Bonus from dividend check
+            actual_dividends = {k: v for k, v in dividends.items() if "Full Sheet" not in k and "Bonus" not in k}
+            
+            # End game if all dividends claimed
+            if actual_dividends and len(winners) >= len(actual_dividends):
+                await db.user_games.update_one(
+                    {"user_game_id": game["user_game_id"]},
+                    {"$set": {
+                        "status": "completed",
+                        "auto_call_enabled": False,
+                        "ended_at": now.isoformat()
+                    }}
+                )
+                logger.info(f"User game {game['user_game_id']} completed - all dividends claimed!")
+                continue
+            
             last_call = game.get("last_call_time")
             if last_call:
                 try:
@@ -2244,10 +2264,9 @@ async def auto_call_user_game_numbers():
             
             called = game.get("called_numbers", [])
             
-            # Stop calling if all 90 numbers called or game completed
-            if len(called) >= 90 or game.get("status") == "completed":
-                # Mark game as completed if all numbers called
-                if len(called) >= 90 and game.get("status") != "completed":
+            # Stop calling if all 90 numbers called
+            if len(called) >= 90:
+                if game.get("status") != "completed":
                     await db.user_games.update_one(
                         {"user_game_id": game["user_game_id"]},
                         {"$set": {
