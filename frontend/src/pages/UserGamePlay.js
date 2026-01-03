@@ -23,84 +23,58 @@ export default function UserGamePlay() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentBall, setCurrentBall] = useState(null);
   const [showBallAnimation, setShowBallAnimation] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(false);
-  const [showAudioPrompt, setShowAudioPrompt] = useState(true);
-  const [isAnnouncing, setIsAnnouncing] = useState(false);
+  const [dividends, setDividends] = useState({});
+  const [allWinners, setAllWinners] = useState({});
   
   const audioRef = useRef(null);
   const pollIntervalRef = useRef(null);
   const audioContextRef = useRef(null);
-  const audioQueueRef = useRef([]);
   const lastAnnouncedRef = useRef(null);
   const speechSynthRef = useRef(null);
+  const isAnnouncingRef = useRef(false);
+  const previousWinnersRef = useRef({});
 
-  // Pre-load voices for better mobile performance
-  const loadVoices = useCallback(() => {
-    if ('speechSynthesis' in window) {
-      const voices = window.speechSynthesis.getVoices();
-      // Find best voice for Indian English
-      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
-      const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
-      speechSynthRef.current = indianVoice || englishVoice || voices[0];
-    }
-  }, []);
-
-  // Enable audio on user interaction (required for mobile)
-  const enableAudio = async () => {
+  // Initialize audio on component mount
+  const initAudio = useCallback(async () => {
     try {
-      // Create AudioContext to unlock audio on mobile
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       }
-      await audioContextRef.current.resume();
       
-      // Initialize speech synthesis and load voices
+      // Pre-load voices
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        loadVoices();
-        // Force load voices (some browsers need this)
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-        
-        // Warm up with silent speech
-        const warmup = new SpeechSynthesisUtterance('');
-        warmup.volume = 0;
-        window.speechSynthesis.speak(warmup);
+        const voices = window.speechSynthesis.getVoices();
+        speechSynthRef.current = voices.find(v => v.lang.includes('en-IN')) || 
+                                  voices.find(v => v.lang.includes('en')) || 
+                                  voices[0];
+        window.speechSynthesis.onvoiceschanged = () => {
+          const v = window.speechSynthesis.getVoices();
+          speechSynthRef.current = v.find(x => x.lang.includes('en-IN')) || v.find(x => x.lang.includes('en')) || v[0];
+        };
       }
-      
-      // Play silent audio to unlock
-      const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+0DEAAAHAAGgAAAANIAAANIAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+0LEJgAAA0gAAAAADSAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
-      await silentAudio.play().catch(() => {});
-      
-      setAudioEnabled(true);
-      setShowAudioPrompt(false);
-      toast.success('🔊 Sound enabled! Ready for live announcements.');
-    } catch (error) {
-      console.error('Failed to enable audio:', error);
-      toast.error('Could not enable audio. Try again.');
+    } catch (e) {
+      console.log('Audio init error:', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    initAudio();
     fetchInitialData();
-    loadVoices();
     
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(() => {});
-      }
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     };
-  }, [userGameId, loadVoices]);
+  }, [userGameId, initAudio]);
 
   useEffect(() => {
-    // Poll for ALL users since auto-call is enabled
+    // Poll every 2 seconds for live game
     if (game && game.status === 'live') {
       pollIntervalRef.current = setInterval(fetchSession, 2000);
       return () => clearInterval(pollIntervalRef.current);
     }
+  }, [game]);
   }, [game]);
 
   const fetchInitialData = async () => {
