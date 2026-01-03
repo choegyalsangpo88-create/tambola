@@ -409,16 +409,35 @@ export default function LiveGame() {
                     }
                   });
                   
-                  // Sort by remaining (fewer = closer to winning), take top 5, remove duplicates
-                  const uniquePlayers = {};
+                  // Sort by remaining (fewer = closer to winning)
+                  // For users with same remaining, prioritize those with more tickets close to winning
+                  const playerStats = {};
                   playerProgress.forEach(p => {
-                    if (!uniquePlayers[p.name] || uniquePlayers[p.name].remaining > p.remaining) {
-                      uniquePlayers[p.name] = p;
+                    if (!playerStats[p.name]) {
+                      playerStats[p.name] = { 
+                        name: p.name, 
+                        bestRemaining: p.remaining, 
+                        ticketCount: 1,
+                        totalRemaining: p.remaining 
+                      };
+                    } else {
+                      // Track best (lowest) remaining
+                      if (p.remaining < playerStats[p.name].bestRemaining) {
+                        playerStats[p.name].bestRemaining = p.remaining;
+                      }
+                      playerStats[p.name].ticketCount++;
+                      playerStats[p.name].totalRemaining += p.remaining;
                     }
                   });
                   
-                  const top5 = Object.values(uniquePlayers)
-                    .sort((a, b) => a.remaining - b.remaining)
+                  // Sort: 1st by best remaining (ascending), 2nd by ticket count (descending)
+                  const top5 = Object.values(playerStats)
+                    .sort((a, b) => {
+                      if (a.bestRemaining !== b.bestRemaining) {
+                        return a.bestRemaining - b.bestRemaining;
+                      }
+                      return b.ticketCount - a.ticketCount; // More tickets = higher priority
+                    })
                     .slice(0, 5);
                   
                   if (top5.length === 0) {
@@ -427,9 +446,12 @@ export default function LiveGame() {
                   
                   return top5.map((p, idx) => (
                     <div key={idx} className="bg-white/5 rounded px-1.5 py-1">
-                      <span className="text-[9px] text-white font-medium truncate block">{p.name.split(' ')[0]}</span>
+                      <span className="text-[9px] text-white font-medium truncate block">
+                        {p.name.split(' ')[0]}
+                        {p.ticketCount > 1 && <span className="text-amber-400 ml-1">x{p.ticketCount}</span>}
+                      </span>
                       <div className="flex gap-0.5 mt-0.5">
-                        {Array.from({ length: Math.min(p.remaining, 5) }).map((_, i) => (
+                        {Array.from({ length: Math.min(p.bestRemaining, 5) }).map((_, i) => (
                           <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
                         ))}
                       </div>
