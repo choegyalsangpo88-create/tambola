@@ -141,7 +141,7 @@ export default function UserGamePlay() {
     }
   };
 
-  // Celebrate winner with confetti, toast, and TTS
+  // Celebrate winner with confetti and toast - NO TTS announcement
   const celebrateWinner = async (prize, winnerName) => {
     // Big confetti burst
     confetti({
@@ -167,7 +167,7 @@ export default function UserGamePlay() {
       });
     }, 300);
     
-    // Show toast with "Prize Gone" message
+    // Show toast with "Prize Gone" message and winner name(s)
     toast.success(
       <div className="text-center">
         <p className="text-xl font-black text-amber-400">🎉 Congratulations!</p>
@@ -177,15 +177,7 @@ export default function UserGamePlay() {
       { duration: 6000 }
     );
     
-    // Announce winner via TTS
-    if (audioUnlocked && soundEnabled) {
-      try {
-        const text = `Congratulations! ${prize} Gone! Winner is ${winnerName}!`;
-        await playTTSWithHowler(text);
-      } catch (e) {
-        console.log('Winner announcement error:', e);
-      }
-    }
+    // NO TTS announcement for winner name
   };
 
   const showNewNumber = async (number) => {
