@@ -2078,42 +2078,60 @@ logger = logging.getLogger(__name__)
 # ============ AUTO-GAME MANAGEMENT ============
 
 async def check_and_start_games():
-    """Check for games that should start and start them automatically"""
+    """Check for admin games that should start and start them automatically"""
     now = datetime.now(timezone.utc)
-    current_date = now.strftime("%Y-%m-%d")
-    current_time = now.strftime("%H:%M")
     
-    # Find upcoming games that should start now
-    games_to_start = await db.games.find({
-        "status": "upcoming",
-        "date": current_date,
-        "time": {"$lte": current_time}
+    # Get all upcoming admin games
+    upcoming_games = await db.games.find({
+        "status": "upcoming"
     }, {"_id": 0}).to_list(100)
     
-    for game in games_to_start:
+    for game in upcoming_games:
         try:
-            # Start the game
-            await db.games.update_one(
-                {"game_id": game["game_id"]},
-                {"$set": {"status": "live", "started_at": now.isoformat()}}
-            )
+            game_date = game.get("date")  # Format: YYYY-MM-DD
+            game_time = game.get("time")  # Format: HH:MM
             
-            # Create game session
-            session_id = f"session_{uuid.uuid4().hex[:8]}"
-            await db.game_sessions.insert_one({
-                "session_id": session_id,
-                "game_id": game["game_id"],
-                "called_numbers": [],
-                "current_number": None,
-                "winners": {},
-                "status": "active",
-                "auto_call_enabled": True,
-                "last_call_time": now.isoformat(),
-                "created_at": now.isoformat()
-            })
-            logger.info(f"Auto-started game: {game['name']} ({game['game_id']})")
+            if not game_date or not game_time:
+                continue
+            
+            # Parse the scheduled datetime (assume IST/local timezone UTC+5:30)
+            scheduled_str = f"{game_date} {game_time}"
+            try:
+                # Parse as naive datetime
+                scheduled_naive = datetime.strptime(scheduled_str, "%Y-%m-%d %H:%M")
+                # Assume IST (UTC+5:30) - convert to UTC for comparison
+                from datetime import timedelta
+                ist_offset = timedelta(hours=5, minutes=30)
+                scheduled_utc = scheduled_naive - ist_offset
+                scheduled_utc = scheduled_utc.replace(tzinfo=timezone.utc)
+                
+                # Check if scheduled time has passed
+                if now >= scheduled_utc:
+                    # Start the game
+                    await db.games.update_one(
+                        {"game_id": game["game_id"]},
+                        {"$set": {"status": "live", "started_at": now.isoformat()}}
+                    )
+                    
+                    # Create game session
+                    session_id = f"session_{uuid.uuid4().hex[:8]}"
+                    await db.game_sessions.insert_one({
+                        "session_id": session_id,
+                        "game_id": game["game_id"],
+                        "called_numbers": [],
+                        "current_number": None,
+                        "winners": {},
+                        "status": "active",
+                        "auto_call_enabled": True,
+                        "last_call_time": now.isoformat(),
+                        "created_at": now.isoformat()
+                    })
+                    logger.info(f"Auto-started admin game: {game['name']} ({game['game_id']})")
+            except Exception as parse_error:
+                logger.error(f"Date parse error for admin game {game['game_id']}: {parse_error}")
+                
         except Exception as e:
-            logger.error(f"Failed to auto-start game {game['game_id']}: {e}")
+            logger.error(f"Failed to auto-start admin game {game['game_id']}: {e}")
 
 async def auto_call_numbers():
     """Automatically call numbers for live games with auto_call_enabled"""
