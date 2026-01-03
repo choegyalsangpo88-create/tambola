@@ -2369,35 +2369,78 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
         if not game:
             return
         
-        participants = await db.user_game_participants.find({
-            "user_game_id": user_game_id
-        }, {"_id": 0}).to_list(100)
-        
         dividends = game.get("dividends", {})
         current_winners = game.get("winners", {})
         
-        for prize_type in dividends.keys():
-            if prize_type in current_winners:
-                continue
+        # Get players from embedded tickets in the game
+        tickets = game.get("tickets", [])
+        assigned_tickets = [t for t in tickets if t.get("assigned_to")]
+        
+        # If no embedded tickets, try participants collection
+        if not assigned_tickets:
+            participants = await db.user_game_participants.find({
+                "user_game_id": user_game_id
+            }, {"_id": 0}).to_list(100)
             
-            for participant in participants:
-                ticket = participant.get("ticket", {})
-                if not ticket:
+            for prize_type in dividends.keys():
+                if prize_type in current_winners:
                     continue
-                    
-                winner_info = check_all_winners({"numbers": ticket.get("numbers", [])}, called_numbers, prize_type)
-                if winner_info:
-                    current_winners[prize_type] = {
-                        "participant_id": participant.get("participant_id"),
-                        "name": participant.get("name"),
-                        "won_at": datetime.now(timezone.utc).isoformat()
-                    }
-                    await db.user_games.update_one(
-                        {"user_game_id": user_game_id},
-                        {"$set": {"winners": current_winners}}
-                    )
-                    logger.info(f"Winner found for {prize_type} in user game {user_game_id}")
-                    break
+                
+                for participant in participants:
+                    ticket = participant.get("ticket", {})
+                    if not ticket:
+                        continue
+                        
+                    winner_info = check_all_winners({"numbers": ticket.get("numbers", [])}, called_numbers, prize_type)
+                    if winner_info:
+                        current_winners[prize_type] = {
+                            "participant_id": participant.get("participant_id"),
+                            "name": participant.get("name"),
+                            "won_at": datetime.now(timezone.utc).isoformat()
+                        }
+                        await db.user_games.update_one(
+                            {"user_game_id": user_game_id},
+                            {"$set": {"winners": current_winners}}
+                        )
+                        logger.info(f"Winner found for {prize_type} in user game {user_game_id}")
+                        break
+        else:
+            # Use embedded tickets
+            for prize_type in dividends.keys():
+                if prize_type in current_winners:
+                    continue
+                
+                for ticket in assigned_tickets:
+                    ticket_numbers = ticket.get("numbers", [])
+                    if not ticket_numbers:
+                        continue
+                        
+                    winner_info = check_all_winners({"numbers": ticket_numbers}, called_numbers, prize_type)
+                    if winner_info:
+                        current_winners[prize_type] = {
+                            "ticket_id": ticket.get("ticket_id"),
+                            "name": ticket.get("assigned_to"),
+                            "ticket_number": ticket.get("ticket_number"),
+                            "won_at": datetime.now(timezone.utc).isoformat()
+                        }
+                        await db.user_games.update_one(
+                            {"user_game_id": user_game_id},
+                            {"$set": {"winners": current_winners}}
+                        )
+                        logger.info(f"Winner found for {prize_type} in user game {user_game_id}: {ticket.get('assigned_to')}")
+                        break
+        
+        # Auto-end game if all prizes won
+        if len(current_winners) >= len(dividends) and len(dividends) > 0:
+            await db.user_games.update_one(
+                {"user_game_id": user_game_id},
+                {"$set": {
+                    "status": "completed",
+                    "ended_at": datetime.now(timezone.utc).isoformat(),
+                    "auto_call_enabled": False
+                }}
+            )
+            logger.info(f"User game {user_game_id} auto-ended - all prizes won!")
         
         # Auto-end if all prizes won
         if len(current_winners) >= len(dividends) and len(dividends) > 0:
