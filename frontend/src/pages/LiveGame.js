@@ -6,6 +6,7 @@ import { ArrowLeft, Trophy, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-rea
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { getCallName } from '@/utils/tambolaCallNames';
+import { unlockMobileAudio, playBase64Audio, speakText } from '@/utils/audioHelper';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -23,30 +24,19 @@ export default function LiveGame() {
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const pollInterval = useRef(null);
-  const audioRef = useRef(null);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
   const previousWinnersRef = useRef({});
 
-  // Unlock audio on iOS/mobile - MUST be triggered by user gesture
-  const unlockAudio = useCallback(() => {
-    const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////");
-    silentAudio.volume = 0.01;
-    silentAudio.play().then(() => {
+  // Unlock audio on iOS/mobile using Howler.js - MUST be triggered by user gesture
+  const unlockAudio = useCallback(async () => {
+    try {
+      await unlockMobileAudio();
       setAudioUnlocked(true);
       toast.success('🔊 Sound enabled!');
-    }).catch(() => {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const buffer = ctx.createBuffer(1, 1, 22050);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(ctx.destination);
-        source.start(0);
-        setAudioUnlocked(true);
-        toast.success('🔊 Sound enabled!');
-      } catch (e) {
-        console.log('Audio unlock failed:', e);
+    } catch (e) {
+      console.log('Audio unlock failed:', e);
+      setAudioUnlocked(true); // Still try to play
       }
     });
   }, []);
