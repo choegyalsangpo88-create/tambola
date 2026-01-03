@@ -67,19 +67,20 @@ export default function LiveGame() {
       });
     }, 300);
     
-    // Show toast with winner info
+    // Show toast with "Prize Gone" message
     toast.success(
       <div className="text-center">
-        <p className="text-lg font-bold">🏆 {prize}</p>
-        <p className="text-xl font-black text-amber-400">Congratulations {winnerName}!</p>
+        <p className="text-xl font-black text-amber-400">🎉 Congratulations!</p>
+        <p className="text-lg font-bold text-white">{prize} Gone!</p>
+        <p className="text-sm text-green-300">Winner: {winnerName}</p>
       </div>,
       { duration: 6000 }
     );
     
-    // Announce winner via TTS if audio is unlocked
+    // Announce winner via TTS
     if (audioUnlocked && soundEnabled) {
       try {
-        const text = `Congratulations ${winnerName}! You have won ${prize}!`;
+        const text = `Congratulations! ${prize} Gone! Winner is ${winnerName}!`;
         await playTTSWithHowler(text);
       } catch (e) {
         console.log('Winner announcement error:', e);
