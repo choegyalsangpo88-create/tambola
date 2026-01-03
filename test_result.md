@@ -477,7 +477,65 @@ frontend:
         agent: "testing"
         comment: "✅ CRITICAL FIXES TESTING COMPLETE: User game deletion endpoint verified in backend code. DELETE /api/user-games/{user_game_id} properly implemented with host authentication checks and works for any game status. Frontend delete buttons exist with confirmation dialogs. Endpoint requires authenticated session for testing but implementation is correct."
 
-  - task: "TTS Endpoint for Number Calling"
+  - task: "Critical Fixes - User Game Creation & Ticket Generation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CRITICAL FIX VERIFIED: User game creation with proper ticket generation working perfectly! Comprehensive testing confirmed: 1) POST /api/user-games creates games with valid tickets array ✅, 2) Each ticket has proper 3x9 grid structure with exactly 15 numbers ✅, 3) Tambola rules followed: 5 numbers per row, 4 empty cells per row ✅, 4) Tickets properly structured with ticket_id, numbers array, assigned_to fields ✅, 5) Share code generation working ✅. Ticket generation follows authentic Tambola format."
+
+  - task: "Critical Fixes - Duplicate Game Prevention"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CRITICAL FIX VERIFIED: Duplicate game prevention working correctly! Testing confirmed: 1) Backend prevents creating games with same name, date, and time by same host ✅, 2) Returns 400 error with clear message 'A game with same name, date and time already exists. Please change at least one.' ✅, 3) Validation occurs before game creation ✅, 4) Different names/dates/times allow creation ✅. Duplicate prevention logic is robust and user-friendly."
+
+  - task: "Critical Fixes - TTS Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CRITICAL FIX VERIFIED: TTS endpoint working perfectly! Comprehensive testing confirmed: 1) POST /api/tts/generate responds correctly with audio data ✅, 2) include_prefix parameter works - adds random prefix lines when true ✅, 3) Returns proper response format with enabled, audio, text, format fields ✅, 4) Audio generation working via emergentintegrations OpenAI TTS ✅, 5) Voice settings and prefix functionality operational ✅. TTS system ready for live game number calling."
+
+  - task: "Critical Fixes - User Games API Public Access"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CRITICAL FIX VERIFIED: User Games API public access working perfectly! Testing confirmed: 1) GET /api/user-games/code/{share_code} works without authentication ✅, 2) Returns game details for valid share codes ✅, 3) POST /api/user-games/code/{share_code}/join allows public joining ✅, 4) Players can join with just name, no auth required ✅, 5) Ticket assignment works correctly ✅, 6) Complete user game flow functional ✅. Public API enables family/party game sharing."
+
+  - task: "Critical Fixes - Admin Game Auto-Start (BLOCKED)"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE FOUND: Admin game auto-start blocked by RecursionError in ticket_generator.py! Error details: 1) POST /api/games fails with 500 Internal Server Error ✅, 2) Backend logs show 'RecursionError: maximum recursion depth exceeded' in generate_full_sheet() function ✅, 3) Line 336 in ticket_generator.py calls itself recursively without proper exit condition ✅, 4) This prevents admin game creation entirely ✅. REQUIRES IMMEDIATE FIX: Main agent must fix the infinite recursion in generate_full_sheet() function before admin game auto-start can be tested."
     implemented: true
     working: true
     file: "/app/backend/server.py"
