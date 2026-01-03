@@ -421,6 +421,29 @@ agent_communication:
   - agent: "main"
     message: "NEW TASK: Testing Auto-Archive feature on Dashboard for Tambola game application. Need to test: 1) Login and Dashboard Access, 2) Check Dashboard Sections (Live Games, Just Ended with green theme, Upcoming Games), 3) Test 'Just Ended' Section functionality, 4) Test Past Results Page. Expected UI Elements: 'Just Ended' section with Clock icon (emerald/green color), 'ENDED' badge (green background), 'View Results' button (green gradient). There should be at least 1 recently completed game in the system."
   - agent: "testing"
+  - agent: "main"
+    message: "NEW TASK: Testing Game Automation & UX Features for Tambola application. Previous agent implemented but did NOT test the following features. Please test: 
+    1) GAME AUTOMATION:
+       a) Admin game auto-start: Create admin game scheduled for near future, verify it transitions to 'live' automatically at scheduled time
+       b) User game auto-start: Create user game scheduled for near future, verify auto-transition to live
+       c) Auto-calling: Verify numbers are called automatically in live games (both admin and user games) every ~8 seconds
+       d) Auto-end: Verify game ends automatically when all prizes are won
+    2) HOST SELF-BOOKING:
+       a) Test POST /api/user-games/{user_game_id}/host-join?ticket_count=1 endpoint
+       b) Verify host appears in players list with is_host=true
+       c) Test that only host can use this endpoint (403 for non-host)
+    3) USER NAMES ON TICKETS:
+       a) Verify tickets show abbreviated names (e.g., 'Anil Sharma' -> 'A. Sharma')
+       b) Check LiveGame.js displays holder_name or booked_by_name above tickets
+    4) JOIN LIVE BUTTON:
+       a) Verify MyUserGames.js shows 'Join Live' button for games with status='live'
+       b) Test navigation to /user-game-play/{id}
+    5) USER GAME DELETION:
+       a) DELETE /api/user-games/{user_game_id} should work for host even if game is live
+       b) Non-host should get 403
+    
+    Admin Panel Credentials: /control-ceo, username: sixtysevenceo, password: Freetibet123!@#
+    Backend URL: https://tambola-fun.preview.emergentagent.com"
     message: "✅ AUTO-ARCHIVE FEATURE DASHBOARD TESTING COMPLETE: Comprehensive testing verified all auto-archive functionality working perfectly! BACKEND VERIFICATION ✅: Recent completed games API found 1 game 'Auto-Archive Test Game - Just Ended' completed within 5 minutes, archived games API found 1 game older than 5 minutes, default games API correctly includes recent completed games, 5-minute auto-archive logic working perfectly. FRONTEND VERIFICATION ✅: Dashboard and Past Results routes properly protected, frontend contains all required auto-archive UI elements (emerald theme, Clock icon, ENDED badge, View Results button), Dashboard.js implements 'Just Ended' section with proper data-testid, PastResults.js fetches archived games correctly. EXPECTED BEHAVIOR: Games completed within 5 minutes appear in 'Just Ended' section with emerald/green theme, Clock icon, green 'ENDED' badge, 'View Results' button with green gradient, and 'Results available • Moving to archive soon' text. After 5 minutes, games automatically move to Past Results archive. Auto-archive feature is FULLY IMPLEMENTED and WORKING. Manual Google Auth login required to verify complete UI rendering."
   - agent: "main"
     message: "NEW TASK: Test the WhatsApp Booking flow on the Tambola game application. Test Flow: 1) Navigate to app and login via Google Auth, 2) Go to an upcoming game, 3) Select 1-2 available tickets, 4) Click '💬 Book via WhatsApp' button, 5) Verify: No error toast, Success toast 'Booking created! Opening WhatsApp...', New tab opens with WhatsApp URL containing message with Player name/Email/Game/Date/Tickets/Amount/Booking ID. WhatsApp URL format: https://wa.me/916909166157?text=... Note: Booking should create pending booking and redirect to WhatsApp Business number."
