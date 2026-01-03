@@ -927,19 +927,27 @@ async def get_all_bookings(request: Request, status: Optional[str] = None, _: bo
 
 @api_router.put("/admin/bookings/{booking_id}/confirm")
 async def confirm_booking(booking_id: str, request: Request, _: bool = Depends(verify_admin)):
+    booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
     result = await db.bookings.update_one(
         {"booking_id": booking_id},
         {"$set": {"status": "confirmed", "whatsapp_confirmed": True}}
     )
     
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Booking not found")
+    # Get user info for holder name
+    user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0})
+    holder_name = user.get("name", "Player") if user else "Player"
     
-    # Update ticket status
-    booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
+    # Update ticket status with holder name
     await db.tickets.update_many(
         {"ticket_id": {"$in": booking["ticket_ids"]}},
-        {"$set": {"booking_status": "confirmed"}}
+        {"$set": {
+            "booking_status": "confirmed",
+            "holder_name": holder_name,
+            "booked_by_name": holder_name
+        }}
     )
     
     return {"message": "Booking confirmed"}
