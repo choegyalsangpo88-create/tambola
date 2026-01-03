@@ -37,8 +37,7 @@ export default function LiveGame() {
     } catch (e) {
       console.log('Audio unlock failed:', e);
       setAudioUnlocked(true); // Still try to play
-      }
-    });
+    }
   }, []);
 
   // Celebrate winner with name and prize
@@ -80,14 +79,14 @@ export default function LiveGame() {
     if (audioUnlocked && soundEnabled) {
       try {
         const text = `Congratulations ${winnerName}! You have won ${prize}!`;
-        await playServerTTS(text);
+        await playTTSWithHowler(text);
       } catch (e) {
         console.log('Winner announcement error:', e);
       }
     }
   };
 
-  // Play TTS announcement - uses server TTS for mobile compatibility
+  // Play TTS announcement using Howler.js for mobile compatibility
   const playTTSAnnouncement = async (number) => {
     if (!soundEnabled || !audioUnlocked || isAnnouncingRef.current || game?.status === 'completed') return;
     if (lastAnnouncedRef.current === number) return;
@@ -99,12 +98,12 @@ export default function LiveGame() {
     const callName = getCallName(number);
     
     try {
-      // Try server-side TTS first (most reliable for mobile)
-      const played = await playServerTTS(callName);
+      // Try server-side TTS with Howler.js (most reliable for mobile)
+      const played = await playTTSWithHowler(callName);
       
       // Fallback to browser TTS if server TTS fails
       if (!played) {
-        await speakWithBrowserTTS(callName);
+        await speakText(callName);
       }
     } catch (error) {
       console.log('TTS error:', error);
@@ -113,11 +112,27 @@ export default function LiveGame() {
     }
   };
 
-  // Server-side TTS - most reliable for iOS/Android
-  const playServerTTS = async (text) => {
+  // Server-side TTS with Howler.js - works on iOS/Android
+  const playTTSWithHowler = async (text) => {
     try {
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
       const data = response.data;
+      
+      if (data.audio) {
+        return await playBase64Audio(data.audio);
+      }
+      
+      if (data.use_browser_tts) {
+        await speakText(data.text || text);
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      console.log('Server TTS error:', e);
+      return false;
+    }
+  };
       
       if (data.audio) {
         return new Promise((resolve) => {
