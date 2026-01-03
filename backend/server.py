@@ -2007,6 +2007,306 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ============ AUTO-GAME MANAGEMENT ============
+
+async def check_and_start_games():
+    """Check for games that should start and start them automatically"""
+    now = datetime.now(timezone.utc)
+    current_date = now.strftime("%Y-%m-%d")
+    current_time = now.strftime("%H:%M")
+    
+    # Find upcoming games that should start now
+    games_to_start = await db.games.find({
+        "status": "upcoming",
+        "date": current_date,
+        "time": {"$lte": current_time}
+    }, {"_id": 0}).to_list(100)
+    
+    for game in games_to_start:
+        try:
+            # Start the game
+            await db.games.update_one(
+                {"game_id": game["game_id"]},
+                {"$set": {"status": "live", "started_at": now.isoformat()}}
+            )
+            
+            # Create game session
+            session_id = f"session_{uuid.uuid4().hex[:8]}"
+            await db.game_sessions.insert_one({
+                "session_id": session_id,
+                "game_id": game["game_id"],
+                "called_numbers": [],
+                "current_number": None,
+                "winners": {},
+                "status": "active",
+                "auto_call_enabled": True,
+                "last_call_time": now.isoformat(),
+                "created_at": now.isoformat()
+            })
+            logger.info(f"Auto-started game: {game['name']} ({game['game_id']})")
+        except Exception as e:
+            logger.error(f"Failed to auto-start game {game['game_id']}: {e}")
+
+async def auto_call_numbers():
+    """Automatically call numbers for live games with auto_call_enabled"""
+    now = datetime.now(timezone.utc)
+    
+    # Find active game sessions with auto-call enabled
+    sessions = await db.game_sessions.find({
+        "status": "active",
+        "auto_call_enabled": True
+    }, {"_id": 0}).to_list(100)
+    
+    for session in sessions:
+        try:
+            # Check if enough time has passed since last call (8 seconds)
+            last_call = session.get("last_call_time")
+            if last_call:
+                last_call_dt = datetime.fromisoformat(last_call.replace('Z', '+00:00'))
+                if (now - last_call_dt).total_seconds() < 8:
+                    continue
+            
+            called = session.get("called_numbers", [])
+            if len(called) >= 90:
+                # All numbers called, check if game should end
+                continue
+            
+            # Get remaining numbers
+            all_numbers = list(range(1, 91))
+            remaining = [n for n in all_numbers if n not in called]
+            
+            if remaining:
+                # Call next number
+                next_number = random.choice(remaining)
+                called.append(next_number)
+                
+                await db.game_sessions.update_one(
+                    {"session_id": session["session_id"]},
+                    {"$set": {
+                        "called_numbers": called,
+                        "current_number": next_number,
+                        "last_call_time": now.isoformat()
+                    }}
+                )
+                
+                # Check for winners after each call
+                await check_winners_for_session(session["game_id"], called)
+                
+        except Exception as e:
+            logger.error(f"Auto-call error for session {session.get('session_id')}: {e}")
+
+async def check_winners_for_session(game_id: str, called_numbers: List[int]):
+    """Check for winners and auto-end game if all prizes won"""
+    from winner_detection import check_all_winners
+    
+    try:
+        game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+        if not game:
+            return
+        
+        session = await db.game_sessions.find_one({"game_id": game_id, "status": "active"}, {"_id": 0})
+        if not session:
+            return
+        
+        # Get all booked tickets for this game
+        booked_tickets = await db.tickets.find({
+            "game_id": game_id,
+            "is_booked": True
+        }, {"_id": 0}).to_list(1000)
+        
+        # Check winners for each prize type
+        prizes = game.get("prizes", {})
+        current_winners = session.get("winners", {})
+        
+        for prize_type in prizes.keys():
+            if prize_type in current_winners:
+                continue  # Already won
+            
+            # Check each ticket for this prize
+            for ticket in booked_tickets:
+                winner_info = check_all_winners(ticket, called_numbers, prize_type)
+                if winner_info:
+                    current_winners[prize_type] = {
+                        "user_id": ticket.get("user_id"),
+                        "ticket_id": ticket.get("ticket_id"),
+                        "ticket_number": ticket.get("ticket_number"),
+                        "won_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.game_sessions.update_one(
+                        {"session_id": session["session_id"]},
+                        {"$set": {"winners": current_winners}}
+                    )
+                    logger.info(f"Winner found for {prize_type} in game {game_id}")
+                    break
+        
+        # Check if all prizes are won - end game automatically
+        if len(current_winners) >= len(prizes) and len(prizes) > 0:
+            await db.games.update_one(
+                {"game_id": game_id},
+                {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            await db.game_sessions.update_one(
+                {"session_id": session["session_id"]},
+                {"$set": {"status": "completed", "auto_call_enabled": False}}
+            )
+            logger.info(f"Game {game_id} auto-ended - all prizes won!")
+            
+    except Exception as e:
+        logger.error(f"Winner check error for game {game_id}: {e}")
+
+async def auto_game_manager():
+    """Background task that manages auto-start, auto-call, and auto-end"""
+    global auto_game_task_running
+    auto_game_task_running = True
+    
+    while auto_game_task_running:
+        try:
+            await check_and_start_games()
+            await auto_call_numbers()
+            
+            # Also check user-created games
+            await check_and_start_user_games()
+            await auto_call_user_game_numbers()
+        except Exception as e:
+            logger.error(f"Auto-game manager error: {e}")
+        
+        await asyncio.sleep(5)  # Check every 5 seconds
+
+async def check_and_start_user_games():
+    """Check for user-created games that should start"""
+    now = datetime.now(timezone.utc)
+    current_date = now.strftime("%Y-%m-%d")
+    current_time = now.strftime("%H:%M")
+    
+    games_to_start = await db.user_games.find({
+        "status": "upcoming",
+        "date": current_date,
+        "time": {"$lte": current_time}
+    }, {"_id": 0}).to_list(100)
+    
+    for game in games_to_start:
+        try:
+            await db.user_games.update_one(
+                {"user_game_id": game["user_game_id"]},
+                {"$set": {
+                    "status": "live",
+                    "started_at": now.isoformat(),
+                    "called_numbers": [],
+                    "current_number": None,
+                    "winners": {},
+                    "auto_call_enabled": True,
+                    "last_call_time": now.isoformat()
+                }}
+            )
+            logger.info(f"Auto-started user game: {game['name']} ({game['user_game_id']})")
+        except Exception as e:
+            logger.error(f"Failed to auto-start user game {game['user_game_id']}: {e}")
+
+async def auto_call_user_game_numbers():
+    """Automatically call numbers for live user games"""
+    now = datetime.now(timezone.utc)
+    
+    live_games = await db.user_games.find({
+        "status": "live",
+        "auto_call_enabled": True
+    }, {"_id": 0}).to_list(100)
+    
+    for game in live_games:
+        try:
+            last_call = game.get("last_call_time")
+            if last_call:
+                last_call_dt = datetime.fromisoformat(last_call.replace('Z', '+00:00'))
+                if (now - last_call_dt).total_seconds() < 8:
+                    continue
+            
+            called = game.get("called_numbers", [])
+            if len(called) >= 90:
+                continue
+            
+            all_numbers = list(range(1, 91))
+            remaining = [n for n in all_numbers if n not in called]
+            
+            if remaining:
+                next_number = random.choice(remaining)
+                called.append(next_number)
+                
+                await db.user_games.update_one(
+                    {"user_game_id": game["user_game_id"]},
+                    {"$set": {
+                        "called_numbers": called,
+                        "current_number": next_number,
+                        "last_call_time": now.isoformat()
+                    }}
+                )
+                
+                # Check for winners
+                await check_user_game_winners(game["user_game_id"], called)
+                
+        except Exception as e:
+            logger.error(f"Auto-call error for user game {game.get('user_game_id')}: {e}")
+
+async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
+    """Check for winners in user-created games"""
+    from winner_detection import check_all_winners
+    
+    try:
+        game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+        if not game:
+            return
+        
+        participants = await db.user_game_participants.find({
+            "user_game_id": user_game_id
+        }, {"_id": 0}).to_list(100)
+        
+        dividends = game.get("dividends", {})
+        current_winners = game.get("winners", {})
+        
+        for prize_type in dividends.keys():
+            if prize_type in current_winners:
+                continue
+            
+            for participant in participants:
+                ticket = participant.get("ticket", {})
+                if not ticket:
+                    continue
+                    
+                winner_info = check_all_winners({"numbers": ticket.get("numbers", [])}, called_numbers, prize_type)
+                if winner_info:
+                    current_winners[prize_type] = {
+                        "participant_id": participant.get("participant_id"),
+                        "name": participant.get("name"),
+                        "won_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.user_games.update_one(
+                        {"user_game_id": user_game_id},
+                        {"$set": {"winners": current_winners}}
+                    )
+                    logger.info(f"Winner found for {prize_type} in user game {user_game_id}")
+                    break
+        
+        # Auto-end if all prizes won
+        if len(current_winners) >= len(dividends) and len(dividends) > 0:
+            await db.user_games.update_one(
+                {"user_game_id": user_game_id},
+                {"$set": {
+                    "status": "completed",
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "auto_call_enabled": False
+                }}
+            )
+            logger.info(f"User game {user_game_id} auto-ended - all prizes won!")
+            
+    except Exception as e:
+        logger.error(f"User game winner check error: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background tasks on app startup"""
+    asyncio.create_task(auto_game_manager())
+    logger.info("Auto-game manager started")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    global auto_game_task_running
+    auto_game_task_running = False
     client.close()
