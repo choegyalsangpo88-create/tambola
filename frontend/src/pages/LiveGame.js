@@ -46,13 +46,14 @@ export default function LiveGame() {
 
   // Play TTS for number announcement
   const playTTSAnnouncement = async (number) => {
-    if (!soundEnabled || number === lastPlayedNumber) return;
+    // Don't play if game is completed or sound is disabled
+    if (!soundEnabled || number === lastPlayedNumber || game?.status === 'completed') return;
     
     try {
       const callName = getCallName(number);
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(callName)}&include_prefix=true`);
       
-      if (response.data.enabled) {
+      if (response.data.enabled && game?.status !== 'completed') {
         if (response.data.audio && !response.data.use_browser_tts) {
           // Use API-generated audio
           if (ttsAudioRef.current) {
