@@ -13,148 +13,69 @@ PRODUCT REQUIREMENTS:
 - Customizable caller voice (male/female, speed, accents, funny prefix lines).
 - A separate, password-protected admin panel inaccessible to regular users.
 
-**User's preferred language**:
-English
+**User's preferred language**: English
 
 **what currently exists?**
 A full-stack Tambola web application (Six Seven Tambola) with a React frontend, a heavily modified FastAPI backend, and a MongoDB database.
 
-- **Frontend:** A responsive UI with pages for Login (Google & WhatsApp OTP), Dashboard, Game Details, Live Game, and a My Games section for user-created games. It includes a completely separate and password-protected Admin Panel.
-- **Backend:** A large  file containing over 50 API endpoints. It manages Google/WhatsApp auth, a new password-based admin auth, full CRUD for admin-created and user-created games, ticket booking requests, and live game state management. A background  task is implemented to handle automatic game starting, number calling, and ending.
-- **Admin Panel:** A comprehensive, password-protected interface at  for game creation, management (edit/delete/force-delete), viewing booking requests, and configuring caller voice settings.
+- **Frontend:** Features a responsive UI with pages for Login, Dashboard, Admin Panel, Game Details, and Live Game screens. The live game UI has been significantly refactored for mobile experience, with improved audio handling (audio queue, auto-unlock), a new layout, and winner celebrations (confetti + TTS).
+- **Backend:** A large  file manages all APIs. It includes a robust background task for game automation (auto-start/call/end) with timezone-aware logic. The TTS integration is now fully functional using . A new, official Tambola ticket generator () and a comprehensive winner detection engine () have been implemented based on detailed user specifications. Logic to prevent duplicate game creation has also been added.
+- **Admin Panel:** A comprehensive, password-protected interface at  for game creation and management.
 - **Integrations:**
-    - **Emergent-managed Google Auth:** Fully functional.
-    - **Twilio:** Active for WhatsApp OTP and booking notifications, but is limited by sandbox mode (user reported issues with international numbers).
-    - **OpenAI TTS:** Attempted integration failed due to an API key error. A browser-based  API was implemented as a fallback.
-    - **SendGrid (Email):** Code is present but remains mocked, and the user has declined to use it.
+    - **Emergent-managed Google Auth:** Functional.
+    - **Twilio:** Active for WhatsApp OTP and booking notifications (limited by sandbox mode).
+    - **OpenAI TTS:** Now **fully working** via the  library for server-side audio generation.
 
 **Last working item**:
-- **Last item agent was working:** Implementing a large batch of features related to game automation and user experience requested by the user. This included:
-    1.  Fixing the backend background task to correctly handle auto-starting, auto-calling, and auto-ending for both admin and user-created games, including games that were already live.
-    2.  Adding an endpoint and UI for a game creator (host) to book their own ticket in a user-created game.
-    3.  Adding a Join Live button in the My Games section to directly enter a live game.
-    4.  Displaying the ticket holder's abbreviated name (e.g., A. Sharma) above each ticket in the live game view.
-    5.  Allowing users to delete their own created games at any time, even if live.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** Both. This was a massive change touching core logic.
-    - **Backend testing agent:** To verify the  background task correctly starts games, calls numbers, and ends games. Test the new host self-booking endpoint () and the user game deletion logic.
-    - **Frontend testing agent:** To verify the UI for auto-calling status, the host's Book My Ticket button, the Join Live button, and the display of user names on tickets.
+- **Last item agent was working:** Addressing a large batch of critical user-reported issues related to game creation, audio stability, winner announcements, and UI layout. This involved:
+    1.  Fixing a bug that caused game creation to fail silently while creating a game entry without tickets.
+    2.  Adding a backend check to prevent creating duplicate games with the same name, date, and time.
+    3.  Removing the Enable Sound popup and implementing an automatic audio-unlock mechanism.
+    4.  Refining the audio-calling system to be more robust and prevent lag/overlap.
+    5.  Implementing a Congratulations TTS announcement with confetti when a winner is detected.
+- **Status:** USER VERIFICATION PENDING
+- **Agent Testing Done:** N (Agent only fixed linter errors after implementation).
+- **Which testing method agent to use?** Both.
+    - **Backend:** Use  or a test script to verify that creating a game with duplicate details is blocked and that new games are created with correctly formatted tickets.
+    - **Frontend:** Use the  tool and manual testing in the preview to verify the audio plays smoothly on mobile without a popup, and that winner announcements and confetti trigger correctly.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Test and Verify Game Automation & UX Features (P0)**
-  - **Description:** A large set of automation features (auto-start, auto-call, auto-end) and UX improvements (host self-booking, user names on tickets, join live button) were implemented but have not been tested. These changes affect the core gameplay loop and require thorough verification.
+- **Issue 1: Verify Game Creation, Audio, and Winner Celebration Fixes (P0)**
+  - **Description:** The agent implemented fixes for preventing duplicate game creation, ensuring tickets are generated correctly on creation, removing the audio popup, and adding winner celebrations. These critical fixes have not been tested or verified by the user. There is also a remaining linter error in .
   - **Next debug checklist:**
-    1.  Create an admin game and a user game scheduled to start in the near future.
-    2.  Verify the backend background task automatically transitions the games to live status at the scheduled time.
-    3.  Join the live games and verify that numbers are being called automatically without manual intervention.
-    4.  Verify the UI shows an Auto-calling status.
-    5.  Verify the user's abbreviated name appears above their booked tickets.
-    6.  As a game host, verify the Book My Ticket button appears and functions correctly on the User Game Details page.
-    7.  Verify the Join Live button appears for live games in the My Games list and navigates correctly.
-  - **Why fix this issue and what will be achieved with the fix?** This will complete the user's core requests for a fully automated game experience.
+    1.  Fix the remaining linter error in  ().
+    2.  Attempt to create a new user game. Verify it succeeds.
+    3.  Attempt to create the exact same game again. Verify the backend returns an error and prevents the duplicate.
+    4.  Join a live game on a mobile device. Verify that audio starts playing automatically without any popup or prompt.
+    5.  Play through a game until a prize is won. Verify that the confetti animation appears and the TTS announces Congratulations [Winner Name]....
+  - **Why fix this issue and what will be achieved with the fix?** To confirm that the latest batch of critical bug fixes are working correctly and the core gameplay is stable.
   - **Status:** IN PROGRESS
-  - **Is recurring issue?** N
+  - **Is recurring issue?** Y
   - **Should Test frontend/backend/both after fix?** Both
   - **Blocked on other issue:** None
 
 - **Issue 2: WhatsApp Sandbox Limitations (P1)**
-  - **Description:** The user reported that a Canadian number could not receive a WhatsApp OTP. This is an expected limitation of the Twilio sandbox, which requires numbers to first join the sandbox. The agent did not provide a solution or clear explanation to the user.
+  - **Description:** A user reported that a Canadian number could not receive a WhatsApp OTP. This is an expected limitation of the Twilio sandbox. The agent has not yet implemented a user-facing explanation.
   - **Next debug checklist:**
-    1.  Review the Twilio integration in .
-    2.  Implement a user-facing notification on the login screen explaining the sandbox limitation and providing instructions on how to join it (i.e., Send join <sandbox-code> to the Twilio number).
-  - **Why fix this issue and what will be achieved with the fix?** It will prevent user confusion and support tickets related to international numbers not working during testing.
+    1.  Review .
+    2.  Add a small, non-intrusive notification on the login screen () explaining the sandbox limitation and providing instructions for international users to join the sandbox.
+  - **Why fix this issue and what will be achieved with the fix?** It will prevent user confusion and support requests related to international numbers not working during testing.
   - **Status:** NOT STARTED
   - **Is recurring issue?** N
   - **Should Test frontend/backend/both after fix?** Frontend
   - **Blocked on other issue:** None
 
-- **Issue 3: Server-Side TTS Integration Failure (P2)**
-  - **Description:** The agent's attempt to use the usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit library for text-to-speech failed with a 401  error, suggesting the  is not compatible with the standard OpenAI SDK. A browser-based  was implemented as a fallback.
-  - **Attempted fixes:** Tried installing  (failed), then used the standard usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit package (failed with 401).
+- **Issue 3: Application Performance and Scalability (P2)**
+  - **Description:** The user expressed concerns that the website feels difficult to load sometimes and must handle 1000 concurrent users for a live game. The agent has not addressed this.
   - **Next debug checklist:**
-    1.  Call the  for OpenAI TTS again to confirm the correct usage pattern with . It likely requires a custom .
-    2.  Update the TTS helper function in  with the correct client initialization from the playbook.
-    3.  Remove the browser-based  fallback from  once the backend TTS is working.
-  - **Why fix this issue and what will be achieved with the fix?** Provides a consistent voice experience for all users, independent of their browser's capabilities, and fulfills the original request for customizable voices.
-  - **Status:** BLOCKED (pending correct integration info)
+    1.  Analyze the frontend bundle size and identify opportunities for code splitting or optimization.
+    2.  Review backend database queries, especially those in the real-time polling loops (), to ensure they are indexed and efficient.
+    3.  Consider transitioning the real-time updates from HTTP polling to WebSockets for better performance and scalability.
+  - **Why fix this issue and what will be achieved with the fix?** To ensure a smooth user experience and prepare the application for a larger user base as requested.
+  - **Status:** NOT STARTED
   - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Backend
+  - **Should Test frontend/backend/both after fix?** Both
   - **Blocked on other issue:** None
 
 **In progress Task List**:
@@ -163,7 +84,7 @@ None.
 **Upcoming and Future Tasks**
 
 - **Upcoming Tasks:**
-  - **Refactor  (P1):** The main backend file is over 2,200 lines long. It needs to be broken down into multiple FastAPI routers (e.g., , , , ) for maintainability.
+  - **Refactor  (P1):** The main backend file is over 2,400 lines long. It is critical to break it down into multiple FastAPI routers (e.g., , , , ) for maintainability and scalability.
 
 - **Future Tasks:**
   - Implement an in-game chat feature.
@@ -171,184 +92,101 @@ None.
   - Develop a game replay feature for past games.
 
 **Completed work in this session**
-- **Password-Protected Admin Panel:** Implemented a separate login () and JWT authentication for the admin panel, completely separating it from the user-facing app.
-- **Admin Panel Feature Expansion:** Added features for managing booking requests, configuring caller voice settings (voice, speed, custom prefixes), and a Force Delete for stuck live games.
-- **Game Auto-Archiving:** Implemented logic to move completed games from the main dashboard to a Past Results page after a 5-minute grace period.
-- **WhatsApp Booking Flow Fix:** Corrected the booking process to redirect to the user's specific WhatsApp Business number with a pre-filled, detailed message for offline payment confirmation.
-- **Booking Request Workflow:** Changed the frontend booking flow to use the  endpoint, ensuring new bookings appear in the admin panel for approval instead of being auto-confirmed.
-- **Six Seven Rebranding:** Renamed the app to Six Seven Tambola across the frontend UI.
-- **Deployment-Blocking Bugs:**
-    - Fixed a frontend syntax error in  that was causing the build to fail.
-    - Added a  endpoint to the backend to resolve Kubernetes health check failures during deployment.
-- **Removed Emergent Badge:** Deleted the Made with Emergent floating badge from .
+- **Fixed Server-Side TTS:** Successfully integrated OpenAI TTS using the  library, resolving the previous 401 API key error.
+- **Corrected Game Automation:** Fixed a timezone bug in the backend  that prevented games from starting automatically.
+- **Implemented Official Tambola Rules:**
+  - **Ticket Generation:** Re-wrote the ticket generator () to produce valid 6-ticket full sheets that adhere to all official column, row, and number distribution rules.
+  - **Winner Detection:** Re-wrote the winner detection engine () with correct logic for all major patterns including Lines, Four Corners, Early Five, Full House (1st, 2nd, 3rd), and the complex Full Sheet Bonus.
+- **Improved Real-Time Experience:**
+  - **Mobile Audio:** Re-engineered the frontend audio system with a queuing mechanism to prevent overlapping/skipped announcements and an auto-unlock feature to bypass mobile browser audio restrictions.
+  - **Announcement Format:** Corrected the TTS call-out format to Phrase... Number X.
+  - **Game End Logic:** Ensured the game automatically stops calling numbers once all defined prizes have been claimed.
+- **Enhanced UI/UX:**
+  - **Live Game Layout:** Redesigned the live game screen to balance the space between the caller and dividends sections.
+  - **Winner Celebration:** Added confetti and a custom TTS announcement to celebrate when a player wins a prize.
+  - **Removed UI Clutter:** Removed the player's name from the ticket display and eliminated the Enable Audio popup.
+- **Bug Fixes:**
+  - Implemented a check to prevent users from creating duplicate games.
+  - Fixed a bug where creating a user game would fail to generate and store tickets correctly.
 
 **Earlier issues found/mentioned but not fixed**
-- **WhatsApp OTP for International Numbers:** User reported this, agent identified it as a Twilio sandbox issue but did not implement a user-facing fix or explanation.
-- **OpenAI TTS Integration:** The backend integration failed due to an API key error. The agent implemented a browser-based fallback instead of resolving the root cause.
+- **Issue 1: WhatsApp Sandbox Limitations:** The user was not provided with a UI notification explaining why international numbers might not receive OTPs.
+- **Issue 2: Application Performance:** User concerns about app slowness and scalability to 1000 users were acknowledged but not yet addressed.
+- **Issue 3: Backend Refactoring:** The critical task of refactoring the monolithic  was planned but postponed to address urgent bugs.
 
 **Known issue recurrence from previous fork**
-None.
+- None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, Shadcn/UI, React Router, Axios, ,  (browser TTS fallback).
-- **Backend:** FastAPI, Pydantic,  for persistent background jobs.
+- **Frontend:** React, Tailwind CSS, Shadcn/UI, Axios, . Audio handling heavily modified with a custom queue and silent audio playback for mobile compatibility.
+- **Backend:** FastAPI, Pydantic,  for the game automation background task.
 - **Database:** MongoDB.
-- **Authentication:** Emergent-managed Google OAuth, Twilio WhatsApp OTP, and a separate JWT-based system for the admin panel.
+- **Integrations:** Emergent-managed Google Auth, Twilio (WhatsApp),  for OpenAI TTS.
 
 **key DB schema**
-- **admin_settings**: 
-- **admin_users**: 
-- **games**: 
-- **game_sessions**: 
-- **user_games**: 
-- **booking_requests**: (New) 
+- **user_games**: Structure updated to properly store an array of generated  and a list of  on creation.
 
 **changes in tech stack**
-- **usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit:** Added to the backend for TTS, though the integration is currently failing.
-- **:** Added to the backend for hashing the admin password.
+- ****: Added and used for OpenAI TTS.
 
 **All files of reference**
-- : Critically modified. Grew to >2200 lines with new admin auth, background tasks, booking requests, and numerous new endpoints.
-- : Heavily modified with new tabs, modals, and handlers for expanded admin features.
-- : Created for the new password-protected admin entry point.
-- : Updated to include the new  and  routes.
-- : Updated to support auto-calling status, game-ended display, and showing player names on tickets.
-- : Booking logic was completely reworked to create booking requests and redirect to WhatsApp.
-- : Updated with Book My Ticket and Delete Game functionality for hosts.
-- : Updated to handle auto-calling and game-ended states.
-- : Updated to add a Join Live button.
-- : Modified to remove the Emergent badge.
+- : Heavily modified to use the new generator/detector, fix automation, and prevent duplicate games.
+- : **New file**, contains the official logic for generating valid Tambola ticket sheets.
+- : **Completely overwritten** with logic for all official winning patterns.
+- : **Heavily refactored** with a new layout, a completely new audio handling system, winner celebrations, and removal of the audio prompt.
+- : **Heavily refactored** with the same layout and audio system improvements as .
+- : **Overwritten** to correct the announcement format.
+- : Modified to disable the create button while loading.
 
 **Areas that need refactoring**:
-- **CRITICAL: **. This file is now unmanageable. It MUST be broken down into separate FastAPI routers by concern (e.g., auth, admin, user_games, public_games). This was planned but deferred.
-- **Frontend Components:** Pages like  (>1000 lines), , and  are extremely large and would benefit from being broken down into smaller components and custom hooks.
+- **CRITICAL: **. This monolithic file is now over 2400 lines and is a major source of technical debt. It must be broken into separate FastAPI routers.
+- **CRITICAL:  & **. These files have grown very large and complex with extensive state management, effects, and audio logic. They should be broken down into smaller, more manageable components and custom hooks (e.g., , ).
 
 **key api endpoints**
-- **Admin Auth:** , 
-- **Admin Management:** ,  (GET/POST),  (GET/POST)
-- **Game Automation:**  (failing), 
-- **User Game Management:** 
-- **Health Check:**  (root level, not under )
+-  (POST): Logic was significantly updated to prevent duplicates and correctly store generated tickets.
+-  (POST): Now fully functional using .
 
 **Critical Info for New Agent**
-- **Admin Panel Access:** The admin panel is no longer at . It is now at  and requires a separate login. Credentials are in the Credentials to test flow section. All admin API calls now require an admin-specific JWT.
-- **Background Task:** The backend runs a continuous  background task () initiated on startup. This task handles auto-starting games, auto-calling numbers, and auto-ending games. Be aware of this when debugging game state issues.
-- **TTS Failure & Fallback:** The server-side OpenAI TTS integration is broken (401 error). The frontend uses the browser's  API as a temporary fallback. Do not assume the backend TTS works.
-- **Twilio Sandbox Mode:** The user has reported OTP issues for international numbers. This is a known limitation of the Twilio sandbox. Inform the user clearly about this or implement a notice on the login page.
-- **Booking Flow:** The user-facing booking flow now creates a  which must be approved by an admin. It does NOT create a confirmed booking directly anymore.
+- **Test with New Games:** The ticket generation and winner detection logic has been completely replaced. **All old games in the database have invalid tickets.** You MUST create new games to test any gameplay functionality.
+- **Audio System:** The frontend audio system has been completely rewritten to use a queue and an auto-unlock mechanism. Do not re-introduce simple audio playback or popups. The goal is a seamless, commentator-like experience.
+- **User Feedback Loop:** The user provides very detailed, high-quality feedback. Pay close attention to their specifications for rules and UI, as they have driven the most important recent changes.
+- **Refactoring is Overdue:** The  refactor is no longer just a nice-to-have. The file's size and complexity are hindering development and are a likely source of future bugs. It should be prioritized after the current fixes are verified by the user.
 
 **documents and test reports created in this job**
--  was updated several times for backend and frontend testing cycles.
+-  was updated to track testing for automation and TTS.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request:** the created live game still showing and i cant delete it... how to clear all games. **Status:** Completed. Agent added a Force Delete button to the admin panel and ran a script to clear the dev DB.
-2.  **User Message:** User provided deployment failure logs (frontend syntax error). **Status:** Completed. Agent fixed the syntax error in .
-3.  **User Message:** User provided deployment failure logs again (backend health check). **Status:** Completed. Agent added a  endpoint to .
-4.  **Request:** Call deployer agent to run health check. **Status:** Completed. Agent confirmed readiness for deployment.
-5.  **User Message:** User provided deployment logs again, which showed connection refused errors but also successful health checks. **Status:** Completed. Agent correctly identified this as normal startup behavior and informed the user the app was likely running.
-6.  **Request:** why emergent logo is on my app screen... how to remove this. **Status:** Completed. Agent found and removed the badge from .
-7.  **Request:** User reported multiple issues: WhatsApp OTP not working for Canada, booking redirect failing, booking requests not showing in admin, and requested full game automation (auto-start, auto-call, auto-end). **Status:** In Progress. This became the last working item.
-8.  **Request:** User reported more issues with a screenshot: auto-calling not working, game creators can't book their own tickets, can't join live game from My Games, and requested user names on tickets. **Status:** In Progress. This was merged into the last working item.
-9.  **Request**: dont develop asking question, if i deployed and later have to add some features, do i need again 50 credits.... **Status**: Completed. Agent called  and provided the answer.
-10. **Request**: is it ready to launch on appstore and play store?. **Status**: Completed. Agent explained the difference between a web app and a native app and recommended staying with the web app for now.
+1.  **Request:** Fix game creation failure, prevent duplicate games, remove sound popup, improve audio flow, add winner celebration, and improve performance. **Status:** In Progress (implementation done, pending user verification).
+2.  **Request:** Adjust live game layout for more dividend space, smaller caller, and fix Top Players list. **Status:** Completed.
+3.  **Request:** Fix mobile audio lag and reverse the TTS announcement order (phrase first, then number). **Status:** Completed.
+4.  **Request:** Provided a complete guide to all winning patterns (Lines, Corners, Full House, etc.). **Status:** Completed. Agent re-implemented the winner detection engine.
+5.  **Request:** Provided the official algorithm for generating valid Tambola tickets. **Status:** Completed. Agent re-implemented the ticket generator.
+6.  **Request:** Reported tickets have incorrect number counts, mobile TTS issues, and provided corrected rules for several winning patterns. **Status:** Completed.
+7.  **Request:** Reported issues with number calling smoothness, incorrect ticket generation, broken winner detection, and asked about Indian accent voices. **Status:** Completed.
+8.  **Request:** Reported that auto-start is not working and real-time number calling is not updating the UI for hosts. **Status:** Completed.
+9.  **Request:** Agreed to agent's plan: 1. Test automation, 2. Fix TTS, 3. Refactor . **Status:** Completed.
 
 **Project Health Check:**
-- **Broken:**
-  - Server-side OpenAI TTS integration ( returns 401).
+- **Broken:** None.
 - **Mocked:**
-  - SendGrid email notification system is coded but inactive.
+  - SendGrid email notification system remains coded but inactive.
 - **Degraded:**
-  - WhatsApp OTP functionality is limited by Twilio's sandbox mode, impacting international users.
-  - Caller voice relies on a browser-based fallback () instead of the intended server-side generation.
+  - WhatsApp OTP functionality is limited by Twilio's sandbox mode, impacting international users. A UI notice is still needed.
+  - Overall application performance under load is an unaddressed user concern.
 
 **3rd Party Integrations**
 - **Emergent-managed Google Auth**: Used for user login.
-- **Twilio (SMS/WhatsApp)**: Integrated with user-provided key for OTP and notifications. **(Sandbox Mode)**.
-- **SendGrid (Email)**: Requires User API Key **(Mocked, User Rejected)**.
-- **OpenAI TTS**: Integrated via usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit library but is **(Broken - 401 Auth Error)**.
-- , , , , .
+- **Twilio (SMS/WhatsApp)**: Integrated with user-provided key. **(Sandbox Mode)**.
+- **OpenAI TTS**: **Working** (via ).
+- ****: Used for winner celebrations.
 
 **Testing status**
-- Testing agent used after significant changes: YES
-- Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: None. The testing agent used ad-hoc tests via .
+- Testing agent used after significant changes: YES (for initial automation).
+- Troubleshoot agent used after agent stuck in loop: NO.
+- Test files created: None.
 - Known regressions: None.
 
 **Credentials to test flow:**
@@ -356,12 +194,9 @@ options:
 - **Admin Username:** 
 - **Admin Password:** 
 - **Google Auth:** Use the Continue with Google button.
-- **WhatsApp OTP (Sandbox):**
-    - Recipient Number (User): 
-    - Twilio Sandbox Number (Sender): 
-    - **To Test:** The recipient number must have first joined the Twilio sandbox by sending the correct code (e.g., ) to the sandbox number.
 
 **What agent forgot to execute**
-- The critical refactoring of the monolithic  into smaller, manageable routers was not performed.
-- The root cause of the OpenAI TTS integration failure (the 401 API key error) was not resolved; a fallback was implemented instead.
-- A clear, user-facing explanation or guide for the Twilio sandbox limitation was not added to the UI.</analysis>
+- The critical refactoring of the monolithic  file was deferred multiple times and remains the largest piece of technical debt.
+- A user-facing explanation for the Twilio sandbox limitation was never added to the UI.
+- The user's concern about performance and scalability to 1000 users was acknowledged but not addressed with specific optimizations.
+- A final linter error () remains in .</analysis>

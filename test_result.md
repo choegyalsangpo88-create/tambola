@@ -547,7 +547,7 @@ agent_communication:
        c) Test GET /api/user-games/{user_game_id}/players
     
     Admin Panel Credentials: /control-ceo, username: sixtysevenceo, password: Freetibet123!@#
-    Backend URL: https://tambola-fun.preview.emergentagent.com"
+    Backend URL: https://tambola-live-6.preview.emergentagent.com"
   - agent: "testing"
     message: "✅ GAME AUTOMATION & UX FEATURES TESTING COMPLETE: Comprehensive testing of all testable features completed! RESULTS: 1) GAME AUTOMATION ✅ - Admin game auto-start working perfectly: games with past start times automatically transition to 'live' status within 10 seconds, auto number calling verified (3 numbers called in 30 seconds), background task auto_game_manager() functioning correctly. 2) TTS ENDPOINT ✅ - POST /api/tts/generate working perfectly with exact review request parameters, returns use_browser_tts: true, proper text formatting with prefix lines, voice settings included. 3) PUBLIC API ENDPOINTS ✅ - All public endpoints responding correctly. 4) AUTHENTICATION LIMITATIONS ❌ - Cannot test user game features (Host Self-Booking, User Game Deletion, User Games API authenticated endpoints, User Names on Tickets, Join Live Button) due to Google Auth requirement - these require manual testing with valid user session. CRITICAL FINDING: Admin game automation is FULLY WORKING, TTS endpoint is FULLY WORKING, but user-specific features need manual verification with authenticated session."
   - agent: "main"
