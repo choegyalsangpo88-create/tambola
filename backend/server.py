@@ -650,6 +650,16 @@ async def create_game(game_data: CreateGameRequest):
     
     total_tickets = game_data.dict().get('total_tickets', 600)
     
+    # Validate tickets must be multiple of 6 (for full sheets)
+    if total_tickets % 6 != 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Total tickets must be a multiple of 6 (for full sheets). Got {total_tickets}. Try {(total_tickets // 6) * 6} or {((total_tickets // 6) + 1) * 6}."
+        )
+    
+    if total_tickets < 6:
+        raise HTTPException(status_code=400, detail="Minimum 6 tickets (1 full sheet) required")
+    
     game = {
         "game_id": game_id,
         "name": game_data.name,
@@ -666,20 +676,17 @@ async def create_game(game_data: CreateGameRequest):
     
     await db.games.insert_one(game)
     
-    # Auto-generate tickets for the game using full sheet rule (1-6, 7-12, 13-18, ...)
+    # Auto-generate tickets for the game using full sheet rule
+    # Each full sheet has 6 tickets containing all numbers 1-90
     tickets = []
     ticket_counter = 1
-    num_sheets = (total_tickets + 5) // 6  # Round up to full sheets
+    num_sheets = total_tickets // 6  # Exact number of full sheets
     
     for sheet_num in range(1, num_sheets + 1):
-        if ticket_counter > total_tickets:
-            break
         full_sheet = generate_full_sheet()
         sheet_id = f"FS{sheet_num:03d}"
         
         for ticket_num_in_sheet, ticket_numbers in enumerate(full_sheet, 1):
-            if ticket_counter > total_tickets:
-                break
             ticket = {
                 "ticket_id": f"{game_id}_T{ticket_counter:03d}",
                 "game_id": game_id,
