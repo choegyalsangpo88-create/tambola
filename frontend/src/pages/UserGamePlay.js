@@ -180,7 +180,7 @@ export default function UserGamePlay() {
     if (audioUnlocked && soundEnabled) {
       try {
         const text = `Congratulations ${winnerName}! You have won ${prize}!`;
-        await playServerTTS(text);
+        await playTTSWithHowler(text);
       } catch (e) {
         console.log('Winner announcement error:', e);
       }
@@ -205,7 +205,7 @@ export default function UserGamePlay() {
     setTimeout(() => setShowBallAnimation(false), 3000);
   };
 
-  // Main announcement function - uses server TTS for mobile compatibility
+  // Main announcement function - uses Howler.js for mobile compatibility
   const announceNumber = async (number) => {
     if (isAnnouncingRef.current || game?.status === 'completed' || !audioUnlocked) return;
     isAnnouncingRef.current = true;
@@ -213,12 +213,12 @@ export default function UserGamePlay() {
     const callName = getCallName(number);
     
     try {
-      // Try server-side TTS first (most reliable for mobile)
-      const played = await playServerTTS(callName);
+      // Try server-side TTS with Howler.js (most reliable for mobile)
+      const played = await playTTSWithHowler(callName);
       
       // Fallback to browser TTS if server TTS fails
       if (!played) {
-        await speakWithBrowserTTS(callName);
+        await speakText(callName);
       }
     } catch (error) {
       console.log('Announcement error:', error);
@@ -227,37 +227,29 @@ export default function UserGamePlay() {
     }
   };
 
-  // Server-side TTS - most reliable for iOS/Android
-  const playServerTTS = async (text) => {
+  // Server-side TTS with Howler.js - works on iOS/Android
+  const playTTSWithHowler = async (text) => {
     try {
       const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
       const data = response.data;
       
       if (data.audio) {
-        return new Promise((resolve) => {
-          // Create audio element
-          const audio = new Audio();
-          audio.src = `data:audio/mp3;base64,${data.audio}`;
-          audio.volume = 1.0;
-          audio.preload = 'auto';
-          
-          audio.onended = () => resolve(true);
-          audio.onerror = (e) => {
-            console.log('Audio error:', e);
-            resolve(false);
-          };
-          
-          // Play with promise handling
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                // Playing
-              })
-              .catch((e) => {
-                console.log('Play failed:', e);
-                resolve(false);
-              });
+        // Use Howler.js via our utility
+        return await playBase64Audio(data.audio);
+      }
+      
+      // If server returns use_browser_tts, use browser TTS
+      if (data.use_browser_tts) {
+        await speakText(data.text || text);
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      console.log('Server TTS error:', e);
+      return false;
+    }
+  };
           }
           
           // Timeout safety
