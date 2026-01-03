@@ -924,8 +924,8 @@ class TambolaAPITester:
         return True
 
     def run_all_tests(self):
-        """Run all API tests with focus on critical fixes"""
-        print("🚀 Starting Tambola API Tests - CRITICAL FIXES FOCUS")
+        """Run all API tests with focus on winner detection fixes"""
+        print("🚀 Starting Tambola API Tests - WINNER DETECTION FIXES FOCUS")
         print(f"🔗 Base URL: {self.base_url}")
         print(f"👤 Test User ID: {self.user_id}")
         print(f"🔑 Session Token: {self.session_token[:20]}...")
@@ -936,19 +936,22 @@ class TambolaAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
-        # CRITICAL FIXES TESTING (Priority 1)
-        print("\n" + "🔥"*60)
-        print("CRITICAL FIXES TESTING - PRIORITY 1")
-        print("🔥"*60)
+        # WINNER DETECTION FIXES TESTING (Priority 1)
+        print("\n" + "🎯"*60)
+        print("WINNER DETECTION FIXES TESTING - PRIORITY 1")
+        print("🎯"*60)
         
-        # Test 1: User Games Critical Fixes (Ticket Generation + Duplicate Prevention)
+        # Test 1: Winner Detection Logic (Four Corners, Full House, Full Sheet Bonus)
+        winner_detection_success = self.test_winner_detection_fixes()
+        
+        # Test 2: TTS Endpoint for Mobile Audio
+        tts_success = self.test_tts_endpoint()
+        
+        # Test 3: User Games Critical Fixes (Ticket Generation + Duplicate Prevention)
         user_games_success = self.test_user_games_endpoints()
         
-        # Test 2: Admin Game Auto-Start and Auto-Calling
+        # Test 4: Admin Game Auto-Start and Auto-Calling
         auto_game_id = self.test_admin_game_automation()
-        
-        # Test 3: TTS Endpoint
-        tts_success = self.test_tts_endpoint()
         
         # ADDITIONAL TESTING (Priority 2)
         print("\n" + "📋"*60)
@@ -970,15 +973,16 @@ class TambolaAPITester:
         print(f"📊 Tests passed: {self.tests_passed}/{self.tests_run}")
         print(f"✅ Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
-        # Critical fixes results
-        print("\n🔥 CRITICAL FIXES RESULTS:")
-        critical_results = [
+        # Winner detection fixes results
+        print("\n🎯 WINNER DETECTION FIXES RESULTS:")
+        winner_detection_results = [
+            ("Winner Detection Logic (Four Corners, Full House, Full Sheet)", winner_detection_success),
+            ("TTS Endpoint for Mobile Audio", tts_success),
             ("User Games (Tickets + Duplicate Prevention)", user_games_success),
-            ("Admin Game Auto-Start & Auto-Calling", auto_game_id is not None),
-            ("TTS Endpoint", tts_success)
+            ("Admin Game Auto-Start & Auto-Calling", auto_game_id is not None)
         ]
         
-        for fix_name, success in critical_results:
+        for fix_name, success in winner_detection_results:
             status = "✅ PASS" if success else "❌ FAIL"
             print(f"   {fix_name}: {status}")
         
@@ -999,9 +1003,9 @@ class TambolaAPITester:
             status = "✅ PASS" if success else "❌ FAIL"
             print(f"   {suite_name}: {status}")
         
-        # Summary for critical fixes
-        critical_passed = sum(1 for _, success in critical_results if success)
-        print(f"\n🎯 CRITICAL FIXES SUMMARY: {critical_passed}/{len(critical_results)} PASSED")
+        # Summary for winner detection fixes
+        winner_detection_passed = sum(1 for _, success in winner_detection_results if success)
+        print(f"\n🎯 WINNER DETECTION FIXES SUMMARY: {winner_detection_passed}/{len(winner_detection_results)} PASSED")
         
         return self.tests_passed == self.tests_run
 
