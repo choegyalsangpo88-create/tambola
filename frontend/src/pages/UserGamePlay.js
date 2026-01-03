@@ -515,39 +515,74 @@ export default function UserGamePlay() {
           </div>
         </div>
 
-        {/* Top Players - Show names from beginning */}
+        {/* Top Players - Show names by remaining numbers */}
         <div className="bg-black/30 rounded-xl p-3 mb-4">
           <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
             <Users className="w-3 h-3" /> TOP PLAYERS
           </h3>
           <div className="grid grid-cols-3 gap-2">
             {players.length > 0 ? (
-              players
-                .map(player => {
-                  // Calculate marked count for each player
-                  const calledSet = new Set(session?.called_numbers || []);
-                  let markedCount = 0;
-                  if (player.tickets) {
-                    player.tickets.forEach(ticket => {
-                      if (ticket.numbers) {
-                        ticket.numbers.forEach(row => {
-                          row.forEach(num => {
-                            if (num && calledSet.has(num)) markedCount++;
-                          });
-                        });
-                      }
+              (() => {
+                const calledSet = new Set(session?.called_numbers || []);
+                const playerStats = [];
+                
+                players.forEach(player => {
+                  if (!player.tickets || player.tickets.length === 0) return;
+                  
+                  let bestRemaining = 999;
+                  let ticketsCloseToWin = 0;
+                  
+                  player.tickets.forEach(ticket => {
+                    if (!ticket.numbers) return;
+                    const allNums = ticket.numbers.flat().filter(n => n !== null);
+                    const marked = allNums.filter(n => calledSet.has(n)).length;
+                    const remaining = 15 - marked;
+                    
+                    if (remaining < bestRemaining) {
+                      bestRemaining = remaining;
+                    }
+                    if (remaining <= 5) {
+                      ticketsCloseToWin++;
+                    }
+                  });
+                  
+                  if (bestRemaining < 999) {
+                    playerStats.push({
+                      ...player,
+                      bestRemaining,
+                      ticketsCloseToWin
                     });
                   }
-                  return { ...player, markedCount };
-                })
-                .sort((a, b) => b.markedCount - a.markedCount)
-                .slice(0, 6)
-                .map((player, idx) => (
+                });
+                
+                // Sort: 1st by remaining (ascending), 2nd by tickets close to win (descending)
+                const top6 = playerStats
+                  .sort((a, b) => {
+                    if (a.bestRemaining !== b.bestRemaining) {
+                      return a.bestRemaining - b.bestRemaining;
+                    }
+                    return b.ticketsCloseToWin - a.ticketsCloseToWin;
+                  })
+                  .slice(0, 6);
+                
+                if (top6.length === 0) {
+                  return <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>;
+                }
+                
+                return top6.map((player, idx) => (
                   <div key={player.user_id || idx} className="bg-white/5 rounded-lg p-2 text-center">
-                    <p className="text-white text-xs font-medium truncate">{player.name?.split(' ')[0] || 'Player'}</p>
-                    <p className="text-amber-400 text-[10px]">{player.markedCount} marked</p>
+                    <p className="text-white text-xs font-medium truncate">
+                      {player.name?.split(' ')[0] || 'Player'}
+                      {player.ticketsCloseToWin > 1 && <span className="text-amber-400 ml-1">x{player.ticketsCloseToWin}</span>}
+                    </p>
+                    <div className="flex justify-center gap-0.5 mt-1">
+                      {Array.from({ length: Math.min(player.bestRemaining, 5) }).map((_, i) => (
+                        <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      ))}
+                    </div>
                   </div>
-                ))
+                ));
+              })()
             ) : (
               <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>
             )}
