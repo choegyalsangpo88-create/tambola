@@ -93,6 +93,65 @@ def detect_all_patterns(ticket_numbers, called_numbers):
     }
 
 
+def check_all_winners(ticket, called_numbers, prize_type):
+    """
+    Check if a ticket wins the given prize type.
+    Returns winner info dict if ticket wins, None otherwise.
+    
+    Args:
+        ticket: dict with 'numbers' key containing 3x9 grid
+        called_numbers: list of called numbers
+        prize_type: string like 'First Line', 'Full House', etc.
+    
+    Returns:
+        dict with winner info if ticket wins, None otherwise
+    """
+    ticket_numbers = ticket.get("numbers", [])
+    if not ticket_numbers:
+        return None
+    
+    called_set = set(called_numbers)
+    
+    # Map prize types to check functions
+    prize_mapping = {
+        # Line prizes
+        "first_line": check_top_line,
+        "First Line": check_top_line,
+        "Top Line": check_top_line,
+        "top_line": check_top_line,
+        
+        "second_line": check_middle_line,
+        "Second Line": check_middle_line,
+        "Middle Line": check_middle_line,
+        "middle_line": check_middle_line,
+        
+        "third_line": check_bottom_line,
+        "Third Line": check_bottom_line,
+        "Bottom Line": check_bottom_line,
+        "bottom_line": check_bottom_line,
+        
+        # House prizes
+        "full_house": check_full_house,
+        "Full House": check_full_house,
+        "1st House": check_full_house,
+        "2nd House": check_full_house,
+        "3rd House": check_full_house,
+        
+        # Other patterns
+        "Quick Five": check_quick_five,
+        "quick_five": check_quick_five,
+        "Four Corners": check_four_corners,
+        "four_corners": check_four_corners,
+    }
+    
+    check_func = prize_mapping.get(prize_type)
+    if check_func:
+        if check_func(ticket_numbers, called_set):
+            return {"winner": True, "prize_type": prize_type}
+    
+    return None
+
+
 async def auto_detect_winners(db, game_id, called_numbers, existing_winners):
     """
     Automatically detect winners for all patterns.
