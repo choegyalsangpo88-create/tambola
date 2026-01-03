@@ -1619,22 +1619,36 @@ async def create_user_game(
     while await db.user_games.find_one({"share_code": share_code}):
         share_code = generate_share_code()
     
-    # Generate tickets with proper structure
-    from ticket_generator import generate_user_game_tickets
-    raw_tickets = generate_user_game_tickets(game_data.max_tickets)
+    # Generate tickets with proper structure using Full Sheets
+    from ticket_generator import generate_full_sheet
     
     tickets = []
-    for i, ticket_numbers in enumerate(raw_tickets):
-        tickets.append({
-            "ticket_id": f"t_{uuid.uuid4().hex[:8]}",
-            "ticket_number": f"T{i+1:02d}",
-            "numbers": ticket_numbers,
-            "assigned_to": None,
-            "assigned_to_id": None,
-            "is_booked": False
-        })
+    num_sheets = (game_data.max_tickets + 5) // 6  # Round up to full sheets
+    actual_ticket_count = 0
     
-    # Default dividends for user games
+    for sheet_num in range(num_sheets):
+        sheet_id = f"FS{sheet_num + 1:03d}"
+        full_sheet = generate_full_sheet()
+        
+        for position, ticket_numbers in enumerate(full_sheet, 1):
+            if actual_ticket_count >= game_data.max_tickets:
+                break
+            tickets.append({
+                "ticket_id": f"t_{uuid.uuid4().hex[:8]}",
+                "ticket_number": f"T{actual_ticket_count + 1:02d}",
+                "full_sheet_id": sheet_id,
+                "ticket_position_in_sheet": position,
+                "numbers": ticket_numbers,
+                "assigned_to": None,
+                "assigned_to_id": None,
+                "is_booked": False
+            })
+            actual_ticket_count += 1
+        
+        if actual_ticket_count >= game_data.max_tickets:
+            break
+    
+    # Default dividends for user games (includes Full Sheet Bonus)
     dividends = {
         "Early Five": 0,
         "Top Line": 0,
