@@ -378,6 +378,66 @@ frontend:
         agent: "testing"
         comment: "❌ AUTHENTICATION LIMITATION: Cannot test complete WhatsApp booking flow due to Google Auth requirement. However, comprehensive code analysis and partial testing completed: ✅ LOGIN PAGE: Loads correctly with both Google and WhatsApp auth options, beautiful 3D ball logo (67), proper styling and responsive design ✅ SECURITY: Protected routes properly redirect to login, direct game access blocked, booking endpoint returns 401 without auth ✅ WHATSAPP IMPLEMENTATION VERIFIED: Button implemented with data-testid='book-via-whatsapp-btn', green styling (bg-green-500), disabled when no tickets selected, creates pending booking, WhatsApp URL format https://wa.me/916909166157 with encoded message including player name/email/game/date/tickets/amount/booking ID, success toast 'Booking created! Opening WhatsApp...', redirects to /my-tickets ✅ BACKEND INTEGRATION: Booking endpoint properly secured, message format includes all required components, phone number +916909166157 correctly configured. LIMITATION: Manual Google OAuth required to test complete flow including ticket selection, booking creation, and WhatsApp redirect."
 
+  - task: "Game Automation - Auto-Start, Auto-Call, Auto-End"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW: Background task auto_game_manager() runs every 5 seconds. Handles: check_and_start_games (admin games), check_and_start_user_games, auto_call_numbers (8-second intervals), auto_call_user_game_numbers. Auto-end when all prizes won."
+
+  - task: "Host Self-Booking for User Games"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW: POST /api/user-games/{user_game_id}/host-join?ticket_count=1 endpoint. Host gets abbreviated name (A. Sharma format). Frontend has 'Book My Ticket' button on UserGameDetails.js."
+
+  - task: "User Names on Tickets in Live Game"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/LiveGame.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW: LiveGame.js displays abbreviated name above each ticket using holder_name or booked_by_name."
+
+  - task: "Join Live Button in My Games"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/MyUserGames.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW: MyUserGames.js shows red 'Join Live' button with Play icon for games where status='live'. Button navigates to /user-game-play/{id}."
+
+  - task: "User Game Deletion by Host"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW: DELETE /api/user-games/{user_game_id} works for host at any game status. Frontend has delete button on UserGameDetails.js."
+
 test_plan:
   current_focus:
     - "Game Automation Features (auto-start, auto-call, auto-end)"
