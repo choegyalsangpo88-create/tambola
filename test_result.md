@@ -552,12 +552,9 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Host Self-Booking for User Games"
-    - "User Names on Tickets in Live Game"
-    - "Join Live Button in My Games"
-    - "User Game Deletion by Host"
-    - "Create Your Own Game Feature"
-  stuck_tasks: []
+    - "Critical Fixes - Admin Game Auto-Start (BLOCKED)"
+  stuck_tasks:
+    - "Critical Fixes - Admin Game Auto-Start (BLOCKED)"
   test_all: false
   test_priority: "high_first"
 
