@@ -307,6 +307,13 @@ export default function UserGameDetails() {
             )}
             <div className="flex gap-3">
               <Button
+                onClick={handleDeleteGame}
+                variant="outline"
+                className="h-12 px-4 border-red-500/30 text-red-400 hover:bg-red-500/10"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              <Button
                 onClick={() => navigate(`/edit-game/${userGameId}`)}
                 variant="outline"
                 className="flex-1 h-12 border-white/10 text-white hover:bg-white/10"
