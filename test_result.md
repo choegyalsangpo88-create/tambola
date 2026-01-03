@@ -479,11 +479,11 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Game Automation Features (auto-start, auto-call, auto-end)"
     - "Host Self-Booking for User Games"
     - "User Names on Tickets in Live Game"
     - "Join Live Button in My Games"
-    - "User Game Deletion"
+    - "User Game Deletion by Host"
+    - "Create Your Own Game Feature"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
