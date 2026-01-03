@@ -373,12 +373,17 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         full_sheet_id = ticket.get("full_sheet_id")
         
         # Group by user and full sheet for Full Sheet Bonus
+        # Only count tickets from complete full sheets booked by the same user
         if full_sheet_id and user_id:
             if user_id not in user_sheets:
                 user_sheets[user_id] = {}
             if full_sheet_id not in user_sheets[user_id]:
                 user_sheets[user_id][full_sheet_id] = {"holder_name": holder_name, "tickets": []}
-            user_sheets[user_id][full_sheet_id]["tickets"].append(ticket)
+            user_sheets[user_id][full_sheet_id]["tickets"].append({
+                "numbers": ticket_numbers,
+                "ticket_id": ticket_id,
+                "ticket_position_in_sheet": ticket.get("ticket_position_in_sheet")
+            })
         
         # Check single-ticket patterns
         patterns = detect_all_patterns(ticket_numbers, called_set)
