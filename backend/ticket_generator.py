@@ -256,7 +256,7 @@ def _generate_deterministic_ticket() -> List[List[Optional[int]]]:
     return ticket
 
 
-def generate_full_sheet() -> List[List[List[Optional[int]]]]:
+def generate_full_sheet(max_attempts: int = 100) -> List[List[List[Optional[int]]]]:
     """
     Generate an authentic Tambola Full Sheet with 6 tickets.
     
@@ -267,89 +267,106 @@ def generate_full_sheet() -> List[List[List[Optional[int]]]]:
     - 15 × 6 = 90 (all numbers covered)
     """
     
-    # Create number pools for each column
-    column_pools = []
-    for col in range(9):
-        start, end = COLUMN_RANGES[col]
-        numbers = list(range(start, end + 1))
-        random.shuffle(numbers)
-        column_pools.append(numbers)
-    
-    # Initialize 6 tickets
-    tickets = [[[None for _ in range(9)] for _ in range(3)] for _ in range(6)]
-    
-    # Track row counts for each ticket
-    ticket_row_counts = [[0, 0, 0] for _ in range(6)]
-    
-    # Distribute numbers from each column to tickets
-    for col in range(9):
-        pool = column_pools[col]
-        num_count = len(pool)
+    for attempt in range(max_attempts):
+        # Create number pools for each column
+        column_pools = []
+        for col in range(9):
+            start, end = COLUMN_RANGES[col]
+            numbers = list(range(start, end + 1))
+            random.shuffle(numbers)
+            column_pools.append(numbers)
         
-        # Determine how many numbers each ticket gets from this column
-        # Total numbers in pool must be distributed across 6 tickets
-        # Each ticket should get 1-2 numbers from each column (average ~1.67)
+        # Initialize 6 tickets
+        tickets = [[[None for _ in range(9)] for _ in range(3)] for _ in range(6)]
         
-        # Calculate distribution
-        base = num_count // 6  # Either 1 or 1 (9/6=1, 10/6=1, 11/6=1)
-        extra = num_count % 6  # Remaining to distribute
+        # Track row counts for each ticket
+        ticket_row_counts = [[0, 0, 0] for _ in range(6)]
         
-        distribution = [base] * 6
-        # Give extra numbers to random tickets
-        extra_tickets = random.sample(range(6), extra)
-        for t in extra_tickets:
-            distribution[t] += 1
-        
-        # Shuffle distribution
-        random.shuffle(distribution)
-        
-        # Assign numbers to tickets
-        num_idx = 0
-        for ticket_idx in range(6):
-            count = distribution[ticket_idx]
-            if count == 0:
-                continue
+        # Distribute numbers from each column to tickets
+        for col in range(9):
+            pool = column_pools[col]
+            num_count = len(pool)
             
-            # Get numbers for this ticket
-            ticket_numbers = sorted(pool[num_idx:num_idx + count])
-            num_idx += count
+            # Determine how many numbers each ticket gets from this column
+            # Total numbers in pool must be distributed across 6 tickets
+            # Each ticket should get 1-2 numbers from each column (average ~1.67)
             
-            # Find best rows (those with fewer numbers)
-            available_rows = sorted(range(3), key=lambda r: ticket_row_counts[ticket_idx][r])[:count]
-            available_rows = sorted(available_rows)
+            # Calculate distribution
+            base = num_count // 6  # Either 1 or 1 (9/6=1, 10/6=1, 11/6=1)
+            extra = num_count % 6  # Remaining to distribute
             
-            # Assign numbers to rows
-            for i, row in enumerate(available_rows):
-                if i < len(ticket_numbers):
-                    tickets[ticket_idx][row][col] = ticket_numbers[i]
-                    ticket_row_counts[ticket_idx][row] += 1
+            distribution = [base] * 6
+            # Give extra numbers to random tickets
+            extra_tickets = random.sample(range(6), extra)
+            for t in extra_tickets:
+                distribution[t] += 1
+            
+            # Shuffle distribution
+            random.shuffle(distribution)
+            
+            # Assign numbers to tickets
+            num_idx = 0
+            for ticket_idx in range(6):
+                count = distribution[ticket_idx]
+                if count == 0:
+                    continue
+                
+                # Get numbers for this ticket
+                ticket_numbers = sorted(pool[num_idx:num_idx + count])
+                num_idx += count
+                
+                # Find best rows (those with fewer numbers)
+                available_rows = sorted(range(3), key=lambda r: ticket_row_counts[ticket_idx][r])[:count]
+                available_rows = sorted(available_rows)
+                
+                # Assign numbers to rows
+                for i, row in enumerate(available_rows):
+                    if i < len(ticket_numbers):
+                        tickets[ticket_idx][row][col] = ticket_numbers[i]
+                        ticket_row_counts[ticket_idx][row] += 1
+        
+        # Fix row distributions for each ticket
+        for ticket_idx, ticket in enumerate(tickets):
+            _balance_ticket_rows(ticket)
+            _sort_columns(ticket)
+        
+        # Validate all tickets
+        all_valid = True
+        for ticket in tickets:
+            if not _validate_ticket(ticket):
+                all_valid = False
+                break
+        
+        if not all_valid:
+            continue
+        
+        # Validate all 90 numbers are present exactly once
+        all_numbers = set()
+        has_duplicate = False
+        for ticket in tickets:
+            for row in ticket:
+                for num in row:
+                    if num is not None:
+                        if num in all_numbers:
+                            has_duplicate = True
+                            break
+                        all_numbers.add(num)
+                if has_duplicate:
+                    break
+            if has_duplicate:
+                break
+        
+        if has_duplicate:
+            continue
+        
+        if len(all_numbers) != 90 or all_numbers != set(range(1, 91)):
+            continue
+        
+        return tickets
     
-    # Fix row distributions for each ticket
-    for ticket_idx, ticket in enumerate(tickets):
-        _balance_ticket_rows(ticket)
-        _sort_columns(ticket)
-    
-    # Validate all tickets
-    for ticket in tickets:
-        if not _validate_ticket(ticket):
-            # Regenerate if invalid
-            return generate_full_sheet()
-    
-    # Validate all 90 numbers are present exactly once
-    all_numbers = set()
-    for ticket in tickets:
-        for row in ticket:
-            for num in row:
-                if num is not None:
-                    if num in all_numbers:
-                        # Duplicate found - regenerate
-                        return generate_full_sheet()
-                    all_numbers.add(num)
-    
-    if len(all_numbers) != 90 or all_numbers != set(range(1, 91)):
-        return generate_full_sheet()
-    
-    return tickets
+    # If all attempts fail, generate 6 individual tickets as fallback
+    # (won't have all 90 numbers, but will be valid tickets)
+    return [generate_authentic_ticket() for _ in range(6)]
 
 
 def _balance_ticket_rows(ticket: List[List[Optional[int]]]):
