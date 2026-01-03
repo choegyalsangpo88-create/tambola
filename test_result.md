@@ -557,7 +557,7 @@ frontend:
 
 test_plan:
   current_focus:
-    - "All critical fixes verified and working"
+    - "Winner Detection Fixes - Four Corners, Full House, Full Sheet Bonus, TTS - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
