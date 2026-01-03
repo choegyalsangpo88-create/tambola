@@ -202,6 +202,50 @@ export default function LiveGame() {
     );
   }
 
+  // Check if game is completed
+  const isGameCompleted = game.status === 'completed' || session.status === 'completed';
+  const allWinners = session.winners || {};
+  const totalPrizes = Object.keys(game.prizes || {}).length;
+  const wonPrizes = Object.keys(allWinners).length;
+
+  // Game Ended Screen
+  if (isGameCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0a3d2c] to-[#0a0a0c] flex flex-col items-center justify-center p-4">
+        <div className="glass-card p-8 max-w-lg w-full text-center">
+          <div className="text-6xl mb-4">🎉</div>
+          <h1 className="text-3xl font-bold text-white mb-2">Game Ended!</h1>
+          <p className="text-gray-400 mb-6">Congratulations to all winners!</p>
+          
+          <div className="space-y-3 mb-6">
+            {Object.entries(allWinners).map(([prize, winner]) => (
+              <div key={prize} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-400 font-bold">{prize}</span>
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                </div>
+                <p className="text-white text-sm mt-1">
+                  Ticket: {winner.ticket_number || winner.name || 'Winner'}
+                </p>
+              </div>
+            ))}
+          </div>
+          
+          <p className="text-gray-500 text-sm mb-4">
+            Total numbers called: {session.called_numbers?.length || 0}/90
+          </p>
+          
+          <Button 
+            onClick={() => navigate('/')} 
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          >
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a3d2c] to-[#0a0a0c] overflow-y-auto">
       <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGD0fPTgjMGHm7A7+OZTA0OVqzl7K1aFwlInN/zxmwlBSp9zPLdjTkIGGS38+OXRQwRX7fn77hjGQc9k9TxwXEcBip6yO7glT0KFF24+fGmXRoJQ5vd88dxKAYrdMnx3I0+ChljuO3nnEcNElWv5OysWxYLSJvf88lwKAUrdsrw3Y0/ChVhuvDmnUgOElu05+ytXBcLS5zf88hwJwYreMnw3I5AChZivPDmnUkOElm05u6sXBgLTZve8slxJQYrecrw3Y5AChZivPDlnUoOE1u15u6rXBcLS5vc9MlxJgYse8nw3Y5AChZivPDlnUoOE1u15u6rXBcLS5vc9MlxJgYse8nw3Y5AChZivPDlnUoO" preload="auto" />
