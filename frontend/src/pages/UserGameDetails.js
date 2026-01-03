@@ -99,6 +99,19 @@ export default function UserGameDetails() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleHostBookTicket = async () => {
+    try {
+      await axios.post(`${API}/user-games/${userGameId}/host-join?ticket_count=1`, {}, { withCredentials: true });
+      toast.success('Ticket booked for you!');
+      fetchGameDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to book ticket');
+    }
+  };
+
+  // Check if host has already booked
+  const hostHasTicket = players.some(p => p.is_host);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c]">
