@@ -250,59 +250,6 @@ export default function UserGamePlay() {
       return false;
     }
   };
-          }
-          
-          // Timeout safety
-          setTimeout(() => resolve(true), 6000);
-        });
-      }
-      
-      return false;
-    } catch (e) {
-      console.log('Server TTS error:', e);
-      return false;
-    }
-  };
-
-  // Browser speech synthesis - fallback
-  const speakWithBrowserTTS = (text) => {
-    return new Promise((resolve) => {
-      if (!('speechSynthesis' in window)) {
-        resolve();
-        return;
-      }
-      
-      try {
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        utterance.lang = 'en-US';
-        
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
-        
-        window.speechSynthesis.speak(utterance);
-        
-        // Timeout safety
-        setTimeout(resolve, 8000);
-      } catch (e) {
-        resolve();
-      }
-    });
-  };
-
-  const playSound = () => {
-    try {
-      const audio = new Audio('/sounds/ball-drop.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    } catch (e) {
-      // Ignore audio errors
-    }
-  };
 
   const handleCallNumber = async () => {
     if (isCalling) return;
