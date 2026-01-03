@@ -1654,6 +1654,7 @@ async def create_user_game(
         "Top Line": 0,
         "Middle Line": 0,
         "Bottom Line": 0,
+        "Full Sheet Bonus": 0,
         "Full House": 0
     }
     
