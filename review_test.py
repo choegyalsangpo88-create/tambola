@@ -189,6 +189,10 @@ class SixSevenTambolaReviewTester:
         print("TEST 3: CORE FUNCTIONALITY")
         print("="*60)
         
+        game_success = False
+        ticket_success = False
+        tts_success = False
+        
         if not self.admin_token:
             if not self.admin_login():
                 self.log_test("Admin authentication required", False, "Cannot test admin functions")
@@ -225,6 +229,7 @@ class SixSevenTambolaReviewTester:
             if response.status_code == 200:
                 created_game = response.json()
                 self.game_id = created_game.get('game_id')
+                game_success = True
                 
                 self.log_test(
                     "Create admin game via POST /api/games",
@@ -243,9 +248,11 @@ class SixSevenTambolaReviewTester:
                     tickets = ticket_data.get('tickets', [])
                     total_tickets = ticket_data.get('total', 0)
                     
+                    ticket_success = total_tickets > 0
+                    
                     self.log_test(
                         "Game creation with ticket generation",
-                        total_tickets > 0,
+                        ticket_success,
                         f"Generated {total_tickets} tickets automatically"
                     )
                     
@@ -290,6 +297,7 @@ class SixSevenTambolaReviewTester:
             
             if tts_response.status_code == 200:
                 tts_data = tts_response.json()
+                tts_success = True
                 
                 self.log_test(
                     "TTS endpoint POST /api/tts/generate?text=Number%2045",
@@ -317,6 +325,8 @@ class SixSevenTambolaReviewTester:
                 False,
                 f"Error: {str(e)}"
             )
+        
+        return game_success and ticket_success and tts_success
 
     def test_winner_detection_regression(self):
         """Test 4: Winner Detection Regression Test - Four Corners and Full Sheet Bonus"""
