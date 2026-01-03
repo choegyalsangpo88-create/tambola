@@ -472,50 +472,106 @@ export default function UserGamePlay() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Current Ball Display */}
-        <div className="flex justify-center mb-8">
-          <div className={`relative transition-all duration-500 ${showBallAnimation ? 'scale-110' : 'scale-100'}`}>
-            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br ${getBallColor(currentBall || session?.current_number || 0)} flex items-center justify-center shadow-2xl`}
-              style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 -10px 30px rgba(0,0,0,0.3), inset 0 10px 30px rgba(255,255,255,0.3)' }}
-            >
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white flex items-center justify-center shadow-inner">
-                <span className="text-4xl md:text-5xl font-black text-gray-900">
-                  {currentBall || session?.current_number || '?'}
-                </span>
+      <div className="max-w-4xl mx-auto px-3 py-4">
+        {/* Main Row: Caller Ball | Dividends - Equal Space */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* Left: Compact Caller Ball */}
+          <div className="bg-black/30 rounded-xl p-3 flex flex-col items-center justify-center">
+            <div className={`relative transition-all duration-500 ${showBallAnimation ? 'scale-110' : 'scale-100'}`}>
+              <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br ${getBallColor(currentBall || session?.current_number || 0)} flex items-center justify-center shadow-xl`}
+                style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 -5px 15px rgba(0,0,0,0.3), inset 0 5px 15px rgba(255,255,255,0.3)' }}
+              >
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center shadow-inner">
+                  <span className="text-2xl md:text-3xl font-black text-gray-900">
+                    {currentBall || session?.current_number || '?'}
+                  </span>
+                </div>
               </div>
+              {showBallAnimation && (
+                <div className="absolute inset-0 rounded-full bg-white/30 animate-ping" />
+              )}
             </div>
-            {showBallAnimation && (
-              <div className="absolute inset-0 rounded-full bg-white/30 animate-ping" />
+            <p className="text-amber-400 text-xs mt-2">{session?.called_numbers?.length || 0}/90 Numbers</p>
+          </div>
+
+          {/* Right: Dividends with Winner Names */}
+          <div className="bg-black/30 rounded-xl p-3">
+            <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
+              <Trophy className="w-3 h-3" /> DIVIDENDS
+            </h3>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {Object.entries(dividends).map(([prize, amount]) => {
+                const winner = allWinners[prize];
+                return (
+                  <div key={prize} className={`flex justify-between items-center text-xs py-1 px-2 rounded ${winner ? 'bg-green-900/30' : 'bg-white/5'}`}>
+                    <div className="flex-1 min-w-0">
+                      <span className={`${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
+                      {winner && (
+                        <p className="text-green-300 text-[10px] truncate">🏆 {winner.holder_name || winner.name || 'Winner'}</p>
+                      )}
+                    </div>
+                    <span className="text-amber-400 font-bold ml-2">₹{amount?.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Players - Show names from beginning */}
+        <div className="bg-black/30 rounded-xl p-3 mb-4">
+          <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
+            <Users className="w-3 h-3" /> TOP PLAYERS
+          </h3>
+          <div className="grid grid-cols-3 gap-2">
+            {players.length > 0 ? (
+              players
+                .map(player => {
+                  // Calculate marked count for each player
+                  const calledSet = new Set(session?.called_numbers || []);
+                  let markedCount = 0;
+                  if (player.tickets) {
+                    player.tickets.forEach(ticket => {
+                      if (ticket.numbers) {
+                        ticket.numbers.forEach(row => {
+                          row.forEach(num => {
+                            if (num && calledSet.has(num)) markedCount++;
+                          });
+                        });
+                      }
+                    });
+                  }
+                  return { ...player, markedCount };
+                })
+                .sort((a, b) => b.markedCount - a.markedCount)
+                .slice(0, 6)
+                .map((player, idx) => (
+                  <div key={player.user_id || idx} className="bg-white/5 rounded-lg p-2 text-center">
+                    <p className="text-white text-xs font-medium truncate">{player.name?.split(' ')[0] || 'Player'}</p>
+                    <p className="text-amber-400 text-[10px]">{player.markedCount} marked</p>
+                  </div>
+                ))
+            ) : (
+              <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>
             )}
           </div>
         </div>
 
-        {/* Call Name */}
-        {(currentBall || session?.current_number) && (
-          <p className="text-center text-amber-400 font-semibold mb-6 text-lg">
-            {getCallName(currentBall || session?.current_number)}
-          </p>
-        )}
-
-        {/* Auto-Calling Status - No manual controls needed */}
+        {/* Auto-Calling Status */}
         {game.status === 'live' && (
-          <div className="text-center mb-6">
-            <p className="text-emerald-400 text-sm">🔄 Numbers are being called automatically every 10 seconds</p>
-          </div>
+          <p className="text-center text-emerald-400 text-xs mb-4">🔄 Auto-calling every 10 seconds</p>
         )}
         
         {/* Game Completed Message */}
         {game.status === 'completed' && (
-          <div className="text-center mb-6 p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
-            <p className="text-amber-400 text-lg font-bold">🎉 Game Completed!</p>
-            <p className="text-gray-400 text-sm mt-1">All numbers have been called or all prizes won</p>
+          <div className="text-center mb-4 p-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
+            <p className="text-amber-400 font-bold">🎉 Game Completed!</p>
           </div>
         )}
 
         {/* Host Controls - Only End Game button */}
         {isHost && game.status === 'live' && (
-          <div className="flex gap-3 justify-center mb-8">
+          <div className="flex gap-3 justify-center mb-4">
             <Button
               onClick={handleEndGame}
               variant="outline"
