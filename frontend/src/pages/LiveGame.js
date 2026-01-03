@@ -545,12 +545,6 @@ export default function LiveGame() {
                 return (
                   <div key={ticket.ticket_id} className={`bg-amber-50 rounded-lg transition-all duration-300 ${ticketZoom === 1 ? 'p-1' : ticketZoom === 2 ? 'p-2' : 'p-3'}`}>
                     <p className={`font-bold text-amber-700 mb-1 ${ticketZoom === 1 ? 'text-[7px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-sm'}`}>{ticket.ticket_number}</p>
-                      {shortName && (
-                        <p className={`text-purple-600 font-medium bg-purple-100 px-1 rounded ${ticketZoom === 1 ? 'text-[6px]' : ticketZoom === 2 ? 'text-[8px]' : 'text-xs'}`}>
-                          {shortName}
-                        </p>
-                      )}
-                    </div>
                     <div className="grid grid-cols-9 gap-px">
                       {ticket.numbers.map((row, rowIndex) => (
                         row.map((num, colIndex) => {
