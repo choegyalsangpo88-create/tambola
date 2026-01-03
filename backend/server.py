@@ -16,6 +16,7 @@ import base64
 import hashlib
 import asyncio
 from emergentintegrations.llm.openai import OpenAITextToSpeech
+from ticket_generator import generate_full_sheet, generate_user_game_tickets, generate_authentic_ticket
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
