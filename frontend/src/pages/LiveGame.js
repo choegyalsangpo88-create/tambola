@@ -74,8 +74,8 @@ export default function LiveGame() {
 
   // Play TTS for number announcement
   const playTTSAnnouncement = async (number) => {
-    // Don't play if game is completed or sound is disabled
-    if (!soundEnabled || number === lastPlayedNumber || game?.status === 'completed') return;
+    // Don't play if game is completed, sound disabled, or audio not enabled
+    if (!soundEnabled || !audioEnabled || number === lastPlayedNumber || game?.status === 'completed') return;
     
     try {
       const callName = getCallName(number);
@@ -87,25 +87,57 @@ export default function LiveGame() {
           if (ttsAudioRef.current) {
             ttsAudioRef.current.pause();
           }
+          
+          // Resume audio context if suspended (mobile)
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume();
+          }
+          
           const audio = new Audio(`data:audio/mp3;base64,${response.data.audio}`);
           ttsAudioRef.current = audio;
-          await audio.play();
+          await audio.play().catch(() => {
+            // Fallback to browser TTS
+            speakWithBrowserTTS(response.data.text || callName);
+          });
         } else if (response.data.use_browser_tts && response.data.text) {
-          // Use browser's built-in speech synthesis
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Stop any ongoing speech
-            const utterance = new SpeechSynthesisUtterance(response.data.text);
-            
-            // Set voice properties based on settings
-            const voiceSettings = response.data.voice_settings || {};
-            utterance.rate = voiceSettings.speed || 1.0;
-            utterance.pitch = 1.0;
-            
-            // Try to select appropriate voice
-            const voices = window.speechSynthesis.getVoices();
-            const preferredGender = voiceSettings.gender === 'male' ? 'male' : 'female';
-            const indianVoice = voices.find(v => v.lang.includes('en-IN'));
-            const genderVoice = voices.find(v => v.name.toLowerCase().includes(preferredGender));
+          speakWithBrowserTTS(response.data.text, response.data.voice_settings);
+        }
+        setLastPlayedNumber(number);
+      } else {
+        // Fallback to beep sound
+        playNumberSound();
+      }
+    } catch (error) {
+      console.error('TTS failed:', error);
+      playNumberSound();
+    }
+  };
+
+  const speakWithBrowserTTS = (text, voiceSettings = {}) => {
+    if (!('speechSynthesis' in window) || !audioEnabled) return;
+    
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = voiceSettings.speed || 1.0;
+      utterance.pitch = 1.0;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
+      const preferredGender = voiceSettings.gender === 'male' ? 'male' : 'female';
+      const genderVoice = voices.find(v => v.name.toLowerCase().includes(preferredGender));
+      
+      if (indianVoice) {
+        utterance.voice = indianVoice;
+      } else if (genderVoice) {
+        utterance.voice = genderVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Browser TTS failed:', error);
+    }
+  };
             
             if (indianVoice) {
               utterance.voice = indianVoice;
