@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -23,12 +23,27 @@ export default function UserGamePlay() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentBall, setCurrentBall] = useState(null);
   const [showBallAnimation, setShowBallAnimation] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(false); // Track if user has enabled audio
-  const [showAudioPrompt, setShowAudioPrompt] = useState(true); // Show prompt to enable audio
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [showAudioPrompt, setShowAudioPrompt] = useState(true);
+  const [isAnnouncing, setIsAnnouncing] = useState(false);
   
   const audioRef = useRef(null);
   const pollIntervalRef = useRef(null);
   const audioContextRef = useRef(null);
+  const audioQueueRef = useRef([]);
+  const lastAnnouncedRef = useRef(null);
+  const speechSynthRef = useRef(null);
+
+  // Pre-load voices for better mobile performance
+  const loadVoices = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      const voices = window.speechSynthesis.getVoices();
+      // Find best voice for Indian English
+      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
+      const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
+      speechSynthRef.current = indianVoice || englishVoice || voices[0];
+    }
+  }, []);
 
   // Enable audio on user interaction (required for mobile)
   const enableAudio = async () => {
@@ -39,13 +54,17 @@ export default function UserGamePlay() {
       }
       await audioContextRef.current.resume();
       
-      // Also initialize speech synthesis
+      // Initialize speech synthesis and load voices
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        // Speak empty string to initialize
-        const utterance = new SpeechSynthesisUtterance('');
-        utterance.volume = 0;
-        window.speechSynthesis.speak(utterance);
+        loadVoices();
+        // Force load voices (some browsers need this)
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        
+        // Warm up with silent speech
+        const warmup = new SpeechSynthesisUtterance('');
+        warmup.volume = 0;
+        window.speechSynthesis.speak(warmup);
       }
       
       // Play silent audio to unlock
@@ -54,26 +73,30 @@ export default function UserGamePlay() {
       
       setAudioEnabled(true);
       setShowAudioPrompt(false);
-      toast.success('🔊 Audio enabled! You will now hear number announcements.');
+      toast.success('🔊 Sound enabled! Ready for live announcements.');
     } catch (error) {
       console.error('Failed to enable audio:', error);
-      toast.error('Could not enable audio. Please check your device settings.');
+      toast.error('Could not enable audio. Try again.');
     }
   };
 
   useEffect(() => {
     fetchInitialData();
+    loadVoices();
+    
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      // Cleanup audio context
       if (audioContextRef.current) {
-        audioContextRef.current.close();
+        audioContextRef.current.close().catch(() => {});
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
       }
     };
-  }, [userGameId]);
+  }, [userGameId, loadVoices]);
 
   useEffect(() => {
-    // Poll for ALL users (host and non-host) since auto-call is enabled
+    // Poll for ALL users since auto-call is enabled
     if (game && game.status === 'live') {
       pollIntervalRef.current = setInterval(fetchSession, 2000);
       return () => clearInterval(pollIntervalRef.current);
