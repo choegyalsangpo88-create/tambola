@@ -184,7 +184,7 @@ export default function UserGamePlay() {
     setTimeout(() => setShowBallAnimation(false), 3000);
   };
 
-  // Main announcement function - reliable audio
+  // Main announcement function - uses server TTS for iOS compatibility
   const announceNumber = async (number) => {
     if (isAnnouncingRef.current || game?.status === 'completed') return;
     isAnnouncingRef.current = true;
@@ -197,8 +197,13 @@ export default function UserGamePlay() {
         await audioContextRef.current.resume();
       }
       
-      // Use browser TTS for reliability (no lag/skip)
-      await speakWithBrowserTTS(callName);
+      // Try server-side TTS first (works on iOS)
+      const played = await playServerTTS(callName);
+      
+      // Fallback to browser TTS if server TTS fails
+      if (!played) {
+        await speakWithBrowserTTS(callName);
+      }
     } catch (error) {
       console.log('Announcement error:', error);
     } finally {
@@ -206,7 +211,37 @@ export default function UserGamePlay() {
     }
   };
 
-  // Browser speech synthesis - most reliable for real-time
+  // Server-side TTS - works better on iOS
+  const playServerTTS = async (text) => {
+    try {
+      const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
+      const data = response.data;
+      
+      if (data.audio) {
+        // Play base64 audio
+        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+        audio.volume = 1.0;
+        
+        return new Promise((resolve) => {
+          audio.onended = () => resolve(true);
+          audio.onerror = () => resolve(false);
+          audio.play().then(() => {
+            // Audio started playing
+          }).catch(() => resolve(false));
+          
+          // Timeout safety
+          setTimeout(() => resolve(true), 5000);
+        });
+      }
+      
+      return false;
+    } catch (e) {
+      console.log('Server TTS error:', e);
+      return false;
+    }
+  };
+
+  // Browser speech synthesis - fallback for when server TTS is unavailable
   const speakWithBrowserTTS = (text) => {
     return new Promise((resolve) => {
       if (!('speechSynthesis' in window)) {
