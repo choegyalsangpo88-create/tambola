@@ -476,6 +476,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ TTS ENDPOINT TESTING COMPLETE: POST /api/tts/generate working perfectly! TESTED: 1) TTS with prefix (include_prefix=true) returns proper response ✅, 2) use_browser_tts: true as expected ✅, 3) Text properly formatted with prefix line: 'Get ready to mark... Number 45 - Halfway There' ✅, 4) TTS without prefix (include_prefix=false) works correctly ✅, 5) Voice settings included (voice: shimmer, speed: 1.3, gender: female) ✅. Endpoint responds correctly to exact review request parameters: text=Number%2045%20-%20Halfway%20There&include_prefix=true."
+      - working: true
+        agent: "main"
+        comment: "✅ FIXED: Updated TTS integration from broken openai SDK to emergentintegrations library. Now correctly generates audio using OpenAITextToSpeech with EMERGENT_LLM_KEY. Test confirmed: Has Audio: True, Use Browser TTS: False."
 
 test_plan:
   current_focus:
