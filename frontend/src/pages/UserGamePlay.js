@@ -282,26 +282,20 @@ export default function UserGamePlay() {
           </p>
         )}
 
-        {/* Host Controls */}
+        {/* Auto-Calling Status - No manual controls needed */}
+        <div className="text-center mb-6">
+          <p className="text-emerald-400 text-sm">🔄 Numbers are being called automatically every 8 seconds</p>
+        </div>
+
+        {/* Host Controls - Only End Game button */}
         {isHost && game.status === 'live' && (
           <div className="flex gap-3 justify-center mb-8">
             <Button
-              onClick={handleCallNumber}
-              disabled={isCalling || (session?.called_numbers?.length || 0) >= 90}
-              className="h-14 px-8 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 font-bold text-lg rounded-full"
-            >
-              {isCalling ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <><Play className="w-5 h-5 mr-2" /> Call Number</>
-              )}
-            </Button>
-            <Button
               onClick={handleEndGame}
               variant="outline"
-              className="h-14 px-6 border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-full"
+              className="h-12 px-6 border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-full"
             >
-              <Square className="w-5 h-5 mr-2" /> End Game
+              <Square className="w-5 h-5 mr-2" /> End Game Early
             </Button>
           </div>
         )}
