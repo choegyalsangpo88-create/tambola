@@ -2024,10 +2024,10 @@ async def call_user_game_number(
 
 @api_router.get("/user-games/{user_game_id}/session")
 async def get_user_game_session(user_game_id: str):
-    """Get current game session state"""
+    """Get current game session state for live polling"""
     game = await db.user_games.find_one(
         {"user_game_id": user_game_id},
-        {"_id": 0, "called_numbers": 1, "current_number": 1, "status": 1, "winners": 1, "name": 1}
+        {"_id": 0, "called_numbers": 1, "current_number": 1, "status": 1, "winners": 1, "name": 1, "auto_call_enabled": 1}
     )
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
