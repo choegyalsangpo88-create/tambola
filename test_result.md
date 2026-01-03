@@ -399,7 +399,7 @@ frontend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -407,6 +407,9 @@ frontend:
       - working: "NA"
         agent: "testing"
         comment: "❌ AUTHENTICATION LIMITATION: Cannot test Host Self-Booking feature due to Google Auth requirement. Endpoint POST /api/user-games/{user_game_id}/host-join exists in backend code and is properly implemented with: 1) Host authentication check ✅, 2) Abbreviated name generation (A. Sharma format) ✅, 3) is_host=true flag in players list ✅, 4) 403 error for non-host attempts ✅. Manual testing with valid user session required to verify complete functionality."
+      - working: "NA"
+        agent: "testing"
+        comment: "⚠️ AUTHENTICATION LIMITATION CONFIRMED: Cannot test Host Self-Booking without Google OAuth. Frontend structure verified: UserGameDetails.js contains 'Book My Own Ticket' button with green outline and Ticket icon, properly positioned for host users. Backend endpoint implemented correctly. REQUIRES MANUAL TESTING with authenticated user session to verify: 1) Host can book own ticket, 2) Host appears in players list with abbreviated name, 3) Non-host gets 403 error."
 
   - task: "User Names on Tickets in Live Game"
     implemented: true
