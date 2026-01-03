@@ -402,84 +402,92 @@ export default function LiveGame() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 py-2 space-y-2">
         
-        {/* Row 1: Left (Ball + Players) | Right (Dividends List) */}
-        <div className="flex gap-2">
-          {/* LEFT: Ball + Top Players */}
-          <div className="flex-1 space-y-2">
-            {/* Ball */}
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10 flex flex-col items-center">
-              <div className="relative mb-1">
-                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-xl`}
-                  style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.4), inset 0 -5px 15px rgba(0,0,0,0.3), inset 0 5px 15px rgba(255,255,255,0.3)' }}>
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-inner">
-                    <span className="text-2xl font-black text-gray-900">{session.current_number || '?'}</span>
-                  </div>
+        {/* Row 1: Caller Ball | Dividends - Equal Space */}
+        <div className="grid grid-cols-2 gap-2">
+          {/* LEFT: Compact Ball + Number Count */}
+          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 flex flex-col items-center justify-center">
+            <div className="relative">
+              <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-xl`}
+                style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.4), inset 0 -4px 10px rgba(0,0,0,0.3), inset 0 4px 10px rgba(255,255,255,0.3)' }}>
+                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-inner">
+                  <span className="text-xl font-black text-gray-900">{session.current_number || '?'}</span>
                 </div>
-                <div className="absolute top-2 left-4 w-5 h-5 bg-white/40 rounded-full blur-md" />
-              </div>
-              {session.current_number && (
-                <p className="text-[9px] text-white font-medium text-center mt-1 max-w-[120px] leading-tight">
-                  {getCallName(session.current_number).replace(`Number ${session.current_number} - `, '')}
-                </p>
-              )}
-              <p className="text-[10px] text-amber-400 font-semibold mt-1">{session.called_numbers?.length || 0}/90 Numbers</p>
-            </div>
-
-            {/* Top Players */}
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-              <h3 className="text-[10px] font-bold text-amber-400 mb-1.5 text-center">TOP PLAYERS</h3>
-              <div className="space-y-1">
-                {topPlayers.length > 0 ? (
-                  topPlayers.slice(0, 5).map((player, index) => (
-                    <div key={index} className={`flex items-center justify-between px-2 py-1 rounded ${
-                      index === 0 ? 'bg-amber-500/30' :
-                      index === 1 ? 'bg-gray-500/20' :
-                      index === 2 ? 'bg-orange-600/20' :
-                      'bg-white/5'
-                    }`}>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-bold ${
-                          index === 0 ? 'text-amber-400' :
-                          index === 1 ? 'text-gray-300' :
-                          index === 2 ? 'text-orange-400' :
-                          'text-gray-400'
-                        }`}>{index + 1}.</span>
-                        <span className="text-[10px] text-white truncate max-w-[60px]">{player.name}</span>
-                      </div>
-                      <span className="text-[9px] text-amber-400 font-semibold">{player.totalMarked} pts</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[9px] text-gray-500 text-center py-2">Waiting for players...</p>
-                )}
               </div>
             </div>
+            <p className="text-[10px] text-amber-400 font-semibold mt-1">{session.called_numbers?.length || 0}/90</p>
           </div>
 
-          {/* RIGHT: Dividends List */}
-          <div className="w-36 flex-shrink-0">
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 h-full">
-              <div className="flex items-center gap-1 mb-2">
-                <Trophy className="w-3 h-3 text-amber-500" />
-                <span className="text-[10px] font-bold text-white">DIVIDENDS</span>
-              </div>
-              <div className="space-y-1">
-                {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
-                  const winner = session.winners?.[prize];
-                  return (
-                    <div key={prize} className={`flex items-center justify-between px-1.5 py-1 rounded ${
-                      winner ? 'bg-green-500/20' : 'bg-white/5'
-                    }`}>
-                      <div className="flex items-center gap-1">
-                        {winner && <span className="text-[8px]">🏆</span>}
-                        <span className={`text-[9px] ${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-amber-400">₹{amount}</span>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* RIGHT: Dividends List with Winner Names */}
+          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+            <div className="flex items-center gap-1 mb-1">
+              <Trophy className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-bold text-white">DIVIDENDS</span>
             </div>
+            <div className="space-y-0.5 max-h-36 overflow-y-auto">
+              {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
+                const winner = session.winners?.[prize];
+                return (
+                  <div key={prize} className={`px-1.5 py-0.5 rounded ${winner ? 'bg-green-500/20' : 'bg-white/5'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[9px] ${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
+                      <span className="text-[9px] font-bold text-amber-400">₹{amount}</span>
+                    </div>
+                    {winner && (
+                      <p className="text-[8px] text-green-300 truncate">🏆 {winner.holder_name || winner.name || 'Winner'}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Players - Show names from beginning */}
+        <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          <h3 className="text-[10px] font-bold text-amber-400 mb-1 text-center">TOP PLAYERS</h3>
+          <div className="grid grid-cols-4 gap-1">
+            {allBookedTickets.length > 0 ? (
+              (() => {
+                // Calculate marks for all players
+                const calledSet = new Set(session.called_numbers || []);
+                const playerMarks = {};
+                
+                allBookedTickets.forEach(ticket => {
+                  const playerId = ticket.user_id || ticket.holder_name || ticket.booked_by_name;
+                  const playerName = ticket.holder_name || ticket.booked_by_name || 'Player';
+                  
+                  if (!playerMarks[playerId]) {
+                    playerMarks[playerId] = { name: playerName, marks: 0 };
+                  }
+                  
+                  if (ticket.numbers) {
+                    ticket.numbers.forEach(row => {
+                      row.forEach(num => {
+                        if (num && calledSet.has(num)) {
+                          playerMarks[playerId].marks++;
+                        }
+                      });
+                    });
+                  }
+                });
+                
+                // Sort by marks
+                const sortedPlayers = Object.values(playerMarks)
+                  .sort((a, b) => b.marks - a.marks)
+                  .slice(0, 4);
+                
+                return sortedPlayers.map((player, idx) => (
+                  <div key={idx} className={`rounded p-1 text-center ${
+                    idx === 0 ? 'bg-amber-500/30' : idx === 1 ? 'bg-gray-500/20' : idx === 2 ? 'bg-orange-600/20' : 'bg-white/5'
+                  }`}>
+                    <p className="text-[9px] text-white truncate">{player.name?.split(' ')[0]}</p>
+                    <p className="text-[8px] text-amber-400">{player.marks}</p>
+                  </div>
+                ));
+              })()
+            ) : (
+              <p className="col-span-4 text-[9px] text-gray-500 text-center py-1">Waiting for players...</p>
+            )}
           </div>
         </div>
 
