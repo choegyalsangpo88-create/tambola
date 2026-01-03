@@ -139,7 +139,29 @@ export default function LiveGame() {
   const fetchSession = async () => {
     try {
       const response = await axios.get(`${API}/games/${gameId}/session`);
-      setSession(response.data);
+      const newSession = response.data;
+      
+      // Check if game ended
+      if (newSession.status === 'completed' && game?.status !== 'completed') {
+        // Stop polling
+        if (pollInterval.current) {
+          clearInterval(pollInterval.current);
+          pollInterval.current = null;
+        }
+        // Stop all sounds
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        if (ttsAudioRef.current) {
+          ttsAudioRef.current.pause();
+        }
+        // Update game status
+        setGame(prev => ({ ...prev, status: 'completed' }));
+        toast.success('🎉 Game Completed! All prizes have been claimed.');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+      
+      setSession(newSession);
     } catch (error) { console.error('Failed to fetch session:', error); }
   };
 
