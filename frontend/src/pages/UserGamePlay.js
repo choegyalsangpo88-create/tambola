@@ -303,6 +303,19 @@ export default function UserGamePlay() {
     return 'from-gray-400 to-gray-600';
   };
 
+  // Get gradient colors for 3D ball based on number range
+  const getBallGradient = (num) => {
+    if (num <= 9) return '#60a5fa, #2563eb 50%, #1d4ed8 80%, #1e3a8a';
+    if (num <= 19) return '#f87171, #dc2626 50%, #b91c1c 80%, #7f1d1d';
+    if (num <= 29) return '#4ade80, #16a34a 50%, #15803d 80%, #14532d';
+    if (num <= 39) return '#facc15, #ca8a04 50%, #a16207 80%, #713f12';
+    if (num <= 49) return '#c084fc, #9333ea 50%, #7e22ce 80%, #581c87';
+    if (num <= 59) return '#f472b6, #db2777 50%, #be185d 80%, #831843';
+    if (num <= 69) return '#22d3ee, #0891b2 50%, #0e7490 80%, #164e63';
+    if (num <= 79) return '#fb923c, #ea580c 50%, #c2410c 80%, #7c2d12';
+    return '#9ca3af, #6b7280 50%, #4b5563 80%, #374151';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c]">
