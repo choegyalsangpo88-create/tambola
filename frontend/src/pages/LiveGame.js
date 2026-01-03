@@ -178,6 +178,7 @@ export default function LiveGame() {
 
   useEffect(() => {
     fetchGameData();
+    loadVoices();
     fetchMyTickets();
     fetchAllBookedTickets();
     pollInterval.current = setInterval(() => {
