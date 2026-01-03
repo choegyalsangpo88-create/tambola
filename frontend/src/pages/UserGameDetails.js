@@ -6,7 +6,7 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft, Copy, Share2, Users, Calendar, Clock,
-  Trophy, Play, Edit2, QrCode, Download, Check, Ticket
+  Trophy, Play, Edit2, QrCode, Download, Check, Ticket, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
