@@ -342,66 +342,139 @@ export default function LiveGame() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 py-2 space-y-2">
         
-        {/* Row 1: Players | Caller Ball | Dividends */}
+        {/* Row 1: Top Players | 3D Caller Ball | Dividends */}
         <div className="grid grid-cols-12 gap-2">
-          {/* LEFT: Player List with Dots */}
+          {/* LEFT: Top 5 Players Close to Winning */}
           <div className="col-span-3 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-            <p className="text-[9px] text-gray-400 mb-1">Players</p>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
+            <p className="text-[8px] text-amber-400 font-bold mb-1">Top Players</p>
+            <div className="space-y-1.5 max-h-36 overflow-y-auto">
               {allBookedTickets.length > 0 ? (
                 (() => {
                   const calledSet = new Set(session.called_numbers || []);
-                  const playerMarks = {};
+                  const playerProgress = [];
                   
+                  // Calculate who is closest to winning each prize
                   allBookedTickets.forEach(ticket => {
                     const name = ticket.holder_name || ticket.booked_by_name || 'Player';
-                    const key = name;
-                    if (!playerMarks[key]) playerMarks[key] = 0;
-                    if (ticket.numbers) {
-                      ticket.numbers.forEach(row => {
-                        row.forEach(num => {
-                          if (num && calledSet.has(num)) playerMarks[key]++;
-                        });
-                      });
+                    if (!ticket.numbers || ticket.numbers.length < 3) return;
+                    
+                    // Top Line (5 numbers)
+                    const topRow = ticket.numbers[0].filter(n => n !== null);
+                    const topMarked = topRow.filter(n => calledSet.has(n)).length;
+                    const topRemaining = 5 - topMarked;
+                    if (topRemaining > 0 && topRemaining <= 3 && !session.winners?.['Top Line']) {
+                      playerProgress.push({ name, prize: 'Top Line', remaining: topRemaining });
+                    }
+                    
+                    // Middle Line
+                    const midRow = ticket.numbers[1].filter(n => n !== null);
+                    const midMarked = midRow.filter(n => calledSet.has(n)).length;
+                    const midRemaining = 5 - midMarked;
+                    if (midRemaining > 0 && midRemaining <= 3 && !session.winners?.['Middle Line']) {
+                      playerProgress.push({ name, prize: 'Middle Line', remaining: midRemaining });
+                    }
+                    
+                    // Bottom Line
+                    const botRow = ticket.numbers[2].filter(n => n !== null);
+                    const botMarked = botRow.filter(n => calledSet.has(n)).length;
+                    const botRemaining = 5 - botMarked;
+                    if (botRemaining > 0 && botRemaining <= 3 && !session.winners?.['Bottom Line']) {
+                      playerProgress.push({ name, prize: 'Bottom Line', remaining: botRemaining });
+                    }
+                    
+                    // Four Corners - check physical positions
+                    const corners = [
+                      ticket.numbers[0][0], ticket.numbers[0][8],
+                      ticket.numbers[2][0], ticket.numbers[2][8]
+                    ].filter(n => n !== null);
+                    if (corners.length === 4) {
+                      const cornersMarked = corners.filter(n => calledSet.has(n)).length;
+                      const cornersRemaining = 4 - cornersMarked;
+                      if (cornersRemaining > 0 && cornersRemaining <= 2 && !session.winners?.['Four Corners']) {
+                        playerProgress.push({ name, prize: 'Four Corners', remaining: cornersRemaining });
+                      }
+                    }
+                    
+                    // Full House (15 numbers)
+                    const allNums = ticket.numbers.flat().filter(n => n !== null);
+                    const fullMarked = allNums.filter(n => calledSet.has(n)).length;
+                    const fullRemaining = 15 - fullMarked;
+                    if (fullRemaining > 0 && fullRemaining <= 5 && !session.winners?.['1st Full House']) {
+                      playerProgress.push({ name, prize: 'Full House', remaining: fullRemaining });
                     }
                   });
                   
-                  return Object.entries(playerMarks)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 6)
-                    .map(([name, marks], idx) => (
-                      <div key={idx} className="flex items-center justify-between">
-                        <span className="text-[8px] text-white truncate max-w-[50px]">{name.split(' ')[0]}</span>
-                        <div className="flex gap-0.5">
-                          {Array.from({ length: Math.min(marks, 5) }).map((_, i) => (
-                            <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                          ))}
-                          {marks > 5 && <span className="text-[7px] text-red-400">+{marks - 5}</span>}
-                        </div>
+                  // Sort by remaining (fewer = closer to winning) and take top 5
+                  const top5 = playerProgress
+                    .sort((a, b) => a.remaining - b.remaining)
+                    .slice(0, 5);
+                  
+                  if (top5.length === 0) {
+                    return <p className="text-[7px] text-gray-500 text-center">Waiting...</p>;
+                  }
+                  
+                  return top5.map((p, idx) => (
+                    <div key={idx} className="bg-white/5 rounded px-1.5 py-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] text-white font-medium truncate max-w-[45px]">{p.name.split(' ')[0]}</span>
+                        <span className="text-[7px] text-amber-400">{p.prize}</span>
                       </div>
-                    ));
+                      <div className="flex gap-0.5 mt-0.5">
+                        {Array.from({ length: p.remaining }).map((_, i) => (
+                          <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        ))}
+                      </div>
+                    </div>
+                  ));
                 })()
               ) : (
-                <p className="text-[8px] text-gray-500">Waiting...</p>
+                <p className="text-[7px] text-gray-500 text-center">Waiting...</p>
               )}
             </div>
           </div>
 
-          {/* CENTER: Caller Ball with Spin Animation */}
-          <div className="col-span-5 bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10 flex flex-col items-center justify-center">
-            <div className={`relative ${isSpinning ? 'ball-spin' : 'ball-pulse'}`}>
+          {/* CENTER: Premium 3D Caller Ball */}
+          <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10 flex flex-col items-center justify-center">
+            <div className={`relative ${isSpinning && game?.status !== 'completed' ? 'ball-spin' : ''}`}>
+              {/* 3D Premium Ball */}
               <div 
-                className={`w-20 h-20 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center`}
-                style={{ 
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 -6px 15px rgba(0,0,0,0.4), inset 0 6px 15px rgba(255,255,255,0.3)'
+                className="w-24 h-24 rounded-full relative"
+                style={{
+                  background: 'radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000 50%, #990000 80%, #660000)',
+                  boxShadow: `
+                    0 15px 35px rgba(0,0,0,0.6),
+                    0 5px 15px rgba(0,0,0,0.4),
+                    inset 0 -8px 20px rgba(0,0,0,0.5),
+                    inset 0 8px 20px rgba(255,255,255,0.2),
+                    inset 0 0 30px rgba(0,0,0,0.3)
+                  `
                 }}
               >
-                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-inner">
-                  <span className="text-3xl font-black text-gray-900">{session.current_number || '?'}</span>
+                {/* Highlight shine */}
+                <div 
+                  className="absolute top-2 left-4 w-6 h-4 rounded-full opacity-60"
+                  style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.8), transparent)' }}
+                />
+                {/* White center circle */}
+                <div 
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{
+                    background: 'radial-gradient(circle at 40% 40%, #ffffff, #f0f0f0 60%, #e0e0e0)',
+                    boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2), 0 1px 2px rgba(255,255,255,0.5)'
+                  }}
+                >
+                  <span className="text-4xl font-black text-gray-900" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>
+                    {session.current_number || '?'}
+                  </span>
                 </div>
               </div>
+              {/* Ball shadow on surface */}
+              <div 
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-4 rounded-full opacity-40"
+                style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.6), transparent 70%)' }}
+              />
             </div>
-            <p className="text-xs text-amber-400 font-bold mt-2">{session.called_numbers?.length || 0} / 90</p>
+            <p className="text-sm text-amber-400 font-bold mt-3">{session.called_numbers?.length || 0} / 90</p>
           </div>
 
           {/* RIGHT: Dividends List with Winner Names */}
@@ -410,13 +483,13 @@ export default function LiveGame() {
               <Trophy className="w-3 h-3 text-amber-500" />
               <span className="text-[9px] font-bold text-white">DIVIDENDS</span>
             </div>
-            <div className="space-y-0.5 max-h-32 overflow-y-auto">
+            <div className="space-y-0.5 max-h-36 overflow-y-auto">
               {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                 const winner = session.winners?.[prize];
                 return (
                   <div key={prize} className={`px-1.5 py-0.5 rounded ${winner ? 'bg-green-500/20' : 'bg-white/5'}`}>
                     <div className="flex items-center justify-between">
-                      <span className={`text-[8px] ${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
+                      <span className={`text-[8px] ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
                       <span className="text-[8px] font-bold text-amber-400">₹{amount}</span>
                     </div>
                     {winner && (
