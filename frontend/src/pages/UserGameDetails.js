@@ -109,6 +109,17 @@ export default function UserGameDetails() {
     }
   };
 
+  const handleDeleteGame = async () => {
+    if (!window.confirm('Are you sure you want to delete this game? This cannot be undone.')) return;
+    try {
+      await axios.delete(`${API}/user-games/${userGameId}`, { withCredentials: true });
+      toast.success('Game deleted');
+      navigate('/my-games');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete game');
+    }
+  };
+
   // Check if host has already booked
   const hostHasTicket = players.some(p => p.is_host);
 
