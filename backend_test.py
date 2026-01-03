@@ -1556,8 +1556,8 @@ class TambolaAPITester:
         return all([completed_games, test_game, tts_response, avg_response_time < 1000])
 
     def run_all_tests(self):
-        """Run all API tests with focus on Join User Game functionality"""
-        print("🚀 Starting Tambola API Tests - JOIN USER GAME FUNCTIONALITY")
+        """Run all API tests with focus on User Game Ticket Selection Features"""
+        print("🚀 Starting Tambola API Tests - USER GAME TICKET SELECTION FEATURES")
         print(f"🔗 Base URL: {self.base_url}")
         print(f"👤 Test User ID: {self.user_id}")
         print(f"🔑 Session Token: {self.session_token[:20]}...")
@@ -1568,26 +1568,34 @@ class TambolaAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
-        # PRIORITY 1: Join User Game Functionality Testing
+        # PRIORITY 1: User Game Ticket Selection Features Testing (Review Request)
         print("\n" + "🎯"*60)
-        print("JOIN USER GAME FUNCTIONALITY TESTING - PRIORITY 1")
+        print("USER GAME TICKET SELECTION FEATURES TESTING - PRIORITY 1")
         print("🎯"*60)
         
-        # Test the specific join functionality from review request
+        # Test the specific ticket selection features from review request
+        ticket_selection_success = self.test_user_game_ticket_selection_features()
+        
+        # PRIORITY 2: Join User Game Functionality Testing
+        print("\n" + "🎯"*60)
+        print("JOIN USER GAME FUNCTIONALITY TESTING - PRIORITY 2")
+        print("🎯"*60)
+        
+        # Test the general join functionality
         join_functionality_success = self.test_join_user_game_functionality()
         
-        # PRIORITY 2: Six Seven Tambola Review Request Testing
+        # PRIORITY 3: Six Seven Tambola Review Request Testing
         print("\n" + "🎯"*60)
-        print("SIX SEVEN TAMBOLA REVIEW REQUEST TESTING - PRIORITY 2")
+        print("SIX SEVEN TAMBOLA REVIEW REQUEST TESTING - PRIORITY 3")
         print("🎯"*60)
         
-        # Test the specific review request items
+        # Test the other review request items
         review_request_success = self.test_six_seven_tambola_review_request()
         
-        # ADDITIONAL TESTING (Priority 3) - Only if join functionality passes
-        if join_functionality_success:
+        # ADDITIONAL TESTING (Priority 4) - Only if main features pass
+        if ticket_selection_success:
             print("\n" + "📋"*60)
-            print("ADDITIONAL API TESTING - PRIORITY 3")
+            print("ADDITIONAL API TESTING - PRIORITY 4")
             print("📋"*60)
             
             # Test 2: Winner Detection Logic (Four Corners, Full House, Full Sheet Bonus)
@@ -1602,7 +1610,7 @@ class TambolaAPITester:
             # Test 5: Admin Game Auto-Start and Auto-Calling
             auto_game_id = self.test_admin_game_automation()
         else:
-            print("\n⚠️  Skipping additional tests due to join functionality failures")
+            print("\n⚠️  Skipping additional tests due to ticket selection feature failures")
             winner_detection_success = False
             tts_success = False
             user_games_success = False
@@ -1615,16 +1623,20 @@ class TambolaAPITester:
         print(f"📊 Tests passed: {self.tests_passed}/{self.tests_run}")
         print(f"✅ Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
-        # Join functionality results (Priority 1)
+        # Ticket selection features results (Priority 1)
+        print("\n🎯 USER GAME TICKET SELECTION FEATURES RESULTS:")
+        print(f"   Ticket Selection Features: {'✅ PASS' if ticket_selection_success else '❌ FAIL'}")
+        
+        # Join functionality results (Priority 2)
         print("\n🎯 JOIN USER GAME FUNCTIONALITY RESULTS:")
         print(f"   Join Functionality Tests: {'✅ PASS' if join_functionality_success else '❌ FAIL'}")
         
-        # Review request results (Priority 2)
+        # Review request results (Priority 3)
         print("\n🎯 SIX SEVEN TAMBOLA REVIEW REQUEST RESULTS:")
         print(f"   Review Request Tests: {'✅ PASS' if review_request_success else '❌ FAIL'}")
         
-        if join_functionality_success:
-            # Additional test results (Priority 3)
+        if ticket_selection_success:
+            # Additional test results (Priority 4)
             print("\n📋 ADDITIONAL TEST SUITE RESULTS:")
             additional_results = [
                 ("Winner Detection Logic", winner_detection_success),
@@ -1637,7 +1649,7 @@ class TambolaAPITester:
                 status = "✅ PASS" if success else "❌ FAIL"
                 print(f"   {test_name}: {status}")
         
-        return join_functionality_success
+        return ticket_selection_success
 
 def main():
     tester = TambolaAPITester()
