@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -25,10 +25,23 @@ export default function LiveGame() {
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [showAudioPrompt, setShowAudioPrompt] = useState(true);
+  const [isAnnouncing, setIsAnnouncing] = useState(false);
   const pollInterval = useRef(null);
   const audioRef = useRef(null);
   const ttsAudioRef = useRef(null);
   const audioContextRef = useRef(null);
+  const speechSynthRef = useRef(null);
+  const lastAnnouncedRef = useRef(null);
+
+  // Pre-load voices for better mobile performance
+  const loadVoices = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      const voices = window.speechSynthesis.getVoices();
+      const indianVoice = voices.find(v => v.lang.includes('en-IN'));
+      const englishVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-US'));
+      speechSynthRef.current = indianVoice || englishVoice || voices[0];
+    }
+  }, []);
 
   // Enable audio on user interaction (required for mobile)
   const enableAudio = async () => {
@@ -40,6 +53,8 @@ export default function LiveGame() {
       
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
         const utterance = new SpeechSynthesisUtterance('');
         utterance.volume = 0;
         window.speechSynthesis.speak(utterance);
