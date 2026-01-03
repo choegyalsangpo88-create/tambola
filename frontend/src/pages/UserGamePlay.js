@@ -21,52 +21,53 @@ export default function UserGamePlay() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCalling, setIsCalling] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [currentBall, setCurrentBall] = useState(null);
   const [showBallAnimation, setShowBallAnimation] = useState(false);
   const [dividends, setDividends] = useState({});
   const [allWinners, setAllWinners] = useState({});
   
   const audioRef = useRef(null);
+  const audioElementRef = useRef(null);
   const pollIntervalRef = useRef(null);
-  const audioContextRef = useRef(null);
   const lastAnnouncedRef = useRef(null);
-  const speechSynthRef = useRef(null);
   const isAnnouncingRef = useRef(false);
   const previousWinnersRef = useRef({});
+  const audioQueueRef = useRef([]);
+  const isPlayingRef = useRef(false);
 
-  // Initialize audio on component mount
-  const initAudio = useCallback(async () => {
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+  // Unlock audio on iOS/mobile - MUST be triggered by user gesture
+  const unlockAudio = useCallback(() => {
+    // Create and play silent audio to unlock
+    const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////");
+    silentAudio.volume = 0.01;
+    silentAudio.play().then(() => {
+      setAudioUnlocked(true);
+      toast.success('🔊 Sound enabled!');
+    }).catch(() => {
+      // Try with AudioContext
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        setAudioUnlocked(true);
+        toast.success('🔊 Sound enabled!');
+      } catch (e) {
+        console.log('Audio unlock failed:', e);
       }
-      
-      // Pre-load voices
-      if ('speechSynthesis' in window) {
-        const voices = window.speechSynthesis.getVoices();
-        speechSynthRef.current = voices.find(v => v.lang.includes('en-IN')) || 
-                                  voices.find(v => v.lang.includes('en')) || 
-                                  voices[0];
-        window.speechSynthesis.onvoiceschanged = () => {
-          const v = window.speechSynthesis.getVoices();
-          speechSynthRef.current = v.find(x => x.lang.includes('en-IN')) || v.find(x => x.lang.includes('en')) || v[0];
-        };
-      }
-    } catch (e) {
-      console.log('Audio init error:', e);
-    }
+    });
   }, []);
 
   useEffect(() => {
-    initAudio();
     fetchInitialData();
     
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     };
-  }, [userGameId, initAudio]);
+  }, [userGameId]);
 
   useEffect(() => {
     // Poll every 2 seconds for live game
