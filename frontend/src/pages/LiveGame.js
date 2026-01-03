@@ -103,60 +103,9 @@ export default function LiveGame() {
       }
     });
   };
-      try {
-        if (audioContextRef.current?.state === 'suspended') {
-          audioContextRef.current.resume();
-        }
-        
-        if (ttsAudioRef.current) {
-          ttsAudioRef.current.pause();
-        }
-        
-        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-        ttsAudioRef.current = audio;
-        
-        audio.onended = resolve;
-        audio.onerror = () => resolve();
-        
-        audio.play().catch(() => resolve());
-        setTimeout(resolve, 8000);
-      } catch (e) {
-        resolve();
-      }
-    });
-  };
-
-  const speakWithBrowserTTS = (text) => {
-    return new Promise((resolve) => {
-      if (!('speechSynthesis' in window) || !audioEnabled) {
-        resolve();
-        return;
-      }
-      
-      try {
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        
-        if (speechSynthRef.current) {
-          utterance.voice = speechSynthRef.current;
-        }
-        
-        utterance.onend = resolve;
-        utterance.onerror = resolve;
-        
-        window.speechSynthesis.speak(utterance);
-        setTimeout(resolve, 10000);
-      } catch (e) {
-        resolve();
-      }
-    });
-  };
 
   useEffect(() => {
+    initAudio();
     fetchGameData();
     loadVoices();
     fetchMyTickets();
