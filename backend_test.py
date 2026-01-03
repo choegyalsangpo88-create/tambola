@@ -2019,6 +2019,14 @@ class TambolaAPITester:
         # Test the other review request items
         review_request_success = self.test_six_seven_tambola_review_request()
         
+        # CRITICAL TEST: Full Sheet Bonus Detection Fix
+        print("\n" + "🚨"*60)
+        print("CRITICAL TEST: FULL SHEET BONUS DETECTION FIX")
+        print("🚨"*60)
+        
+        # Test the specific Full Sheet Bonus detection fix from review request
+        full_sheet_bonus_fix_success = self.test_full_sheet_bonus_detection_fix()
+        
         # ADDITIONAL TESTING (Priority 4) - Only if main features pass
         if ticket_selection_success:
             print("\n" + "📋"*60)
