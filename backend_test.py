@@ -738,7 +738,7 @@ class TambolaAPITester:
         )
         
         if success and initial_session:
-            initial_called = initial_session.get('calledNumbers', [])
+            initial_called = initial_session.get('called_numbers', [])
             print(f"   Initial called numbers: {len(initial_called)}")
         else:
             initial_called = []
@@ -757,8 +757,8 @@ class TambolaAPITester:
         )
         
         if success and updated_session:
-            updated_called = updated_session.get('calledNumbers', [])
-            current_number = updated_session.get('currentNumber')
+            updated_called = updated_session.get('called_numbers', [])
+            current_number = updated_session.get('current_number')
             
             print(f"   Called numbers after wait: {len(updated_called)}")
             print(f"   Current number: {current_number}")
