@@ -134,7 +134,9 @@ export default function UserGamePlay() {
       const audio = new Audio('/sounds/ball-drop.mp3');
       audio.volume = 0.5;
       audio.play().catch(() => {});
-    } catch (e) {}
+    } catch (e) {
+      // Ignore audio errors
+    }
   };
 
   const handleCallNumber = async () => {
