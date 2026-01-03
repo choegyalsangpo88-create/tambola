@@ -696,3 +696,6 @@ agent_communication:
 
   - agent: "main"
     message: "VERIFICATION: 1) Ticket Selection View - WORKING. Users can now see all tickets with numbers when joining via share code (tested with share code 7PZP3C). 2) Full Sheet Bonus Detection - WORKING. Successfully detected when a player has all 6 tickets of a full sheet with at least 1 number marked on each (tested with share code WQFMR6). Please verify both features work correctly."
+
+  - agent: "main"
+    message: "FIXES APPLIED: 1) Full Sheet Bonus detection fixed - now works with both 'is_booked: true' AND booking_status checks. Also groups tickets by holder_name in addition to user_id. Successfully tested - FullSheetTester detected as winner for FS001. 2) Top Players board updated - now shows users sorted by remaining numbers (ascending), with multiple tickets about to win shown as 'x2', 'x3' etc. prioritized higher when same remaining count. Test the fixes on the live game."
