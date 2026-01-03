@@ -202,8 +202,9 @@ export default function GameDetails() {
       const userResponse = await axios.get(`${API}/auth/me`, { withCredentials: true });
       const user = userResponse.data;
 
+      // Create booking REQUEST (not direct booking) - goes to admin for approval
       const response = await axios.post(
-        `${API}/bookings`,
+        `${API}/booking-requests`,
         {
           game_id: gameId,
           ticket_ids: selectedTickets
@@ -211,7 +212,7 @@ export default function GameDetails() {
         { withCredentials: true }
       );
 
-      const booking = response.data;
+      const bookingRequest = response.data;
       
       // Get selected ticket numbers for the message
       const selectedTicketNumbers = tickets
@@ -220,7 +221,7 @@ export default function GameDetails() {
         .join(', ');
 
       // Build detailed WhatsApp message
-      const message = `🎫 *NEW TICKET BOOKING*
+      const message = `🎫 *NEW TICKET BOOKING REQUEST*
 
 👤 *Player:* ${user.name || 'Guest'}
 📧 *Email:* ${user.email || 'N/A'}
@@ -231,13 +232,38 @@ export default function GameDetails() {
 
 🎟️ *Tickets:* ${selectedTicketNumbers}
 📊 *Quantity:* ${selectedTickets.length} ticket(s)
-💰 *Total Amount:* ₹${booking.total_amount}
+💰 *Total Amount:* ₹${bookingRequest.total_amount}
 
-🆔 *Booking ID:* ${booking.booking_id}
+🆔 *Request ID:* ${bookingRequest.request_id}
 
-Please confirm this booking. 🙏`;
+⏳ Status: PENDING APPROVAL
+
+Please approve my booking request. 🙏`;
 
       // WhatsApp Business Number
+      const whatsappNumber = '916909166157';
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      
+      toast.success('Booking request sent! Opening WhatsApp...');
+      window.open(whatsappUrl, '_blank');
+      
+      setSelectedTickets([]);
+      fetchAllTickets();
+    } catch (error) {
+      console.error('Booking request failed:', error);
+      const errorMsg = error.response?.data?.detail || 'Failed to create booking request';
+      toast.error(errorMsg);
+      
+      // If tickets are already booked, refresh the ticket list
+      if (errorMsg.includes('already booked') || errorMsg.includes('not available')) {
+        toast.info('Refreshing tickets...');
+        setSelectedTickets([]);
+        fetchAllTickets();
+      }
+    } finally {
+      setIsBooking(false);
+    }
+  };
       const whatsappNumber = '916909166157';
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       
