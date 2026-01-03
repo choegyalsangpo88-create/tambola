@@ -337,124 +337,91 @@ export default function LiveGame() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 py-2 space-y-2">
         
-        {/* Row 1: Caller Ball | Dividends - Equal Space */}
-        <div className="grid grid-cols-2 gap-2">
-          {/* LEFT: Compact Ball + Number Count */}
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 flex flex-col items-center justify-center">
-            <div className="relative">
-              <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-xl`}
-                style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.4), inset 0 -4px 10px rgba(0,0,0,0.3), inset 0 4px 10px rgba(255,255,255,0.3)' }}>
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-inner">
-                  <span className="text-xl font-black text-gray-900">{session.current_number || '?'}</span>
+        {/* Row 1: Players | Caller Ball | Dividends */}
+        <div className="grid grid-cols-12 gap-2">
+          {/* LEFT: Player List with Dots */}
+          <div className="col-span-3 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+            <p className="text-[9px] text-gray-400 mb-1">Players</p>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {allBookedTickets.length > 0 ? (
+                (() => {
+                  const calledSet = new Set(session.called_numbers || []);
+                  const playerMarks = {};
+                  
+                  allBookedTickets.forEach(ticket => {
+                    const name = ticket.holder_name || ticket.booked_by_name || 'Player';
+                    const key = name;
+                    if (!playerMarks[key]) playerMarks[key] = 0;
+                    if (ticket.numbers) {
+                      ticket.numbers.forEach(row => {
+                        row.forEach(num => {
+                          if (num && calledSet.has(num)) playerMarks[key]++;
+                        });
+                      });
+                    }
+                  });
+                  
+                  return Object.entries(playerMarks)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 6)
+                    .map(([name, marks], idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <span className="text-[8px] text-white truncate max-w-[50px]">{name.split(' ')[0]}</span>
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: Math.min(marks, 5) }).map((_, i) => (
+                            <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          ))}
+                          {marks > 5 && <span className="text-[7px] text-red-400">+{marks - 5}</span>}
+                        </div>
+                      </div>
+                    ));
+                })()
+              ) : (
+                <p className="text-[8px] text-gray-500">Waiting...</p>
+              )}
+            </div>
+          </div>
+
+          {/* CENTER: Caller Ball with Spin Animation */}
+          <div className="col-span-5 bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-white/10 flex flex-col items-center justify-center">
+            <div className={`relative transition-transform duration-500 ${lastPlayedNumber !== session.current_number ? 'animate-spin' : ''}`}>
+              <div 
+                className={`w-20 h-20 rounded-full bg-gradient-to-br ${getBallColor(session.current_number)} flex items-center justify-center shadow-2xl`}
+                style={{ 
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 -6px 15px rgba(0,0,0,0.4), inset 0 6px 15px rgba(255,255,255,0.3)',
+                  animation: lastPlayedNumber !== session.current_number ? 'spin 0.5s ease-out' : 'none'
+                }}
+              >
+                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-inner">
+                  <span className="text-3xl font-black text-gray-900">{session.current_number || '?'}</span>
                 </div>
               </div>
             </div>
-            <p className="text-[10px] text-amber-400 font-semibold mt-1">{session.called_numbers?.length || 0}/90</p>
+            <p className="text-xs text-amber-400 font-bold mt-2">{session.called_numbers?.length || 0} / 90</p>
           </div>
 
           {/* RIGHT: Dividends List with Winner Names */}
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          <div className="col-span-4 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
             <div className="flex items-center gap-1 mb-1">
               <Trophy className="w-3 h-3 text-amber-500" />
-              <span className="text-[10px] font-bold text-white">DIVIDENDS</span>
+              <span className="text-[9px] font-bold text-white">DIVIDENDS</span>
             </div>
-            <div className="space-y-0.5 max-h-36 overflow-y-auto">
+            <div className="space-y-0.5 max-h-32 overflow-y-auto">
               {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                 const winner = session.winners?.[prize];
                 return (
                   <div key={prize} className={`px-1.5 py-0.5 rounded ${winner ? 'bg-green-500/20' : 'bg-white/5'}`}>
                     <div className="flex items-center justify-between">
-                      <span className={`text-[9px] ${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
-                      <span className="text-[9px] font-bold text-amber-400">₹{amount}</span>
+                      <span className={`text-[8px] ${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
+                      <span className="text-[8px] font-bold text-amber-400">₹{amount}</span>
                     </div>
                     {winner && (
-                      <p className="text-[8px] text-green-300 truncate">🏆 {winner.holder_name || winner.name || 'Winner'}</p>
+                      <p className="text-[7px] text-green-300 truncate">🏆 {winner.holder_name || winner.name}</p>
                     )}
                   </div>
                 );
               })}
             </div>
-          </div>
-        </div>
-
-        {/* Top Players - Show progress toward winning prizes */}
-        <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-          <h3 className="text-[10px] font-bold text-amber-400 mb-1 text-center">🔥 CLOSE TO WINNING</h3>
-          <div className="space-y-1">
-            {allBookedTickets.length > 0 ? (
-              (() => {
-                const calledSet = new Set(session.called_numbers || []);
-                const playerProgress = [];
-                
-                // Calculate progress for each player's best prize
-                allBookedTickets.forEach(ticket => {
-                  const playerName = ticket.holder_name || ticket.booked_by_name || 'Player';
-                  const ticketNum = ticket.ticket_number;
-                  
-                  if (!ticket.numbers || ticket.numbers.length < 3) return;
-                  
-                  // Check Top Line progress (5 numbers needed)
-                  const topRow = ticket.numbers[0].filter(n => n !== null);
-                  const topMarked = topRow.filter(n => calledSet.has(n)).length;
-                  if (topMarked >= 3 && topMarked < 5 && !session.winners?.['Top Line']) {
-                    playerProgress.push({ name: playerName, prize: 'Top Line', marked: topMarked, total: 5, ticket: ticketNum });
-                  }
-                  
-                  // Check Middle Line progress
-                  const midRow = ticket.numbers[1].filter(n => n !== null);
-                  const midMarked = midRow.filter(n => calledSet.has(n)).length;
-                  if (midMarked >= 3 && midMarked < 5 && !session.winners?.['Middle Line']) {
-                    playerProgress.push({ name: playerName, prize: 'Middle Line', marked: midMarked, total: 5, ticket: ticketNum });
-                  }
-                  
-                  // Check Bottom Line progress
-                  const botRow = ticket.numbers[2].filter(n => n !== null);
-                  const botMarked = botRow.filter(n => calledSet.has(n)).length;
-                  if (botMarked >= 3 && botMarked < 5 && !session.winners?.['Bottom Line']) {
-                    playerProgress.push({ name: playerName, prize: 'Bottom Line', marked: botMarked, total: 5, ticket: ticketNum });
-                  }
-                  
-                  // Check Four Corners progress
-                  const corners = [ticket.numbers[0][0], ticket.numbers[0][8], ticket.numbers[2][0], ticket.numbers[2][8]].filter(n => n !== null);
-                  const cornersMarked = corners.filter(n => calledSet.has(n)).length;
-                  if (cornersMarked >= 2 && cornersMarked < corners.length && !session.winners?.['Four Corners']) {
-                    playerProgress.push({ name: playerName, prize: 'Corners', marked: cornersMarked, total: corners.length, ticket: ticketNum });
-                  }
-                  
-                  // Check Full House progress (15 numbers)
-                  const allNums = ticket.numbers.flat().filter(n => n !== null);
-                  const fullMarked = allNums.filter(n => calledSet.has(n)).length;
-                  if (fullMarked >= 10 && fullMarked < 15) {
-                    playerProgress.push({ name: playerName, prize: 'Full House', marked: fullMarked, total: 15, ticket: ticketNum });
-                  }
-                });
-                
-                // Sort by closest to winning (highest percentage)
-                const sorted = playerProgress
-                  .sort((a, b) => (b.marked / b.total) - (a.marked / a.total))
-                  .slice(0, 4);
-                
-                if (sorted.length === 0) {
-                  return <p className="text-[9px] text-gray-500 text-center py-1">Game starting...</p>;
-                }
-                
-                return sorted.map((p, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-white/5 rounded px-2 py-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] text-white font-medium truncate max-w-[60px]">{p.name.split(' ')[0]}</span>
-                      <span className="text-[8px] text-amber-400">{p.prize}</span>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: p.total }).map((_, i) => (
-                        <span key={i} className={`w-2 h-2 rounded-full ${i < p.marked ? 'bg-green-500' : 'bg-gray-600'}`} />
-                      ))}
-                    </div>
-                  </div>
-                ));
-              })()
-            ) : (
-              <p className="text-[9px] text-gray-500 text-center py-1">Waiting for players...</p>
-            )}
           </div>
         </div>
 
