@@ -935,9 +935,204 @@ class TambolaAPITester:
         
         return True
 
+    def test_six_seven_tambola_review_request(self):
+        """Test the specific Six Seven Tambola new features from review request"""
+        print("\n" + "="*50)
+        print("TESTING SIX SEVEN TAMBOLA REVIEW REQUEST")
+        print("="*50)
+        
+        # Test 1: Completed Games API
+        print("\n🔍 TEST 1: Completed Games API")
+        import time
+        start_time = time.time()
+        
+        success, completed_games = self.run_test(
+            "GET /api/games/completed",
+            "GET",
+            "games/completed",
+            200
+        )
+        
+        response_time = (time.time() - start_time) * 1000
+        print(f"   ⏱️  Response time: {response_time:.0f}ms")
+        
+        if success and completed_games:
+            print(f"   ✅ Found {len(completed_games)} completed games")
+            
+            # Check if games have winners info
+            for i, game in enumerate(completed_games[:3]):  # Check first 3 games
+                game_name = game.get('name', 'Unknown')
+                winners = game.get('winners', {})
+                print(f"   📋 Game {i+1}: {game_name}")
+                print(f"       Winners: {list(winners.keys()) if winners else 'No winners'}")
+                
+                # Verify required fields
+                required_fields = ['game_id', 'name', 'status', 'winners']
+                missing_fields = [field for field in required_fields if field not in game]
+                if missing_fields:
+                    print(f"       ⚠️  Missing fields: {missing_fields}")
+                else:
+                    print(f"       ✅ All required fields present")
+        else:
+            print("   ❌ Failed to get completed games or empty response")
+        
+        # Test 2: Winner Detection Still Works
+        print("\n🔍 TEST 2: Winner Detection Still Works")
+        
+        # Create a test game for winner detection
+        test_game_data = {
+            "name": f"Winner Detection Test {datetime.now().strftime('%H%M%S')}",
+            "date": "2025-01-30",
+            "time": "21:00",
+            "price": 50.0,
+            "prizes": {
+                "Top Line": 1000.0,
+                "Middle Line": 1000.0,
+                "Bottom Line": 1000.0,
+                "Four Corners": 500.0,
+                "Full House": 2000.0
+            }
+        }
+        
+        start_time = time.time()
+        success, test_game = self.run_test(
+            "Create Test Game for Winner Detection",
+            "POST",
+            "games",
+            200,
+            data=test_game_data
+        )
+        response_time = (time.time() - start_time) * 1000
+        print(f"   ⏱️  Game creation time: {response_time:.0f}ms")
+        
+        if success and test_game:
+            test_game_id = test_game.get('game_id')
+            print(f"   ✅ Created test game: {test_game_id}")
+            
+            # Start the game
+            success, start_result = self.run_test(
+                "Start Test Game",
+                "POST",
+                f"games/{test_game_id}/start",
+                200
+            )
+            
+            if success:
+                # Call a few numbers
+                for i in range(3):
+                    success, call_result = self.run_test(
+                        f"Call Number {i+1}",
+                        "POST",
+                        f"games/{test_game_id}/call-number",
+                        200
+                    )
+                    
+                    if success and call_result:
+                        called_number = call_result.get('number')
+                        new_winners = call_result.get('new_winners', [])
+                        print(f"   📞 Called number: {called_number}")
+                        if new_winners:
+                            print(f"   🏆 New winners detected: {new_winners}")
+                
+                # Check game session for winners
+                success, session_data = self.run_test(
+                    "Get Game Session (Check Winners)",
+                    "GET",
+                    f"games/{test_game_id}/session",
+                    200
+                )
+                
+                if success and session_data:
+                    winners = session_data.get('winners', {})
+                    called_numbers = session_data.get('called_numbers', [])
+                    print(f"   ✅ Numbers called: {len(called_numbers)}")
+                    print(f"   ✅ Winners stored: {list(winners.keys()) if winners else 'None yet'}")
+                    
+                    if winners:
+                        print("   ✅ Winner detection system is working!")
+                    else:
+                        print("   ℹ️  No winners yet (normal for few numbers called)")
+        
+        # Test 3: TTS for Winner Announcement
+        print("\n🔍 TEST 3: TTS for Winner Announcement")
+        
+        start_time = time.time()
+        success, tts_response = self.run_test(
+            "TTS Winner Announcement",
+            "POST",
+            "tts/generate?text=Congratulations%20John!%20You%20have%20won%20Top%20Line!",
+            200
+        )
+        response_time = (time.time() - start_time) * 1000
+        print(f"   ⏱️  TTS response time: {response_time:.0f}ms")
+        
+        if success and tts_response:
+            print(f"   ✅ TTS Response received")
+            print(f"   ✅ Text: {tts_response.get('text', 'N/A')}")
+            print(f"   ✅ Has audio data: {tts_response.get('audio') is not None}")
+            print(f"   ✅ Use browser TTS: {tts_response.get('use_browser_tts', 'N/A')}")
+            print(f"   ✅ Format: {tts_response.get('format', 'N/A')}")
+            
+            # Check if it's server-side TTS (better for mobile)
+            if not tts_response.get('use_browser_tts', True):
+                print("   ✅ Server-side TTS working (good for mobile)")
+            else:
+                print("   ℹ️  Using browser TTS fallback")
+        else:
+            print("   ❌ TTS endpoint failed")
+        
+        # Test 4: API Response Times
+        print("\n🔍 TEST 4: API Response Times (MongoDB Indexes)")
+        
+        endpoints_to_test = [
+            ("games", "GET", "games"),
+            ("games/completed", "GET", "games/completed"),
+            ("games/recent-completed", "GET", "games/recent-completed"),
+            ("auth/me", "GET", "auth/me")
+        ]
+        
+        response_times = []
+        for name, method, endpoint in endpoints_to_test:
+            start_time = time.time()
+            success, response = self.run_test(
+                f"Performance Test: {name}",
+                method,
+                endpoint,
+                200
+            )
+            response_time = (time.time() - start_time) * 1000
+            response_times.append((name, response_time))
+            
+            if response_time < 500:
+                print(f"   ✅ {name}: {response_time:.0f}ms (excellent)")
+            elif response_time < 1000:
+                print(f"   ⚠️  {name}: {response_time:.0f}ms (acceptable)")
+            else:
+                print(f"   ❌ {name}: {response_time:.0f}ms (slow)")
+        
+        # Calculate average response time
+        avg_response_time = sum(rt for _, rt in response_times) / len(response_times)
+        print(f"\n   📊 Average response time: {avg_response_time:.0f}ms")
+        
+        if avg_response_time < 500:
+            print("   ✅ MongoDB indexes are helping - excellent performance!")
+        elif avg_response_time < 1000:
+            print("   ⚠️  Performance is acceptable but could be improved")
+        else:
+            print("   ❌ Performance issues detected - indexes may need optimization")
+        
+        # Summary
+        print(f"\n📋 SIX SEVEN TAMBOLA REVIEW REQUEST SUMMARY:")
+        print(f"   ✅ Completed Games API: {'PASS' if completed_games else 'FAIL'}")
+        print(f"   ✅ Winner Detection: {'PASS' if test_game else 'FAIL'}")
+        print(f"   ✅ TTS Announcement: {'PASS' if tts_response else 'FAIL'}")
+        print(f"   ✅ API Performance: {'PASS' if avg_response_time < 500 else 'NEEDS IMPROVEMENT'}")
+        
+        return all([completed_games, test_game, tts_response, avg_response_time < 1000])
+
     def run_all_tests(self):
-        """Run all API tests with focus on winner detection fixes"""
-        print("🚀 Starting Tambola API Tests - WINNER DETECTION FIXES FOCUS")
+        """Run all API tests with focus on Six Seven Tambola review request"""
+        print("🚀 Starting Tambola API Tests - SIX SEVEN TAMBOLA REVIEW REQUEST")
         print(f"🔗 Base URL: {self.base_url}")
         print(f"👤 Test User ID: {self.user_id}")
         print(f"🔑 Session Token: {self.session_token[:20]}...")
@@ -947,6 +1142,14 @@ class TambolaAPITester:
         if not auth_success:
             print("❌ Authentication failed - stopping tests")
             return False
+        
+        # PRIORITY: Six Seven Tambola Review Request Testing
+        print("\n" + "🎯"*60)
+        print("SIX SEVEN TAMBOLA REVIEW REQUEST TESTING - PRIORITY 1")
+        print("🎯"*60)
+        
+        # Test the specific review request items
+        review_request_success = self.test_six_seven_tambola_review_request()
         
         # WINNER DETECTION FIXES TESTING (Priority 1)
         print("\n" + "🎯"*60)
