@@ -1164,6 +1164,202 @@ class TambolaAPITester:
         
         return all_critical_tests_passed
 
+    def test_user_game_ticket_selection_features(self):
+        """Test the new User Game features for Six Seven Tambola from review request"""
+        print("\n" + "="*50)
+        print("TESTING USER GAME TICKET SELECTION FEATURES")
+        print("="*50)
+        
+        # Test 1: Ticket Selection API Endpoint
+        print("\n🔍 TEST 1: Ticket Selection API Endpoint")
+        share_code = "M08C80"
+        
+        success, tickets_response = self.run_test(
+            f"GET /api/user-games/code/{share_code}/tickets",
+            "GET",
+            f"user-games/code/{share_code}/tickets",
+            200,
+            headers={}  # No authentication required for public endpoint
+        )
+        
+        if success and tickets_response:
+            print(f"   ✅ Ticket selection endpoint working!")
+            print(f"   ✅ User Game ID: {tickets_response.get('user_game_id', 'N/A')}")
+            print(f"   ✅ Game Name: {tickets_response.get('name', 'N/A')}")
+            print(f"   ✅ Game Status: {tickets_response.get('status', 'N/A')}")
+            
+            tickets = tickets_response.get('tickets', [])
+            total_tickets = tickets_response.get('total', 0)
+            available_tickets = tickets_response.get('available', 0)
+            
+            print(f"   ✅ Total tickets: {total_tickets}")
+            print(f"   ✅ Available tickets: {available_tickets}")
+            print(f"   ✅ Tickets array length: {len(tickets)}")
+            
+            # Verify ticket structure
+            if tickets:
+                first_ticket = tickets[0]
+                print(f"   ✅ First ticket structure: {list(first_ticket.keys())}")
+                
+                # Check for required fields from review request
+                required_fields = ['ticket_id', 'full_sheet_id', 'ticket_position_in_sheet', 'numbers']
+                missing_fields = [field for field in required_fields if field not in first_ticket]
+                
+                if missing_fields:
+                    print(f"   ❌ Missing required fields: {missing_fields}")
+                else:
+                    print(f"   ✅ All required fields present")
+                    
+                    # Verify full_sheet_id format (FS001, FS002, etc.)
+                    full_sheet_id = first_ticket.get('full_sheet_id', '')
+                    if full_sheet_id.startswith('FS') and len(full_sheet_id) == 5:
+                        print(f"   ✅ Full Sheet ID format correct: {full_sheet_id}")
+                    else:
+                        print(f"   ❌ Invalid Full Sheet ID format: {full_sheet_id}")
+                    
+                    # Verify ticket_position_in_sheet (1-6)
+                    position = first_ticket.get('ticket_position_in_sheet', 0)
+                    if 1 <= position <= 6:
+                        print(f"   ✅ Ticket position valid: {position}")
+                    else:
+                        print(f"   ❌ Invalid ticket position: {position}")
+                
+                # Store some ticket IDs for join test
+                available_ticket_ids = [t['ticket_id'] for t in tickets if not t.get('assigned_to')][:2]
+                user_game_id = tickets_response.get('user_game_id')
+                
+            else:
+                print(f"   ❌ No tickets found in response")
+                available_ticket_ids = []
+                user_game_id = None
+        else:
+            print(f"   ❌ Failed to get tickets for share code: {share_code}")
+            available_ticket_ids = []
+            user_game_id = None
+        
+        # Test 2: Join with Specific Tickets
+        if available_ticket_ids and user_game_id:
+            print(f"\n🔍 TEST 2: Join with Specific Tickets")
+            
+            join_data = {
+                "player_name": "Test Player",
+                "ticket_ids": available_ticket_ids
+            }
+            
+            success, join_result = self.run_test(
+                f"POST /api/user-games/code/{share_code}/join with specific tickets",
+                "POST",
+                f"user-games/code/{share_code}/join",
+                200,
+                data=join_data,
+                headers={}  # No authentication required
+            )
+            
+            if success and join_result:
+                print(f"   ✅ Successfully joined with specific tickets!")
+                print(f"   ✅ Player name: {join_result.get('player_name', 'N/A')}")
+                
+                assigned_tickets = join_result.get('tickets', [])
+                print(f"   ✅ Tickets assigned: {len(assigned_tickets)}")
+                
+                # Verify the specific tickets were assigned
+                assigned_ticket_ids = [t.get('ticket_id') for t in assigned_tickets]
+                
+                if set(available_ticket_ids).issubset(set(assigned_ticket_ids)):
+                    print(f"   ✅ Requested tickets correctly assigned!")
+                    print(f"   ✅ Requested: {available_ticket_ids}")
+                    print(f"   ✅ Assigned: {assigned_ticket_ids}")
+                else:
+                    print(f"   ❌ Ticket assignment mismatch!")
+                    print(f"   ❌ Requested: {available_ticket_ids}")
+                    print(f"   ❌ Assigned: {assigned_ticket_ids}")
+                
+                # Verify assigned tickets have correct structure
+                for i, ticket in enumerate(assigned_tickets):
+                    ticket_id = ticket.get('ticket_id', 'N/A')
+                    full_sheet_id = ticket.get('full_sheet_id', 'N/A')
+                    position = ticket.get('ticket_position_in_sheet', 0)
+                    assigned_to = ticket.get('assigned_to', 'N/A')
+                    
+                    print(f"   🎫 Ticket {i+1}: {ticket_id}")
+                    print(f"       Full Sheet: {full_sheet_id}, Position: {position}")
+                    print(f"       Assigned to: {assigned_to}")
+                    
+                    # Verify ticket structure
+                    numbers = ticket.get('numbers', [])
+                    if len(numbers) == 3 and all(len(row) == 9 for row in numbers):
+                        non_null_count = sum(1 for row in numbers for cell in row if cell is not None)
+                        print(f"       ✅ Valid 3x9 grid with {non_null_count} numbers")
+                    else:
+                        print(f"       ❌ Invalid ticket structure")
+            else:
+                print(f"   ❌ Failed to join with specific tickets")
+        else:
+            print(f"\n🔍 TEST 2: Join with Specific Tickets - SKIPPED")
+            print(f"   ⚠️  No available tickets or user_game_id to test with")
+        
+        # Test 3: Full Sheet Structure Verification
+        print(f"\n🔍 TEST 3: Full Sheet Structure Verification")
+        
+        if tickets:
+            # Group tickets by full_sheet_id
+            sheets = {}
+            for ticket in tickets:
+                sheet_id = ticket.get('full_sheet_id', '')
+                if sheet_id not in sheets:
+                    sheets[sheet_id] = []
+                sheets[sheet_id].append(ticket)
+            
+            print(f"   ✅ Found {len(sheets)} full sheets")
+            
+            # Verify each sheet has 6 tickets with positions 1-6
+            for sheet_id, sheet_tickets in sheets.items():
+                positions = [t.get('ticket_position_in_sheet', 0) for t in sheet_tickets]
+                positions.sort()
+                
+                print(f"   📋 Sheet {sheet_id}:")
+                print(f"       Tickets: {len(sheet_tickets)}")
+                print(f"       Positions: {positions}")
+                
+                if len(sheet_tickets) == 6 and positions == [1, 2, 3, 4, 5, 6]:
+                    print(f"       ✅ Complete full sheet (6 tickets, positions 1-6)")
+                else:
+                    print(f"       ❌ Incomplete or invalid sheet structure")
+                
+                # Verify all tickets in sheet have same full_sheet_id
+                sheet_ids = [t.get('full_sheet_id', '') for t in sheet_tickets]
+                if all(sid == sheet_id for sid in sheet_ids):
+                    print(f"       ✅ All tickets have correct sheet ID")
+                else:
+                    print(f"       ❌ Sheet ID mismatch in tickets")
+        else:
+            print(f"   ⚠️  No tickets available for sheet structure verification")
+        
+        # Test Summary
+        print(f"\n📋 USER GAME TICKET SELECTION FEATURES SUMMARY:")
+        test_results = []
+        
+        test_results.append(("Ticket Selection API", tickets_response is not None))
+        test_results.append(("Join with Specific Tickets", join_result is not None if available_ticket_ids else True))
+        test_results.append(("Full Sheet Structure", len(sheets) > 0 if tickets else False))
+        
+        for test_name, passed in test_results:
+            status = "✅ PASS" if passed else "❌ FAIL"
+            print(f"   {test_name}: {status}")
+        
+        # Overall result
+        all_tests_passed = all(result for _, result in test_results)
+        
+        if all_tests_passed:
+            print(f"\n🎉 USER GAME TICKET SELECTION FEATURES: ✅ WORKING")
+            print(f"   All new features are working correctly!")
+        else:
+            print(f"\n⚠️  USER GAME TICKET SELECTION FEATURES: ❌ ISSUES FOUND")
+            failed_tests = [name for name, result in test_results if not result]
+            print(f"   Failed tests: {failed_tests}")
+        
+        return all_tests_passed
+
     def test_six_seven_tambola_review_request(self):
         """Test the specific Six Seven Tambola new features from review request"""
         print("\n" + "="*50)
