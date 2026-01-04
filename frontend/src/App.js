@@ -47,6 +47,8 @@ function AppRouter() {
         <Route path="/user-game-play/:userGameId" element={<ProtectedRoute><UserGamePlay /></ProtectedRoute>} />
         {/* Public Join Route - No auth required */}
         <Route path="/join/:shareCode" element={<JoinUserGame />} />
+        {/* Public Play Route for user games - No auth required */}
+        <Route path="/play/:userGameId" element={<UserGamePlay />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <Toaster position="top-right" />
