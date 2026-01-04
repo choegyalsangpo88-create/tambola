@@ -480,51 +480,93 @@ export default function UserGamePlay() {
       <div className="max-w-4xl mx-auto px-3 py-4">
         {/* Main Row: Caller Ball | Dividends - Equal Space */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* Left: 3D Caller Ball */}
+          {/* Left: Real 3D Tambola Ball */}
           <div className="bg-black/30 rounded-xl p-3 flex flex-col items-center justify-center">
-            <div className="sphere-3d" style={{ perspective: '1000px' }}>
+            <div className="sphere-3d relative" style={{ perspective: '800px' }}>
               <div 
-                className={`sphere-3d-inner relative transition-all duration-500 ${showBallAnimation ? 'ball-spin' : ''}`}
+                className={`relative ${showBallAnimation ? 'ball-entry' : 'ball-idle'}`}
                 style={{ transformStyle: 'preserve-3d' }}
               >
-                {/* 3D Premium Ball */}
+                {/* Main Ball Body */}
                 <div 
                   className="w-24 h-24 md:w-28 md:h-28 rounded-full relative"
                   style={{
-                    background: `radial-gradient(circle at 30% 30%, ${getBallGradient(currentBall || session?.current_number || 0)})`,
+                    background: `
+                      radial-gradient(circle at 25% 25%, 
+                        rgba(255,255,255,0.4) 0%, 
+                        transparent 40%
+                      ),
+                      radial-gradient(circle at 75% 75%, 
+                        rgba(0,0,0,0.3) 0%, 
+                        transparent 40%
+                      ),
+                      radial-gradient(circle at 50% 50%, 
+                        ${getBallGradient(currentBall || session?.current_number || 0)}
+                      )
+                    `,
                     boxShadow: `
-                      0 15px 35px rgba(0,0,0,0.6),
-                      0 5px 15px rgba(0,0,0,0.4),
-                      inset 0 -10px 25px rgba(0,0,0,0.5),
-                      inset 0 10px 25px rgba(255,255,255,0.25),
-                      inset 0 0 40px rgba(0,0,0,0.3)
+                      0 20px 40px rgba(0,0,0,0.5),
+                      0 8px 16px rgba(0,0,0,0.3),
+                      inset 0 -15px 30px rgba(0,0,0,0.4),
+                      inset 0 15px 30px rgba(255,255,255,0.15),
+                      inset 8px 0 20px rgba(255,255,255,0.1),
+                      inset -8px 0 20px rgba(0,0,0,0.2)
                     `
                   }}
                 >
-                  {/* Top highlight shine */}
+                  {/* Glossy highlight */}
                   <div 
-                    className="absolute top-2 left-5 w-7 h-4 rounded-full opacity-70"
-                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.9), transparent)' }}
+                    className="absolute top-2 left-3 w-8 h-5 md:w-10 md:h-6 rounded-full"
+                    style={{ 
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                      filter: 'blur(2px)'
+                    }}
                   />
-                  {/* White center circle with number */}
+                  <div 
+                    className="absolute top-4 left-6 w-2 h-1.5 md:w-3 md:h-2 rounded-full"
+                    style={{ background: 'rgba(255,255,255,0.9)' }}
+                  />
+                  
+                  {/* White number circle */}
                   <div 
                     className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
                     style={{
-                      width: '60px',
-                      height: '60px',
-                      background: 'radial-gradient(circle at 40% 40%, #ffffff, #f5f5f5 50%, #e8e8e8 80%, #ddd)',
-                      boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.15), 0 2px 4px rgba(255,255,255,0.5)'
+                      width: '56px',
+                      height: '56px',
+                      background: `
+                        radial-gradient(circle at 35% 35%, 
+                          #ffffff 0%, 
+                          #f8f8f8 40%, 
+                          #eeeeee 70%, 
+                          #e0e0e0 100%
+                        )
+                      `,
+                      boxShadow: `
+                        inset 0 4px 12px rgba(0,0,0,0.15),
+                        inset 0 -2px 8px rgba(255,255,255,0.8),
+                        0 2px 4px rgba(0,0,0,0.2)
+                      `
                     }}
                   >
-                    <span className="text-3xl md:text-4xl font-black text-gray-900">
+                    <span 
+                      className="text-3xl md:text-4xl font-black"
+                      style={{ 
+                        color: '#1a1a1a',
+                        fontFamily: 'Arial Black, Impact, sans-serif'
+                      }}
+                    >
                       {currentBall || session?.current_number || '?'}
                     </span>
                   </div>
                 </div>
-                {/* Ball shadow on surface */}
+                
+                {/* Ball shadow */}
                 <div 
-                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-4 rounded-full opacity-50"
-                  style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.7), transparent 70%)' }}
+                  className="ball-shadow absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-16 h-3 rounded-full"
+                  style={{ 
+                    background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%)',
+                    filter: 'blur(2px)'
+                  }}
                 />
               </div>
             </div>
