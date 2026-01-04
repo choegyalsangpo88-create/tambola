@@ -74,7 +74,8 @@ export default function UserGamePlay() {
       
       const gameData = gameRes.data;
       setGame(gameData);
-      setPlayers(playersRes.data.players || []);
+      const allPlayers = playersRes.data.players || [];
+      setPlayers(allPlayers);
       setDividends(gameData.dividends || {});
       setAllWinners(gameData.winners || {});
       previousWinnersRef.current = gameData.winners || {};
@@ -86,8 +87,45 @@ export default function UserGamePlay() {
         status: gameData.status
       });
       
-      if (userRes?.data && gameData.host_user_id === userRes.data.user_id) {
+      // Check if current user is host
+      const currentUserId = userRes?.data?.user_id;
+      const currentUserName = userRes?.data?.name;
+      
+      if (currentUserId && gameData.host_user_id === currentUserId) {
         setIsHost(true);
+        setPlayerName(currentUserName || 'Host');
+        // Find host's tickets
+        const hostPlayer = allPlayers.find(p => p.name === currentUserName || p.name === gameData.host_name);
+        if (hostPlayer) {
+          setMyTickets(hostPlayer.tickets || []);
+        }
+      }
+      
+      // Check localStorage for player info (for non-logged in players who joined via share code)
+      const storedPlayer = localStorage.getItem(`tambola_player_${userGameId}`);
+      if (storedPlayer) {
+        try {
+          const playerData = JSON.parse(storedPlayer);
+          setPlayerName(playerData.name);
+          // Find this player's current tickets from the players list
+          const myPlayer = allPlayers.find(p => p.name === playerData.name);
+          if (myPlayer) {
+            setMyTickets(myPlayer.tickets || []);
+          }
+        } catch (e) {
+          console.log('Error parsing stored player:', e);
+        }
+      }
+      
+      // Also check URL query param for player name
+      const urlParams = new URLSearchParams(window.location.search);
+      const playerParam = urlParams.get('player');
+      if (playerParam) {
+        setPlayerName(playerParam);
+        const myPlayer = allPlayers.find(p => p.name === playerParam);
+        if (myPlayer) {
+          setMyTickets(myPlayer.tickets || []);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch game:', error);
