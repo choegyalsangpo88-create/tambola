@@ -82,8 +82,8 @@ export default function GameDetails() {
     fetchGame();
     fetchAllTickets();
     
-    // Refresh tickets every 30 seconds to avoid booking stale data
-    const interval = setInterval(fetchAllTickets, 30000);
+    // Refresh tickets every 10 seconds to see real-time bookings
+    const interval = setInterval(fetchAllTickets, 10000);
     return () => clearInterval(interval);
   }, [gameId]);
 
