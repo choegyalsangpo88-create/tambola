@@ -213,17 +213,3 @@ h1, h2, h3, h4, h5, h6 {
 .ball-shadow {
     animation: shadowPulse 2s ease-in-out infinite;
 }
-        transform: rotateY(0deg) rotateX(5deg);
-    }
-    50% {
-        transform: rotateY(180deg) rotateX(-5deg);
-    }
-    100% {
-        transform: rotateY(360deg) rotateX(5deg);
-    }
-}
-
-.ball-3d-rotate {
-    animation: ball3DRotate 3s linear infinite;
-    transform-style: preserve-3d;
-}
