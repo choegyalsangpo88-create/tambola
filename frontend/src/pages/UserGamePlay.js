@@ -18,6 +18,8 @@ export default function UserGamePlay() {
   const [game, setGame] = useState(null);
   const [session, setSession] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [myTickets, setMyTickets] = useState([]); // Current user's tickets
+  const [playerName, setPlayerName] = useState(''); // Current player name
   const [isHost, setIsHost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalling, setIsCalling] = useState(false);
