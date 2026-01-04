@@ -703,25 +703,31 @@ export default function UserGamePlay() {
           </div>
         </div>
 
-        {/* Called Numbers Board */}
-        <div className="glass-card p-4 mb-6">
-          <h3 className="text-sm font-semibold text-gray-400 mb-3">Called Numbers</h3>
-          <div className="grid grid-cols-10 gap-1">
-            {Array.from({ length: 90 }, (_, i) => i + 1).map((num) => {
-              const isCalled = session?.called_numbers?.includes(num);
-              return (
-                <div
-                  key={num}
-                  className={`aspect-square flex items-center justify-center text-xs font-bold rounded transition-all ${
-                    isCalled
-                      ? `bg-gradient-to-br ${getBallColor(num)} text-white shadow-md`
-                      : 'bg-white/5 text-gray-500'
-                  } ${num === session?.current_number ? 'ring-2 ring-amber-400 scale-110' : ''}`}
-                >
-                  {num}
+        {/* Called Numbers - 20 per row, max 3 rows, smaller balls */}
+        <div className="glass-card p-3 mb-4">
+          <h3 className="text-xs font-semibold text-gray-400 mb-2">Called Numbers ({session?.called_numbers?.length || 0})</h3>
+          <div className="space-y-1">
+            {(() => {
+              const called = session?.called_numbers || [];
+              // Show last 60 numbers max (3 rows of 20)
+              const displayNumbers = called.slice(-60);
+              const rows = [];
+              for (let i = 0; i < displayNumbers.length; i += 20) {
+                rows.push(displayNumbers.slice(i, i + 20));
+              }
+              return rows.map((row, rowIdx) => (
+                <div key={rowIdx} className="flex flex-wrap gap-0.5 justify-start">
+                  {row.map((num, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-full bg-gradient-to-br ${getBallColor(num)} text-white shadow-sm ${num === session?.current_number ? 'ring-1 ring-amber-400 scale-110' : ''}`}
+                    >
+                      {num}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+              ));
+            })()}
           </div>
         </div>
 
