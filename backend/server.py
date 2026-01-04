@@ -1881,10 +1881,22 @@ async def get_user_game_players(user_game_id: str):
     tickets = {t["ticket_id"]: t for t in game.get("tickets", [])}
     players = []
     for player in game.get("players", []):
-        player_tickets = [tickets[tid] for tid in player["tickets"] if tid in tickets]
+        # Handle both old format (list of ticket_ids) and new format (list of ticket dicts)
+        player_ticket_list = player.get("tickets", [])
+        player_tickets = []
+        
+        for item in player_ticket_list:
+            if isinstance(item, str):
+                # Old format: item is a ticket_id string
+                if item in tickets:
+                    player_tickets.append(tickets[item])
+            elif isinstance(item, dict):
+                # New format: item is already a ticket dict
+                player_tickets.append(item)
+        
         players.append({
             "name": player["name"],
-            "ticket_count": len(player["tickets"]),
+            "ticket_count": len(player_tickets),
             "tickets": player_tickets,
             "joined_at": player.get("joined_at")
         })
