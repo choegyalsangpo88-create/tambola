@@ -692,6 +692,90 @@ export default function UserGamePlay() {
           </div>
         </div>
 
+        {/* My Tickets Section - Show player's booked tickets */}
+        {myTickets.length > 0 && (
+          <div className="glass-card p-4 mb-6">
+            <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+              🎫 My Tickets ({myTickets.length}) {playerName && <span className="text-amber-400">- {playerName}</span>}
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {myTickets.map((ticket, idx) => {
+                const calledSet = new Set(session?.called_numbers || []);
+                const allNums = ticket.numbers?.flat().filter(n => n !== null) || [];
+                const markedCount = allNums.filter(n => calledSet.has(n)).length;
+                const remaining = 15 - markedCount;
+                
+                return (
+                  <div key={ticket.ticket_id || idx} className="bg-white rounded-lg p-2 shadow-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-gray-700">{ticket.ticket_number}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        remaining <= 3 ? 'bg-red-100 text-red-600 font-bold' : 
+                        remaining <= 6 ? 'bg-amber-100 text-amber-600' : 
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {remaining} left
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-9 gap-0.5">
+                      {ticket.numbers?.map((row, rowIdx) => (
+                        row.map((num, colIdx) => {
+                          const isMarked = num && calledSet.has(num);
+                          return (
+                            <div
+                              key={`${rowIdx}-${colIdx}`}
+                              className={`aspect-square flex items-center justify-center text-[9px] md:text-[10px] font-bold rounded ${
+                                num 
+                                  ? isMarked 
+                                    ? 'bg-green-500 text-white ring-1 ring-green-600' 
+                                    : 'bg-amber-100 text-amber-900'
+                                  : 'bg-gray-100'
+                              }`}
+                            >
+                              {num || ''}
+                            </div>
+                          );
+                        })
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* If no tickets found, show option to enter name */}
+        {myTickets.length === 0 && !isHost && game?.status === 'live' && (
+          <div className="glass-card p-4 mb-6 text-center">
+            <p className="text-gray-400 mb-3">Enter your name to see your tickets:</p>
+            <div className="flex gap-2 max-w-xs mx-auto">
+              <input
+                type="text"
+                placeholder="Your name"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+              />
+              <button
+                onClick={() => {
+                  const myPlayer = players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+                  if (myPlayer) {
+                    setMyTickets(myPlayer.tickets || []);
+                    localStorage.setItem(`tambola_player_${userGameId}`, JSON.stringify({ name: playerName }));
+                    toast.success(`Found ${myPlayer.tickets?.length || 0} tickets!`);
+                  } else {
+                    toast.error('Player not found. Check your name.');
+                  }
+                }}
+                className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+              >
+                Find
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Players with Tickets (Host View) */}
         {isHost && (
           <div className="glass-card p-4">
