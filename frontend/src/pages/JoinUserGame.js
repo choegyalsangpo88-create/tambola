@@ -24,7 +24,16 @@ export default function JoinUserGame() {
 
   useEffect(() => {
     fetchGame();
-  }, [shareCode]);
+    
+    // Auto-refresh tickets every 10 seconds to see real-time updates
+    const interval = setInterval(() => {
+      if (!joinedData) { // Only refresh if not already joined
+        fetchTickets();
+      }
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [shareCode, joinedData]);
 
   const fetchGame = async () => {
     try {
@@ -33,13 +42,32 @@ export default function JoinUserGame() {
       setGame(gameResponse.data);
       
       // Fetch tickets for selection
-      const ticketsResponse = await axios.get(`${API}/user-games/code/${shareCode}/tickets`);
-      setTickets(ticketsResponse.data.tickets || []);
+      await fetchTickets();
     } catch (error) {
       console.error('Failed to fetch game:', error);
       toast.error('Game not found');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchTickets = async () => {
+    try {
+      const ticketsResponse = await axios.get(`${API}/user-games/code/${shareCode}/tickets`);
+      const newTickets = ticketsResponse.data.tickets || [];
+      setTickets(newTickets);
+      
+      // Clear any selected tickets that are now booked
+      setSelectedTickets(prev => {
+        const bookedIds = new Set(newTickets.filter(t => t.assigned_to).map(t => t.ticket_id));
+        const stillAvailable = prev.filter(id => !bookedIds.has(id));
+        if (stillAvailable.length !== prev.length) {
+          toast.info('Some tickets were booked by others');
+        }
+        return stillAvailable;
+      });
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error);
     }
   };
 
