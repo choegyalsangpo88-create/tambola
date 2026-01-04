@@ -582,14 +582,16 @@ export default function UserGamePlay() {
               {Object.entries(dividends).map(([prize, amount]) => {
                 const winner = allWinners[prize];
                 return (
-                  <div key={prize} className={`flex justify-between items-center text-xs py-1 px-2 rounded ${winner ? 'bg-green-900/30' : 'bg-white/5'}`}>
-                    <div className="flex-1 min-w-0">
-                      <span className={`${winner ? 'text-green-400' : 'text-gray-300'}`}>{prize}</span>
-                      {winner && (
-                        <p className="text-green-300 text-[10px] truncate">🏆 {winner.holder_name || winner.name || 'Winner'}</p>
-                      )}
+                  <div key={prize} className={`py-1.5 px-2 rounded ${winner ? 'bg-green-900/40 border border-green-500/30' : 'bg-white/5'}`}>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className={`${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
+                      <span className="text-amber-400 font-bold">₹{amount?.toLocaleString()}</span>
                     </div>
-                    <span className="text-amber-400 font-bold ml-2">₹{amount?.toLocaleString()}</span>
+                    {winner && (
+                      <p className="text-green-300 text-[10px] mt-0.5">
+                        🎉 {winner.holder_name || winner.name || 'Winner'}
+                      </p>
+                    )}
                   </div>
                 );
               })}
@@ -597,7 +599,7 @@ export default function UserGamePlay() {
           </div>
         </div>
 
-        {/* Top Players - Show names by remaining numbers */}
+        {/* Top Players - Show names and dots only, up to 6 */}
         <div className="bg-black/30 rounded-xl p-3 mb-4">
           <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
             <Users className="w-3 h-3" /> TOP PLAYERS
@@ -612,7 +614,6 @@ export default function UserGamePlay() {
                   if (!player.tickets || player.tickets.length === 0) return;
                   
                   let bestRemaining = 999;
-                  let ticketsCloseToWin = 0;
                   
                   player.tickets.forEach(ticket => {
                     if (!ticket.numbers) return;
@@ -623,39 +624,29 @@ export default function UserGamePlay() {
                     if (remaining < bestRemaining) {
                       bestRemaining = remaining;
                     }
-                    if (remaining <= 5) {
-                      ticketsCloseToWin++;
-                    }
                   });
                   
                   if (bestRemaining < 999) {
                     playerStats.push({
                       ...player,
-                      bestRemaining,
-                      ticketsCloseToWin
+                      bestRemaining
                     });
                   }
                 });
                 
-                // Sort: 1st by remaining (ascending), 2nd by tickets close to win (descending)
-                const top6 = playerStats
-                  .sort((a, b) => {
-                    if (a.bestRemaining !== b.bestRemaining) {
-                      return a.bestRemaining - b.bestRemaining;
-                    }
-                    return b.ticketsCloseToWin - a.ticketsCloseToWin;
-                  })
+                // Sort by remaining (ascending), show up to 6 players
+                const topPlayers = playerStats
+                  .sort((a, b) => a.bestRemaining - b.bestRemaining)
                   .slice(0, 6);
                 
-                if (top6.length === 0) {
+                if (topPlayers.length === 0) {
                   return <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>;
                 }
                 
-                return top6.map((player, idx) => (
+                return topPlayers.map((player, idx) => (
                   <div key={player.user_id || idx} className="bg-white/5 rounded-lg p-2 text-center">
                     <p className="text-white text-xs font-medium truncate">
                       {player.name?.split(' ')[0] || 'Player'}
-                      {player.ticketsCloseToWin > 1 && <span className="text-amber-400 ml-1">x{player.ticketsCloseToWin}</span>}
                     </p>
                     <div className="flex justify-center gap-0.5 mt-1">
                       {Array.from({ length: Math.min(player.bestRemaining, 5) }).map((_, i) => (
