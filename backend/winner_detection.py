@@ -361,12 +361,22 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     # Track Full House winners in order
     full_house_tickets = []
     
+    # Build a cache of user names for lookup
+    user_ids = set(t.get("user_id") for t in tickets if t.get("user_id"))
+    user_names = {}
+    if user_ids:
+        users = await db.users.find(
+            {"user_id": {"$in": list(user_ids)}},
+            {"_id": 0, "user_id": 1, "name": 1}
+        ).to_list(1000)
+        user_names = {u["user_id"]: u.get("name", "Player") for u in users}
+    
     # Group tickets by full sheet and user for Full Sheet Bonus
     user_sheets = {}  # user_id -> {full_sheet_id -> [tickets]}
     
     for ticket in tickets:
         user_id = ticket.get("user_id")
-        holder_name = ticket.get("holder_name") or ticket.get("booked_by_name")
+        holder_name = ticket.get("holder_name") or ticket.get("booked_by_name") or user_names.get(user_id, "Player")
         if not user_id and not holder_name:
             continue
         
