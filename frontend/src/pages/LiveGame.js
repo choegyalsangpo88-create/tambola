@@ -570,13 +570,13 @@ export default function LiveGame() {
               {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                 const winner = session.winners?.[prize];
                 return (
-                  <div key={prize} className={`px-1.5 py-0.5 rounded ${winner ? 'bg-green-500/20' : 'bg-white/5'}`}>
+                  <div key={prize} className={`px-1.5 py-1 rounded ${winner ? 'bg-green-500/20 border border-green-500/30' : 'bg-white/5'}`}>
                     <div className="flex items-center justify-between">
                       <span className={`text-[8px] ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
                       <span className="text-[8px] font-bold text-amber-400">₹{amount}</span>
                     </div>
                     {winner && (
-                      <p className="text-[7px] text-green-300 truncate">🏆 {winner.holder_name || winner.name}</p>
+                      <p className="text-[7px] text-green-300 mt-0.5">🎉 {winner.holder_name || winner.name || 'Winner'}</p>
                     )}
                   </div>
                 );
@@ -585,16 +585,34 @@ export default function LiveGame() {
           </div>
         </div>
 
-        {/* Row 2: Last Called Numbers */}
+        {/* Row 2: Called Numbers - 20 per row, max 3 rows */}
         <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
-          <div className="flex gap-1.5 overflow-x-auto">
-            {session.called_numbers && session.called_numbers.length > 0 ? (
-              [...session.called_numbers].reverse().slice(0, 12).map((num, index) => (
-                <div key={num} className={`w-7 h-7 flex-shrink-0 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[9px] font-bold text-white shadow-md ${index === 0 ? 'ring-2 ring-white scale-110' : ''}`}>
-                  {num}
+          <p className="text-[8px] text-gray-400 mb-1">Called: {session.called_numbers?.length || 0}/90</p>
+          <div className="space-y-1">
+            {(() => {
+              const called = session.called_numbers || [];
+              // Show last 60 numbers max (3 rows of 20)
+              const displayNumbers = [...called].reverse().slice(0, 60);
+              const rows = [];
+              for (let i = 0; i < displayNumbers.length; i += 20) {
+                rows.push(displayNumbers.slice(i, i + 20));
+              }
+              if (rows.length === 0) {
+                return <p className="text-[10px] text-gray-400">No numbers called yet</p>;
+              }
+              return rows.map((row, rowIdx) => (
+                <div key={rowIdx} className="flex flex-wrap gap-0.5">
+                  {row.map((num, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-5 h-5 flex-shrink-0 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[8px] font-bold text-white shadow-sm ${rowIdx === 0 && idx === 0 ? 'ring-1 ring-amber-400 scale-110' : ''}`}
+                    >
+                      {num}
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : <p className="text-[10px] text-gray-400">No numbers called yet</p>}
+              ));
+            })()}
           </div>
         </div>
 
