@@ -59,39 +59,96 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-/* Ball spin animation for number calling */
-@keyframes ballSpin {
+/* ========================================
+   REAL 3D TAMBOLA BALL ANIMATION
+   ======================================== */
+
+/* Ball spin animation - realistic tumbling motion */
+@keyframes ballSpin3D {
     0% {
-        transform: rotateY(0deg) rotateX(0deg) scale(0.8);
-        opacity: 0.5;
+        transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(0.7);
+        opacity: 0.6;
     }
-    25% {
-        transform: rotateY(90deg) rotateX(15deg) scale(1.05);
-        opacity: 0.8;
+    20% {
+        transform: rotateY(72deg) rotateX(20deg) rotateZ(10deg) scale(0.9);
+        opacity: 0.85;
     }
-    50% {
-        transform: rotateY(180deg) rotateX(0deg) scale(1.1);
+    40% {
+        transform: rotateY(144deg) rotateX(-15deg) rotateZ(-5deg) scale(1.0);
+        opacity: 0.95;
+    }
+    60% {
+        transform: rotateY(216deg) rotateX(10deg) rotateZ(8deg) scale(1.05);
         opacity: 1;
     }
-    75% {
-        transform: rotateY(270deg) rotateX(-15deg) scale(1.05);
+    80% {
+        transform: rotateY(288deg) rotateX(-10deg) rotateZ(-3deg) scale(1.02);
         opacity: 1;
     }
     100% {
-        transform: rotateY(360deg) rotateX(0deg) scale(1);
+        transform: rotateY(360deg) rotateX(0deg) rotateZ(0deg) scale(1);
         opacity: 1;
+    }
+}
+
+/* Ball entry animation - like coming out of the machine */
+@keyframes ballEntry {
+    0% {
+        transform: translateY(-50px) rotateX(180deg) rotateY(0deg) scale(0.3);
+        opacity: 0;
+    }
+    30% {
+        transform: translateY(10px) rotateX(90deg) rotateY(180deg) scale(0.8);
+        opacity: 0.8;
+    }
+    60% {
+        transform: translateY(-5px) rotateX(30deg) rotateY(300deg) scale(1.1);
+        opacity: 1;
+    }
+    80% {
+        transform: translateY(3px) rotateX(-10deg) rotateY(340deg) scale(1.0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0px) rotateX(0deg) rotateY(360deg) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Bounce settle animation */
+@keyframes ballBounce {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    25% {
+        transform: translateY(-8px) scale(1.02);
+    }
+    50% {
+        transform: translateY(0) scale(0.98);
+    }
+    75% {
+        transform: translateY(-3px) scale(1.01);
     }
 }
 
 .ball-spin {
-    animation: ballSpin 0.8s ease-out;
+    animation: ballSpin3D 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform-style: preserve-3d;
 }
 
-/* 3D Sphere container */
-.sphere-3d {
+.ball-entry {
+    animation: ballEntry 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform-style: preserve-3d;
-    perspective: 1000px;
+}
+
+.ball-bounce {
+    animation: ballBounce 0.6s ease-out;
+}
+
+/* 3D Sphere container with proper perspective */
+.sphere-3d {
+    perspective: 800px;
+    perspective-origin: 50% 50%;
 }
 
 .sphere-3d-inner {
@@ -99,25 +156,41 @@ h1, h2, h3, h4, h5, h6 {
     position: relative;
 }
 
-/* Front face of the ball */
-.ball-face-front {
-    backface-visibility: visible;
+/* Idle floating animation for the ball */
+@keyframes ballFloat {
+    0%, 100% {
+        transform: translateY(0) rotateY(0deg);
+    }
+    50% {
+        transform: translateY(-4px) rotateY(5deg);
+    }
 }
 
-/* Back face of the ball - shows number reversed during spin */
-.ball-face-back {
-    transform: rotateY(180deg);
-    backface-visibility: visible;
+.ball-idle {
+    animation: ballFloat 3s ease-in-out infinite;
 }
 
+/* Ball pulse with realistic shadow */
 @keyframes ballPulse {
     0%, 100% {
         transform: scale(1);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 -6px 15px rgba(0,0,0,0.4), inset 0 6px 15px rgba(255,255,255,0.3);
+        box-shadow: 
+            0 15px 35px rgba(0,0,0,0.5),
+            0 5px 15px rgba(0,0,0,0.3),
+            inset 0 -10px 30px rgba(0,0,0,0.4),
+            inset 0 10px 30px rgba(255,255,255,0.2),
+            inset 5px 0 20px rgba(255,255,255,0.1),
+            inset -5px 0 20px rgba(0,0,0,0.2);
     }
     50% {
-        transform: scale(1.05);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.6), inset 0 -8px 20px rgba(0,0,0,0.5), inset 0 8px 20px rgba(255,255,255,0.4);
+        transform: scale(1.03);
+        box-shadow: 
+            0 20px 45px rgba(0,0,0,0.6),
+            0 8px 20px rgba(0,0,0,0.4),
+            inset 0 -12px 35px rgba(0,0,0,0.5),
+            inset 0 12px 35px rgba(255,255,255,0.25),
+            inset 6px 0 25px rgba(255,255,255,0.15),
+            inset -6px 0 25px rgba(0,0,0,0.25);
     }
 }
 
@@ -125,9 +198,21 @@ h1, h2, h3, h4, h5, h6 {
     animation: ballPulse 2s ease-in-out infinite;
 }
 
-/* Continuous 3D rotation animation */
-@keyframes ball3DRotate {
-    0% {
+/* Shadow under the ball */
+@keyframes shadowPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.4;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.5;
+    }
+}
+
+.ball-shadow {
+    animation: shadowPulse 2s ease-in-out infinite;
+}
         transform: rotateY(0deg) rotateX(5deg);
     }
     50% {
