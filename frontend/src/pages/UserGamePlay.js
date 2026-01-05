@@ -29,6 +29,7 @@ export default function UserGamePlay() {
   const [showBallAnimation, setShowBallAnimation] = useState(false);
   const [dividends, setDividends] = useState({});
   const [allWinners, setAllWinners] = useState({});
+  const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null); // For viewing winning ticket
   
   const pollIntervalRef = useRef(null);
   const lastAnnouncedRef = useRef(null);
