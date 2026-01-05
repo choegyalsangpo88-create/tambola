@@ -585,31 +585,22 @@ export default function LiveGame() {
           </div>
         </div>
 
-        {/* Row 2: Called Numbers - 20 per row, max 3 rows */}
+        {/* Row 2: Called Numbers - Fill lines, max 4 rows */}
         <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
           <p className="text-[8px] text-gray-400 mb-1">Called: {session.called_numbers?.length || 0}/90</p>
-          <div className="space-y-1">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(18px,1fr))] gap-[3px]" style={{ maxHeight: '88px', overflow: 'hidden' }}>
             {(() => {
               const called = session.called_numbers || [];
-              // Show last 60 numbers max (3 rows of 20)
-              const displayNumbers = [...called].reverse().slice(0, 60);
-              const rows = [];
-              for (let i = 0; i < displayNumbers.length; i += 20) {
-                rows.push(displayNumbers.slice(i, i + 20));
+              if (called.length === 0) {
+                return <p className="text-[10px] text-gray-400 col-span-full">No numbers called yet</p>;
               }
-              if (rows.length === 0) {
-                return <p className="text-[10px] text-gray-400">No numbers called yet</p>;
-              }
-              return rows.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex flex-wrap gap-0.5">
-                  {row.map((num, idx) => (
-                    <div
-                      key={idx}
-                      className={`w-5 h-5 flex-shrink-0 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[8px] font-bold text-white shadow-sm ${rowIdx === 0 && idx === 0 ? 'ring-1 ring-amber-400 scale-110' : ''}`}
-                    >
-                      {num}
-                    </div>
-                  ))}
+              // Show all called numbers in reverse order (latest first)
+              return [...called].reverse().map((num, idx) => (
+                <div
+                  key={idx}
+                  className={`w-[18px] h-[18px] rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[7px] font-bold text-white shadow-sm ${idx === 0 ? 'ring-1 ring-amber-400 scale-110' : ''}`}
+                >
+                  {num}
                 </div>
               ));
             })()}
