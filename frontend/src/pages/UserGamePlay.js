@@ -627,6 +627,7 @@ export default function UserGamePlay() {
                     {winner && (
                       <p className="text-green-300 text-[10px] mt-0.5">
                         🎉 {winner.holder_name || winner.name || 'Winner'}
+                        {winner.ticket_number && <span className="text-green-400 ml-1">({winner.ticket_number})</span>}
                       </p>
                     )}
                   </div>
@@ -635,34 +636,6 @@ export default function UserGamePlay() {
             </div>
           </div>
         </div>
-
-        {/* Top Players - Show names and dots only, up to 6 */}
-        <div className="bg-black/30 rounded-xl p-3 mb-4">
-          <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
-            <Users className="w-3 h-3" /> TOP PLAYERS
-          </h3>
-          <div className="grid grid-cols-3 gap-2">
-            {players.length > 0 ? (
-              (() => {
-                const calledSet = new Set(session?.called_numbers || []);
-                const playerStats = [];
-                
-                players.forEach(player => {
-                  if (!player.tickets || player.tickets.length === 0) return;
-                  
-                  let bestRemaining = 999;
-                  
-                  player.tickets.forEach(ticket => {
-                    if (!ticket.numbers) return;
-                    const allNums = ticket.numbers.flat().filter(n => n !== null);
-                    const marked = allNums.filter(n => calledSet.has(n)).length;
-                    const remaining = 15 - marked;
-                    
-                    if (remaining < bestRemaining) {
-                      bestRemaining = remaining;
-                    }
-                  });
-                  
                   if (bestRemaining < 999) {
                     playerStats.push({
                       ...player,
