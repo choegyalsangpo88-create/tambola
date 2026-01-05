@@ -606,7 +606,10 @@ export default function LiveGame() {
                       <span className="text-[8px] font-bold text-amber-400">₹{amount}</span>
                     </div>
                     {winner && (
-                      <p className="text-[7px] text-green-300 mt-0.5">🎉 {winner.holder_name || winner.name || 'Winner'}</p>
+                      <p className="text-[7px] text-green-300 mt-0.5">
+                        🎉 {winner.holder_name || winner.name || 'Winner'} 
+                        {winner.ticket_number && <span className="text-green-400 ml-1">({winner.ticket_number})</span>}
+                      </p>
                     )}
                   </div>
                 );
