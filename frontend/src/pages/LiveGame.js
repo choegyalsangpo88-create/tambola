@@ -251,17 +251,75 @@ export default function LiveGame() {
           
           <div className="space-y-3 mb-6">
             {Object.entries(allWinners).map(([prize, winner]) => (
-              <div key={prize} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3">
+              <div 
+                key={prize} 
+                className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 cursor-pointer hover:border-amber-400 transition-all"
+                onClick={() => {
+                  // Find the winning ticket from allBookedTickets
+                  const winningTicket = allBookedTickets.find(t => 
+                    t.ticket_id === winner.ticket_id || t.ticket_number === winner.ticket_number
+                  );
+                  if (winningTicket) {
+                    setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                  }
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-amber-400 font-bold">{prize}</span>
                   <Trophy className="w-5 h-5 text-amber-500" />
                 </div>
                 <p className="text-white text-sm mt-1">
-                  Ticket: {winner.ticket_number || winner.name || 'Winner'}
+                  🏆 {winner.holder_name || winner.name || 'Winner'}
+                  {winner.ticket_number && <span className="text-amber-300 ml-2">({winner.ticket_number})</span>}
                 </p>
+                <p className="text-gray-400 text-xs mt-1">Click to view winning ticket</p>
               </div>
             ))}
           </div>
+          
+          {/* Modal for viewing winning ticket */}
+          {selectedWinnerTicket && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedWinnerTicket(null)}>
+              <div className="bg-white rounded-xl p-4 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-bold text-gray-800">
+                    🏆 {selectedWinnerTicket.prize}
+                  </h3>
+                  <button onClick={() => setSelectedWinnerTicket(null)} className="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Winner: <span className="font-bold">{selectedWinnerTicket.winner?.holder_name || selectedWinnerTicket.winner?.name}</span>
+                </p>
+                <p className="text-sm text-gray-600 mb-3">
+                  Ticket: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
+                </p>
+                <div className="bg-amber-50 rounded-lg p-3">
+                  <div className="grid grid-cols-9 gap-1">
+                    {selectedWinnerTicket.numbers?.map((row, rowIdx) => (
+                      row.map((num, colIdx) => {
+                        const isCalled = session.called_numbers?.includes(num);
+                        return (
+                          <div
+                            key={`${rowIdx}-${colIdx}`}
+                            className={`aspect-square flex items-center justify-center text-xs font-bold rounded ${
+                              num 
+                                ? isCalled 
+                                  ? 'bg-green-500 text-white ring-2 ring-green-600' 
+                                  : 'bg-amber-100 text-amber-900'
+                                : 'bg-gray-100'
+                            }`}
+                          >
+                            {num || ''}
+                          </div>
+                        );
+                      })
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">Green = Called numbers</p>
+              </div>
+            </div>
+          )}
           
           <p className="text-gray-500 text-sm mb-4">
             Total numbers called: {session.called_numbers?.length || 0}/90
