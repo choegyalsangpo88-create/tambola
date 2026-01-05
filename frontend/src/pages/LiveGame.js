@@ -453,106 +453,136 @@ export default function LiveGame() {
             </div>
           </div>
 
-          {/* CENTER: Real 3D Tambola Ball */}
+          {/* CENTER: Real 3D Tambola Ball with number on both sides */}
           <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10 flex flex-col items-center justify-center">
-            <div className="sphere-3d relative" style={{ perspective: '800px' }}>
-              {/* The 3D Ball */}
+            <div className="relative" style={{ perspective: '800px' }}>
+              {/* The 3D Ball Container */}
               <div 
                 className={`relative ${isSpinning && game?.status !== 'completed' ? 'ball-entry' : 'ball-idle'}`}
                 style={{ transformStyle: 'preserve-3d' }}
               >
                 {/* Main Ball Body */}
                 <div 
-                  className="w-28 h-28 rounded-full relative"
+                  className="w-32 h-32 rounded-full relative"
                   style={{
                     background: `
-                      radial-gradient(circle at 25% 25%, 
-                        rgba(255,255,255,0.4) 0%, 
-                        transparent 40%
-                      ),
-                      radial-gradient(circle at 75% 75%, 
-                        rgba(0,0,0,0.3) 0%, 
-                        transparent 40%
-                      ),
-                      radial-gradient(circle at 50% 50%, 
-                        #ff3333 0%, 
-                        #cc0000 30%, 
-                        #990000 60%, 
-                        #660000 100%
-                      )
+                      radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.5) 0%, transparent 35%),
+                      radial-gradient(ellipse 100% 100% at 50% 50%, #ff2222 0%, #dd0000 35%, #aa0000 60%, #880000 80%, #550000 100%)
                     `,
                     boxShadow: `
-                      0 20px 40px rgba(0,0,0,0.5),
-                      0 8px 16px rgba(0,0,0,0.3),
-                      inset 0 -15px 30px rgba(0,0,0,0.4),
-                      inset 0 15px 30px rgba(255,255,255,0.15),
-                      inset 8px 0 20px rgba(255,255,255,0.1),
-                      inset -8px 0 20px rgba(0,0,0,0.2)
+                      0 25px 50px rgba(0,0,0,0.5),
+                      0 10px 20px rgba(0,0,0,0.3),
+                      inset -20px -20px 40px rgba(0,0,0,0.4),
+                      inset 15px 15px 30px rgba(255,255,255,0.1)
                     `,
-                    transform: 'translateZ(0)'
+                    transform: 'rotateY(-15deg) rotateX(5deg)'
                   }}
                 >
-                  {/* Glossy highlight - top left */}
+                  {/* Main glossy highlight - top left */}
                   <div 
-                    className="absolute top-3 left-4 w-10 h-6 rounded-full"
+                    className="absolute top-4 left-5 w-12 h-7 rounded-full"
                     style={{ 
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
-                      filter: 'blur(2px)'
+                      background: 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, transparent 70%)',
+                      filter: 'blur(3px)',
+                      transform: 'rotate(-20deg)'
                     }}
                   />
                   
-                  {/* Small secondary highlight */}
+                  {/* Sharp highlight spot */}
                   <div 
-                    className="absolute top-5 left-7 w-3 h-2 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.9)' }}
+                    className="absolute top-6 left-8 w-4 h-2.5 rounded-full"
+                    style={{ background: 'rgba(255,255,255,0.95)' }}
                   />
                   
-                  {/* White number circle - slightly recessed look */}
+                  {/* FRONT White number circle (center) */}
                   <div 
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
+                    className="absolute rounded-full flex items-center justify-center"
                     style={{
-                      width: '68px',
-                      height: '68px',
+                      width: '72px',
+                      height: '72px',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
                       background: `
-                        radial-gradient(circle at 35% 35%, 
+                        radial-gradient(ellipse 90% 90% at 40% 35%, 
                           #ffffff 0%, 
-                          #f8f8f8 40%, 
-                          #eeeeee 70%, 
-                          #e0e0e0 100%
+                          #fafafa 30%,
+                          #f0f0f0 60%, 
+                          #e5e5e5 100%
                         )
                       `,
                       boxShadow: `
-                        inset 0 4px 12px rgba(0,0,0,0.15),
-                        inset 0 -2px 8px rgba(255,255,255,0.8),
-                        0 2px 4px rgba(0,0,0,0.2)
-                      `
+                        inset 0 4px 15px rgba(0,0,0,0.12),
+                        inset 0 -3px 10px rgba(255,255,255,0.9),
+                        0 2px 6px rgba(0,0,0,0.25)
+                      `,
+                      border: '3px solid rgba(200,200,200,0.3)'
                     }}
                   >
                     <span 
                       className="text-5xl font-black" 
                       style={{ 
-                        color: '#1a1a1a',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
-                        fontFamily: 'Arial Black, Impact, sans-serif'
+                        color: '#111111',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.15)',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        letterSpacing: '-2px'
                       }}
                     >
                       {session.current_number || '?'}
                     </span>
                   </div>
                   
-                  {/* Bottom edge highlight (rim light) */}
+                  {/* SIDE White number circle (right side - gives 3D depth) */}
                   <div 
-                    className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-14 h-2 rounded-full opacity-30"
-                    style={{ background: 'linear-gradient(to top, rgba(255,200,200,0.5), transparent)' }}
+                    className="absolute rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: '50px',
+                      height: '60px',
+                      top: '38%',
+                      right: '-8px',
+                      background: `
+                        linear-gradient(90deg, 
+                          #e8e8e8 0%,
+                          #f5f5f5 30%,
+                          #fafafa 50%,
+                          #f0f0f0 100%
+                        )
+                      `,
+                      boxShadow: `
+                        inset -3px 0 10px rgba(0,0,0,0.15),
+                        inset 2px 0 8px rgba(255,255,255,0.5)
+                      `,
+                      borderRadius: '50%',
+                      transform: 'rotateY(60deg) scaleX(0.5)',
+                      border: '2px solid rgba(180,180,180,0.3)'
+                    }}
+                  >
+                    <span 
+                      className="text-2xl font-black" 
+                      style={{ 
+                        color: '#222222',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        transform: 'scaleX(2)',
+                        letterSpacing: '-1px'
+                      }}
+                    >
+                      {session.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* Bottom rim reflection */}
+                  <div 
+                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-2 rounded-full opacity-25"
+                    style={{ background: 'linear-gradient(to top, rgba(255,180,180,0.6), transparent)' }}
                   />
                 </div>
                 
                 {/* Ball shadow on surface */}
                 <div 
-                  className="ball-shadow absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-20 h-4 rounded-full"
+                  className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 w-24 h-5 rounded-full"
                   style={{ 
-                    background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%)',
-                    filter: 'blur(3px)'
+                    background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%)',
+                    filter: 'blur(4px)'
                   }}
                 />
               </div>
