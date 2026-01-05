@@ -59,7 +59,7 @@ export default function UserGameDetails() {
   };
 
   const getWhatsAppMessage = () => {
-    const msg = `🎉 Join my Six Seven Game!\n\n🎮 ${game?.name}\n📅 ${game?.date} at ${game?.time}\n\n${game?.prizes_description ? `🏆 Prizes: ${game?.prizes_description}\n\n` : ''}👉 Click to join: ${getShareUrl()}\n\nJust enter your name and get your ticket!`;
+    const msg = `🎉 Join my Six Seven Tambola Game!\n\n🎮 ${game?.name}\n📅 ${game?.date} at ${game?.time}\n\n${game?.prizes_description ? `🏆 Prizes: ${game?.prizes_description}\n\n` : ''}👉 Click to join: ${getShareUrl()}\n\nJust enter your name and get your ticket!`;
     return encodeURIComponent(msg);
   };
 
