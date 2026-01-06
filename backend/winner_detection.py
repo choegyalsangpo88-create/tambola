@@ -401,7 +401,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     # Group tickets by full sheet and user for Full Sheet Bonus
     user_sheets = {}  # user_id -> {full_sheet_id -> [tickets]}
     
-    for ticket in tickets:
+    for ticket in booked_tickets:
         user_id = ticket.get("user_id")
         holder_name = ticket.get("holder_name") or ticket.get("booked_by_name") or user_names.get(user_id, "Player")
         if not user_id and not holder_name:
