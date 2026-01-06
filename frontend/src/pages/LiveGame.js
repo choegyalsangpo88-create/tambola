@@ -24,6 +24,8 @@ export default function LiveGame() {
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [previousBall, setPreviousBall] = useState(null); // For exit animation
+  const [showBallTransition, setShowBallTransition] = useState(false);
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null); // For viewing winning ticket
   const pollInterval = useRef(null);
   const lastAnnouncedRef = useRef(null);
