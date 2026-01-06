@@ -2042,10 +2042,11 @@ class TambolaAPITester:
         # Test Scenario 3: INVALID Full Sheet Bonus - Multiple tickets have insufficient marks
         print("\n🔍 SCENARIO 3: INVALID Full Sheet Bonus (multiple tickets have 0-1 marks)")
         
+        # Use the same non-overlapping tickets from scenario 2
         # Called numbers that leave some tickets with 0-1 marks
-        insufficient_marks_numbers = [1, 2, 3, 4]  # Only first 2 tickets get 2 marks each
+        insufficient_marks_numbers = [10, 11, 20, 21]  # Only first 2 tickets get 2 marks each
         
-        insufficient_result = check_full_sheet_bonus(valid_full_sheet_tickets, insufficient_marks_numbers, min_marks_per_ticket=2)
+        insufficient_result = check_full_sheet_bonus(invalid_test_tickets, insufficient_marks_numbers, min_marks_per_ticket=2)
         print(f"   ❌ Invalid Full Sheet (multiple insufficient): {insufficient_result} (should be False)")
         print(f"   📋 Called numbers: {insufficient_marks_numbers}")
         print(f"   📋 Marks per ticket: [2, 2, 0, 0, 0, 0] <- Multiple tickets fail")
