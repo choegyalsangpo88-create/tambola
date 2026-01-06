@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class TambolaAPITester:
-    def __init__(self, base_url="https://play-housie-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://tambola-housie.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.session_token = "9740c20a7af441c6be784ececbe13a422a63031193f24b9d80c795d5a461a5d3"  # Valid session from DB
