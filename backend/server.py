@@ -860,17 +860,40 @@ async def create_booking(
     
     await db.bookings.insert_one(booking)
     
-    # Mark tickets as booked
-    await db.tickets.update_many(
-        {"ticket_id": {"$in": booking_data.ticket_ids}},
-        {
-            "$set": {
-                "is_booked": True,
-                "user_id": user.user_id,
-                "booking_status": "pending"
+    # Mark tickets as booked - Include booking_type for full sheet bonus eligibility
+    update_fields = {
+        "is_booked": True,
+        "user_id": user.user_id,
+        "booking_status": "pending",
+        "holder_name": user.name  # Store user's name on the ticket
+    }
+    
+    # If this is a full sheet booking, mark those tickets specially
+    if full_sheet_bonus and bonus_sheet_id:
+        # Mark the full sheet tickets with booking_type = "FULL_SHEET"
+        await db.tickets.update_many(
+            {"ticket_id": {"$in": booking_data.ticket_ids}, "full_sheet_id": bonus_sheet_id},
+            {
+                "$set": {
+                    **update_fields,
+                    "booking_type": "FULL_SHEET",
+                    "full_sheet_booked": True
+                }
             }
-        }
-    )
+        )
+        # Mark remaining tickets (if any) as regular
+        non_sheet_tickets = [t["ticket_id"] for t in tickets if t.get("full_sheet_id") != bonus_sheet_id]
+        if non_sheet_tickets:
+            await db.tickets.update_many(
+                {"ticket_id": {"$in": non_sheet_tickets}},
+                {"$set": {**update_fields, "booking_type": "RANDOM"}}
+            )
+    else:
+        # Regular booking - mark all as random
+        await db.tickets.update_many(
+            {"ticket_id": {"$in": booking_data.ticket_ids}},
+            {"$set": {**update_fields, "booking_type": "RANDOM"}}
+        )
     
     # Update available tickets count
     await db.games.update_one(
