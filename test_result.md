@@ -582,10 +582,10 @@ frontend:
         agent: "testing"
         comment: "✅ SIX SEVEN TAMBOLA NEW FEATURES TESTING COMPLETE (100% SUCCESS): Comprehensive testing of all review request items completed successfully! RESULTS: 1) COMPLETED GAMES API ✅ - GET /api/games/completed returns list of completed games with winners info, response time 41ms, found 1 completed game with proper winners dict containing ['second_line', 'first_line', 'full_house'], all required fields present ✅, 2) WINNER DETECTION STILL WORKS ✅ - Created test game (game_ddcdf25c), started successfully, called 3 numbers (43, 37, 85), winner detection system working correctly, no winners yet (normal for few numbers), game session tracking properly ✅, 3) TTS FOR WINNER ANNOUNCEMENT ✅ - POST /api/tts/generate with 'Congratulations John! You have won Top Line!' working perfectly, response time 1915ms, returns audio data as base64 mp3, server-side TTS enabled (use_browser_tts: false), includes prefix functionality ('Housie housie!' prefix added) ✅, 4) API RESPONSE TIMES ✅ - Excellent performance across all endpoints: games (35ms), games/completed (32ms), games/recent-completed (35ms), auth/me (32ms), average response time 34ms, MongoDB indexes working perfectly for sub-50ms responses ✅. ALL REVIEW REQUEST TESTS PASSED (4/4 - 100% success rate). Backend APIs are production-ready with excellent performance and all new features working correctly."
 
-  - task: "Full Sheet Bonus Detection Testing"
+  - task: "Full Sheet Bonus Detection Testing - UPDATED RULE"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/winner_detection.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -596,6 +596,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ CRITICAL FULL SHEET BONUS DETECTION FIX TESTING COMPLETE (95.2% SUCCESS): Comprehensive end-to-end testing of Full Sheet Bonus detection fix completed successfully! RESULTS: 1) GAME CREATION ✅ - Created test game with Full Sheet Bonus prize (₹2500), 12 tickets (2 full sheets), game_id: game_37110c02 ✅, 2) TICKET IDENTIFICATION ✅ - Successfully identified all 6 tickets in FS001 with correct positions 1-6, ticket IDs properly formatted ✅, 3) BOOKING VERIFICATION ✅ - Booked all 6 tickets of FS001 by same user (test_user_123), booking correctly flagged has_full_sheet_bonus: true, full_sheet_id: 'FS001' ✅, 4) GAME EXECUTION ✅ - Started game successfully, called 15 numbers [17, 1, 69, 24, 46, 36, 10, 9, 76, 45, 80, 8, 84, 61, 67] ✅, 5) WINNER DETECTION ✅ - Full Sheet Bonus winner correctly detected with user_id: 'test_user_123', full_sheet_id: 'FS001', pattern: 'Full Sheet Bonus' ✅. RULE VERIFIED: User with ALL 6 tickets of a full sheet booked, with each ticket having at least 1 number marked, wins Full Sheet Bonus. Tests passed: 20/21 (95.2% success rate). The Full Sheet Bonus detection fix is WORKING CORRECTLY as per review request requirements!"
+      - working: true
+        agent: "testing"
+        comment: "✅ FULL SHEET BONUS DETECTION RULE - UPDATED RULE TESTING COMPLETE (100% SUCCESS): Comprehensive testing of UPDATED Full Sheet Bonus detection rule completed successfully! UPDATED RULE VERIFIED: A Full Sheet consists of exactly 6 tickets booked together with the same sheet_id, and each of the 6 tickets must have at least 2 marked numbers (not 1!). STRICT VALIDATION: If even one ticket has fewer than 2 marked numbers, the Full Sheet Bonus is INVALID. RESULTS: 1) VALID Full Sheet Bonus (6 tickets, each with 2+ marks) ✅ - Correctly returns True when all 6 tickets have 2+ marked numbers ✅, 2) INVALID - One ticket with 1 mark ✅ - Correctly returns False when 5 tickets have 2+ marks but 1 ticket has only 1 mark ✅, 3) INVALID - Multiple insufficient marks ✅ - Correctly returns False when multiple tickets have 0-1 marks ✅, 4) Edge Case - Exactly 2 marks per ticket ✅ - Correctly returns True when all tickets have exactly 2 marks (minimum valid) ✅, 5) Integration Test - Admin Game ✅ - Successfully created admin game with Full Sheet Bonus prize, verified booking detection, game execution working correctly ✅. ALL TEST SCENARIOS PASSED (5/5 - 100% success rate). The UPDATED Full Sheet Bonus detection rule with 2-mark minimum per ticket is WORKING CORRECTLY and enforced strictly as specified in the review request!"
 
 frontend:
   - task: "Six Seven Tambola Live Game 3D Ball Animation and Winner Announcement"
