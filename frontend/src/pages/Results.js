@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { Trophy, Calendar, Users, ArrowLeft, Award, Clock } from 'lucide-react';
+import { Trophy, Calendar, Users, ArrowLeft, Award, Clock, Eye, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -12,7 +12,9 @@ export default function Results() {
   const [completedGames, setCompletedGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [gameSession, setGameSession] = useState(null);
+  const [gameTickets, setGameTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
