@@ -237,6 +237,26 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
+/* Modern 2026 ball glow effect */
+@keyframes ballGlow {
+    0%, 100% {
+        box-shadow: 
+            0 30px 60px rgba(0,0,0,0.5),
+            0 15px 30px rgba(0,0,0,0.3),
+            inset -25px -25px 50px rgba(0,0,0,0.35),
+            inset 20px 20px 40px rgba(255,255,255,0.08),
+            0 0 60px rgba(230,57,70,0.2);
+    }
+    50% {
+        box-shadow: 
+            0 35px 70px rgba(0,0,0,0.55),
+            0 18px 35px rgba(0,0,0,0.35),
+            inset -28px -28px 55px rgba(0,0,0,0.4),
+            inset 22px 22px 45px rgba(255,255,255,0.1),
+            0 0 100px rgba(230,57,70,0.4);
+    }
+}
+
 .ball-glow-pulse {
     animation: ballPulseGlow 2.5s ease-in-out infinite;
 }
