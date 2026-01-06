@@ -613,6 +613,18 @@ frontend:
         agent: "testing"
         comment: "✅ SIX SEVEN TAMBOLA 3D BALL ANIMATION & WINNER ANNOUNCEMENT TESTING COMPLETE (100% SUCCESS): Comprehensive verification of all review request features completed successfully! RESULTS: 1) HOMEPAGE LOAD TEST ✅ - App loads correctly at https://tambola-housie.preview.emergentagent.com with beautiful 3D ball logo showing '67', Google Auth button present and functional ✅, 2) VISUAL BALL ANIMATION CSS VERIFICATION ✅ - All required CSS animation classes found in index.css: .ball-entering with newBallEnter animation (1.2s cubic-bezier), .ball-exiting with oldBallExit animation (0.8s cubic-bezier), .ball-idle with ballIdleFloat animation (4s infinite), .ball-glow-pulse animation for winner celebration ✅, 3) ADMIN PANEL ACCESS TEST ✅ - Successfully logged into /control-ceo with credentials sixtysevenceo/Freetibet123!@#, admin panel loads with all 5 tabs (Create, Manage, Requests, Bookings, Settings), create game form shows 'Tickets will be auto-generated on creation' text ✅, 4) CODE VERIFICATION ✅ - LiveGame.js contains: previousBall state for exit animation, showBallTransition state for animation control, ball-exiting class on old ball, ball-entering class on new ball, celebrateWinner function with ticketNumber parameter ✅ - UserGamePlay.js has identical implementation with same animation states and winner celebration ✅, 5) TOAST/WINNER ANNOUNCEMENT STRUCTURE ✅ - celebrateWinner function shows: '🎉 Congratulations!' text, '[Prize] Gone!' message (e.g., 'Top Line Gone!'), Winner name and ticket number format 'Winner: [Name] ([Ticket Number])' ✅, 6) DIVIDENDS DISPLAY ✅ - Shows winner name + ticket number when prize is won in format: '🎉 [Winner Name] ([Ticket Number])' in green text with line-through on claimed prizes ✅. ALL REVIEW REQUEST FEATURES ARE IMPLEMENTED AND WORKING CORRECTLY: Enhanced 3D Caller Ball with real 3D ball showing number on BOTH sides (front center + right side + left side hint), NEW entry/exit animation where old ball gets 'kicked out' to left with spinning animation and new ball enters from top-right with 3D spinning animation, ball has subtle floating idle animation when stationary, Winner Announcement Enhancement with toast showing congratulations + prize gone + winner details, Dividends Display shows winner name + ticket number. All CSS animations properly defined and JavaScript logic correct for ball transitions and winner announcements."
 
+  - task: "Enhanced Results History Page - Winner Details & Ticket Modal"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Results.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "NEW TASK: Testing enhanced Results History page with winner details, winning ticket modal, and called numbers display. Features implemented: 1) Winner Details - Each winner shows holder_name, ticket number, time won, 'View Ticket' button, 2) Winning Ticket Modal - Shows prize name, winner info, full 3x9 ticket grid with called numbers highlighted in green, legend for called vs not called, 3) Called Numbers Display - Vertical grid (1-90) in 10 columns with colored balls for called numbers, call order row showing sequence. Need to verify code structure, API integration (/api/games/completed, /api/games/{game_id}/session, /api/games/{game_id}/tickets), and UI elements."
+
 test_plan:
   current_focus:
     - "Six Seven Tambola Live Game 3D Ball Animation and Winner Announcement - COMPLETED"
