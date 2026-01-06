@@ -149,17 +149,32 @@ export default function LiveGame() {
         Object.keys(session.winners).forEach(prize => {
           if (!previousWinnersRef.current[prize]) {
             const winner = session.winners[prize];
-            celebrateWinner(prize, winner.holder_name || winner.name || 'Player');
+            const winnerName = winner.holder_name || winner.name || 'Player';
+            const ticketNum = winner.ticket_number || '';
+            celebrateWinner(prize, winnerName, ticketNum);
           }
         });
         previousWinnersRef.current = session.winners;
       }
       
-      // Play TTS for new number with spin animation
+      // Play TTS for new number with ball transition animation
       if (session.current_number && session.current_number !== lastPlayedNumber) {
-        // Trigger spin animation
+        // Store previous number for exit animation
+        if (lastPlayedNumber) {
+          setPreviousBall(lastPlayedNumber);
+        }
+        
+        // Trigger ball transition animation
+        setShowBallTransition(true);
         setIsSpinning(true);
-        setTimeout(() => setIsSpinning(false), 600);
+        
+        // Clear transition state after animation
+        setTimeout(() => {
+          setShowBallTransition(false);
+          setPreviousBall(null);
+        }, 1200);
+        
+        setTimeout(() => setIsSpinning(false), 1200);
         
         playTTSAnnouncement(session.current_number);
       }
