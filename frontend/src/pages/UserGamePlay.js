@@ -761,41 +761,6 @@ export default function UserGamePlay() {
             )}
           </div>
         </div>
-                  if (bestRemaining < 999) {
-                    playerStats.push({
-                      ...player,
-                      bestRemaining
-                    });
-                  }
-                });
-                
-                // Sort by remaining (ascending), show up to 6 players
-                const topPlayers = playerStats
-                  .sort((a, b) => a.bestRemaining - b.bestRemaining)
-                  .slice(0, 6);
-                
-                if (topPlayers.length === 0) {
-                  return <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>;
-                }
-                
-                return topPlayers.map((player, idx) => (
-                  <div key={player.user_id || idx} className="bg-white/5 rounded-lg p-2 text-center">
-                    <p className="text-white text-xs font-medium truncate">
-                      {player.name?.split(' ')[0] || 'Player'}
-                    </p>
-                    <div className="flex justify-center gap-0.5 mt-1">
-                      {Array.from({ length: Math.min(player.bestRemaining, 5) }).map((_, i) => (
-                        <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      ))}
-                    </div>
-                  </div>
-                ));
-              })()
-            ) : (
-              <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>
-            )}
-          </div>
-        </div>
 
         {/* Auto-Calling Status */}
         {game.status === 'live' && (
