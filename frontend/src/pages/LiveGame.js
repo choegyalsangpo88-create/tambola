@@ -543,9 +543,9 @@ export default function LiveGame() {
             </div>
           </div>
 
-          {/* CENTER: Real 3D Tambola Ball with number on both sides + Entry/Exit Animation */}
+          {/* CENTER: Real 3D Tambola Ball - 2026 Modern Design with number on both sides */}
           <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10 flex flex-col items-center justify-center overflow-hidden">
-            <div className="relative ball-container" style={{ perspective: '1000px', height: '160px', width: '160px' }}>
+            <div className="relative ball-container" style={{ perspective: '1200px', height: '160px', width: '160px' }}>
               
               {/* OLD BALL - Exits to the left when new number comes */}
               {showBallTransition && previousBall && (
@@ -554,105 +554,103 @@ export default function LiveGame() {
                   style={{ transformStyle: 'preserve-3d' }}
                 >
                   <div 
-                    className="w-32 h-32 rounded-full relative tambola-ball-3d"
+                    className="w-32 h-32 rounded-full relative"
                     style={{
-                      background: `
-                        radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.5) 0%, transparent 35%),
-                        radial-gradient(ellipse 100% 100% at 50% 50%, #ff2222 0%, #dd0000 35%, #aa0000 60%, #880000 80%, #550000 100%)
-                      `,
-                      boxShadow: `
-                        0 25px 50px rgba(0,0,0,0.5),
-                        inset -20px -20px 40px rgba(0,0,0,0.4),
-                        inset 15px 15px 30px rgba(255,255,255,0.1)
-                      `
+                      background: `radial-gradient(circle at 30% 30%, #ff6b6b 0%, #e63946 40%, #c9302c 70%, #9d0208 100%)`,
+                      boxShadow: `0 20px 40px rgba(0,0,0,0.5), inset -15px -15px 30px rgba(0,0,0,0.4), inset 10px 10px 20px rgba(255,255,255,0.15)`
                     }}
                   >
                     <div 
                       className="absolute rounded-full flex items-center justify-center"
                       style={{
-                        width: '72px', height: '72px',
+                        width: '70px', height: '70px',
                         top: '50%', left: '50%',
                         transform: 'translate(-50%, -50%)',
-                        background: 'radial-gradient(ellipse 90% 90% at 40% 35%, #ffffff 0%, #f0f0f0 60%, #e5e5e5 100%)',
-                        boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.25)'
+                        background: 'radial-gradient(circle at 40% 35%, #ffffff 0%, #f5f5f5 50%, #e8e8e8 100%)',
+                        boxShadow: 'inset 0 3px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.2)'
                       }}
                     >
-                      <span className="text-5xl font-black text-gray-900">{previousBall}</span>
+                      <span className="text-4xl font-black text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{previousBall}</span>
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* NEW BALL - Enters from right/top with 3D spin */}
+              {/* NEW BALL - Modern 2026 3D Design with numbers on both sides */}
               <div 
                 className={`absolute inset-0 flex items-center justify-center ${showBallTransition ? 'ball-entering' : 'ball-idle'}`}
                 style={{ transformStyle: 'preserve-3d' }}
               >
                 {/* Main 3D Ball Body */}
                 <div 
-                  className="w-32 h-32 rounded-full relative tambola-ball-3d ball-glow-pulse"
+                  className="w-32 h-32 rounded-full relative"
                   style={{
-                    background: `
-                      radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.6) 0%, transparent 35%),
-                      radial-gradient(ellipse 100% 100% at 50% 50%, #ff3333 0%, #ee1111 30%, #cc0000 55%, #990000 75%, #660000 100%)
-                    `,
+                    background: `radial-gradient(circle at 30% 25%, #ff7b7b 0%, #e63946 35%, #d32f2f 60%, #b71c1c 85%, #8b0000 100%)`,
                     boxShadow: `
-                      0 25px 50px rgba(0,0,0,0.5),
-                      0 10px 20px rgba(0,0,0,0.3),
-                      inset -20px -20px 40px rgba(0,0,0,0.4),
-                      inset 15px 15px 30px rgba(255,255,255,0.15)
+                      0 30px 60px rgba(0,0,0,0.5),
+                      0 15px 30px rgba(0,0,0,0.3),
+                      inset -25px -25px 50px rgba(0,0,0,0.35),
+                      inset 20px 20px 40px rgba(255,255,255,0.08),
+                      0 0 80px rgba(230,57,70,0.3)
                     `,
-                    transformStyle: 'preserve-3d'
+                    transformStyle: 'preserve-3d',
+                    animation: showBallTransition ? 'none' : 'ballGlow 3s ease-in-out infinite'
                   }}
                 >
-                  {/* Main glossy highlight - top left */}
+                  {/* Top highlight - main reflection */}
                   <div 
-                    className="absolute top-4 left-5 w-14 h-8 rounded-full"
+                    className="absolute"
                     style={{ 
-                      background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 40%, transparent 70%)',
-                      filter: 'blur(3px)',
-                      transform: 'rotate(-20deg)'
+                      top: '8px',
+                      left: '15px',
+                      width: '55px',
+                      height: '30px',
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, transparent 70%)',
+                      borderRadius: '50%',
+                      filter: 'blur(4px)',
+                      transform: 'rotate(-15deg)'
                     }}
                   />
                   
-                  {/* Sharp highlight spot */}
+                  {/* Sharp highlight dot */}
                   <div 
-                    className="absolute top-6 left-8 w-5 h-3 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.98)' }}
+                    className="absolute"
+                    style={{ 
+                      top: '14px',
+                      left: '22px',
+                      width: '18px',
+                      height: '10px',
+                      background: 'rgba(255,255,255,0.95)',
+                      borderRadius: '50%',
+                      filter: 'blur(1px)'
+                    }}
                   />
                   
-                  {/* FRONT White number circle (center) */}
+                  {/* CENTER - Main white number circle */}
                   <div 
-                    className="ball-face-front absolute rounded-full"
+                    className="absolute rounded-full flex items-center justify-center"
                     style={{
-                      width: '76px',
-                      height: '76px',
+                      width: '75px',
+                      height: '75px',
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      background: `
-                        radial-gradient(ellipse 90% 90% at 40% 35%, 
-                          #ffffff 0%, 
-                          #fafafa 25%,
-                          #f5f5f5 50%, 
-                          #eeeeee 75%,
-                          #e0e0e0 100%
-                        )
-                      `,
+                      background: `radial-gradient(circle at 40% 30%, #ffffff 0%, #f8f8f8 40%, #f0f0f0 70%, #e8e8e8 100%)`,
                       boxShadow: `
-                        inset 0 5px 18px rgba(0,0,0,0.15),
-                        inset 0 -4px 12px rgba(255,255,255,0.95),
-                        0 3px 8px rgba(0,0,0,0.3)
+                        inset 0 5px 20px rgba(0,0,0,0.12),
+                        inset 0 -4px 15px rgba(255,255,255,0.95),
+                        0 3px 10px rgba(0,0,0,0.25),
+                        0 0 0 3px rgba(180,180,180,0.2)
                       `,
-                      border: '3px solid rgba(200,200,200,0.4)'
+                      border: '1px solid rgba(200,200,200,0.3)'
                     }}
                   >
                     <span 
-                      className="text-5xl font-black absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" 
+                      className="text-5xl font-black" 
                       style={{ 
-                        color: '#111111',
-                        textShadow: '2px 2px 3px rgba(0,0,0,0.2)',
-                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        color: '#1a1a1a',
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.15)',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
                         letterSpacing: '-3px'
                       }}
                     >
@@ -660,78 +658,56 @@ export default function LiveGame() {
                     </span>
                   </div>
                   
-                  {/* RIGHT SIDE White number circle - Creates 3D depth illusion */}
+                  {/* RIGHT SIDE - Number visible on side (3D effect) */}
                   <div 
                     className="absolute rounded-full flex items-center justify-center overflow-hidden"
                     style={{
-                      width: '55px',
-                      height: '65px',
+                      width: '50px',
+                      height: '62px',
                       top: '36%',
-                      right: '-10px',
-                      background: `
-                        linear-gradient(90deg, 
-                          #d8d8d8 0%,
-                          #e8e8e8 20%,
-                          #f2f2f2 40%,
-                          #fafafa 60%,
-                          #f5f5f5 80%,
-                          #eeeeee 100%
-                        )
-                      `,
-                      boxShadow: `
-                        inset -4px 0 12px rgba(0,0,0,0.2),
-                        inset 3px 0 10px rgba(255,255,255,0.6)
-                      `,
+                      right: '-12px',
+                      background: `linear-gradient(90deg, #d0d0d0 0%, #e5e5e5 30%, #f5f5f5 60%, #f0f0f0 100%)`,
+                      boxShadow: `inset -5px 0 15px rgba(0,0,0,0.2), inset 3px 0 10px rgba(255,255,255,0.5)`,
                       borderRadius: '50%',
-                      transform: 'rotateY(65deg) scaleX(0.45)',
-                      border: '2px solid rgba(180,180,180,0.4)'
+                      transform: 'rotateY(70deg) scaleX(0.4)',
+                      border: '1px solid rgba(170,170,170,0.4)'
                     }}
                   >
                     <span 
                       className="text-3xl font-black" 
                       style={{ 
-                        color: '#222222',
-                        fontFamily: 'Arial Black, Impact, sans-serif',
-                        transform: 'scaleX(2.2)',
-                        letterSpacing: '-1px'
+                        color: '#333333',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        transform: 'scaleX(2.5)',
+                        letterSpacing: '-2px'
                       }}
                     >
                       {session.current_number || '?'}
                     </span>
                   </div>
                   
-                  {/* LEFT SIDE hint of number (back of ball) */}
+                  {/* LEFT SIDE - Back of ball number hint */}
                   <div 
                     className="absolute rounded-full flex items-center justify-center overflow-hidden"
                     style={{
-                      width: '45px',
-                      height: '55px',
-                      top: '40%',
-                      left: '-8px',
-                      background: `
-                        linear-gradient(270deg, 
-                          #c8c8c8 0%,
-                          #d8d8d8 30%,
-                          #e0e0e0 60%,
-                          #e8e8e8 100%
-                        )
-                      `,
-                      boxShadow: `
-                        inset 4px 0 10px rgba(0,0,0,0.25),
-                        inset -2px 0 8px rgba(255,255,255,0.4)
-                      `,
+                      width: '42px',
+                      height: '52px',
+                      top: '38%',
+                      left: '-10px',
+                      background: `linear-gradient(270deg, #b8b8b8 0%, #c8c8c8 40%, #d8d8d8 80%, #d0d0d0 100%)`,
+                      boxShadow: `inset 5px 0 12px rgba(0,0,0,0.25), inset -2px 0 8px rgba(255,255,255,0.3)`,
                       borderRadius: '50%',
-                      transform: 'rotateY(-65deg) scaleX(0.4)',
-                      border: '2px solid rgba(160,160,160,0.4)',
-                      opacity: 0.8
+                      transform: 'rotateY(-70deg) scaleX(0.35)',
+                      border: '1px solid rgba(150,150,150,0.4)',
+                      opacity: 0.85
                     }}
                   >
                     <span 
                       className="text-2xl font-black" 
                       style={{ 
-                        color: '#444444',
-                        fontFamily: 'Arial Black, Impact, sans-serif',
-                        transform: 'scaleX(2.5)',
+                        color: '#555555',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        transform: 'scaleX(2.8)',
                         letterSpacing: '-1px'
                       }}
                     >
@@ -739,19 +715,26 @@ export default function LiveGame() {
                     </span>
                   </div>
                   
-                  {/* Bottom rim reflection */}
+                  {/* Bottom reflection */}
                   <div 
-                    className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-16 h-2 rounded-full opacity-30"
-                    style={{ background: 'linear-gradient(to top, rgba(255,200,200,0.8), transparent)' }}
+                    className="absolute bottom-2 left-1/2"
+                    style={{
+                      width: '50px',
+                      height: '6px',
+                      transform: 'translateX(-50%)',
+                      background: 'linear-gradient(to top, rgba(255,180,180,0.4), transparent)',
+                      borderRadius: '50%'
+                    }}
                   />
                 </div>
               </div>
               
               {/* Ball shadow on surface */}
               <div 
-                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-28 h-6 rounded-full ball-shadow-animated"
+                className="absolute -bottom-2 left-1/2 w-28 h-6 rounded-full ball-shadow-animated"
                 style={{ 
-                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%)',
+                  transform: 'translateX(-50%)',
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 70%)',
                   filter: 'blur(5px)'
                 }}
               />
@@ -759,25 +742,34 @@ export default function LiveGame() {
             <p className="text-sm text-amber-400 font-bold mt-4">{session.called_numbers?.length || 0} / 90</p>
           </div>
 
-          {/* RIGHT: Dividends List with Winner Names */}
-          <div className="col-span-4 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+          {/* RIGHT: Dividends List with Winner Names - Full Height Scrollable */}
+          <div className="col-span-4 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/10 flex flex-col" style={{ minHeight: '180px' }}>
             <div className="flex items-center gap-1 mb-1">
               <Trophy className="w-3 h-3 text-amber-500" />
               <span className="text-[9px] font-bold text-white">DIVIDENDS</span>
             </div>
-            <div className="space-y-0.5 max-h-36 overflow-y-auto">
+            <div className="flex-1 space-y-0.5 overflow-y-auto pr-1" style={{ maxHeight: '150px' }}>
               {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                 const winner = session.winners?.[prize];
                 return (
-                  <div key={prize} className={`px-1.5 py-1 rounded ${winner ? 'bg-green-500/20 border border-green-500/30' : 'bg-white/5'}`}>
+                  <div 
+                    key={prize} 
+                    className={`px-1.5 py-1.5 rounded cursor-pointer transition-all ${winner ? 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' : 'bg-white/5 hover:bg-white/10'}`}
+                    onClick={() => {
+                      if (winner && winner.ticket_id) {
+                        const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
+                        if (winningTicket) setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                      }
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className={`text-[8px] ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
-                      <span className="text-[8px] font-bold text-amber-400">₹{amount}</span>
+                      <span className={`text-[9px] ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
+                      <span className="text-[9px] font-bold text-amber-400">₹{amount}</span>
                     </div>
                     {winner && (
-                      <p className="text-[7px] text-green-300 mt-0.5">
+                      <p className="text-[8px] text-green-300 mt-0.5 truncate">
                         🎉 {winner.holder_name || winner.name || 'Winner'} 
-                        {winner.ticket_number && <span className="text-green-400 ml-1">({winner.ticket_number})</span>}
+                        {winner.ticket_number && <span className="text-amber-400 ml-1">({winner.ticket_number})</span>}
                       </p>
                     )}
                   </div>
