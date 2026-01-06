@@ -702,3 +702,7 @@ agent_communication:
 
   - agent: "main"
     message: "FIXES APPLIED: 1) Full Sheet Bonus detection fixed - now works with both 'is_booked: true' AND booking_status checks. Also groups tickets by holder_name in addition to user_id. Successfully tested - FullSheetTester detected as winner for FS001. 2) Top Players board updated - now shows users sorted by remaining numbers (ascending), with multiple tickets about to win shown as 'x2', 'x3' etc. prioritized higher when same remaining count. Test the fixes on the live game."
+
+  - agent: "main"
+    message: "NEW UI FEATURES IMPLEMENTED (Fork): 1) Enhanced 3D Caller Ball - Real 3D ball with number visible on BOTH sides (front + right side + left side hint), NEW entry/exit animation where old ball gets kicked out to the left while new ball enters spinning from top-right. 2) Winner Announcement Enhancement - Toast now shows Congratulations! [Prize] Gone! with winners name AND ticket number (e.g., Winner: Tenzin (T01)). 3) Dividends already show winner name + ticket number. Changes in: LiveGame.js, UserGamePlay.js, index.css. Please test: a) Live game 3D ball animation on number call, b) Old ball exits left/new ball enters right, c) Winner celebration toast shows name + ticket number, d) Dividends list shows winner name + ticket number."
+
