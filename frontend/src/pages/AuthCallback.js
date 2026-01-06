@@ -17,13 +17,19 @@ export default function AuthCallback() {
 
     const processSession = async () => {
       try {
+        // Get session_id from hash
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const sessionId = params.get('session_id');
 
+        console.log('AuthCallback: Processing session_id:', sessionId ? 'found' : 'not found');
+
         if (!sessionId) {
           throw new Error('No session ID found');
         }
+
+        // Clear the hash IMMEDIATELY to prevent re-triggering
+        window.history.replaceState(null, '', window.location.pathname);
 
         // Exchange session_id for session_token
         const response = await axios.post(
@@ -32,20 +38,22 @@ export default function AuthCallback() {
           { withCredentials: true }
         );
 
+        console.log('AuthCallback: Session exchange successful');
+
         const user = response.data.user;
-        
-        // Clear the hash BEFORE navigating to prevent re-triggering AuthCallback
-        window.history.replaceState(null, '', window.location.pathname);
         
         toast.success('Logged in successfully!');
 
-        // Navigate to dashboard with user data
-        navigate('/', { state: { user }, replace: true });
+        // Small delay to ensure cookie is set before redirect
+        setTimeout(() => {
+          // Navigate to dashboard with user data
+          navigate('/', { state: { user }, replace: true });
+        }, 100);
       } catch (error) {
         console.error('Auth error:', error);
         // Clear hash on error too
         window.history.replaceState(null, '', window.location.pathname);
-        toast.error('Authentication failed');
+        toast.error('Authentication failed. Please try again.');
         navigate('/login', { replace: true });
       }
     };
