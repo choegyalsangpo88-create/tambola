@@ -399,6 +399,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         user_names = {u["user_id"]: u.get("name", "Player") for u in users}
     
     # Group tickets by full sheet and user for Full Sheet Bonus
+    # IMPORTANT: Only tickets with booking_type="FULL_SHEET" or full_sheet_booked=True are eligible
     user_sheets = {}  # user_id -> {full_sheet_id -> [tickets]}
     
     for ticket in booked_tickets:
@@ -415,9 +416,14 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         full_sheet_id = ticket.get("full_sheet_id")
         
         # Group by user and full sheet for Full Sheet Bonus
-        # Use user_id if available, otherwise use holder_name as the key
+        # ONLY include if booking_type is FULL_SHEET or full_sheet_booked is True
+        is_full_sheet_booking = (
+            ticket.get("booking_type") == "FULL_SHEET" or 
+            ticket.get("full_sheet_booked") == True
+        )
+        
         group_key = user_id or holder_name
-        if full_sheet_id and group_key:
+        if full_sheet_id and group_key and is_full_sheet_booking:
             if group_key not in user_sheets:
                 user_sheets[group_key] = {}
             if full_sheet_id not in user_sheets[group_key]:
@@ -425,6 +431,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
             user_sheets[group_key][full_sheet_id]["tickets"].append({
                 "numbers": ticket_numbers,
                 "ticket_id": ticket_id,
+                "ticket_number": ticket.get("ticket_number"),
                 "ticket_position_in_sheet": ticket.get("ticket_position_in_sheet")
             })
         
