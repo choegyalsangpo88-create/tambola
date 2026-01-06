@@ -44,8 +44,8 @@ export default function LiveGame() {
     }
   }, []);
 
-  // Celebrate winner with name and prize - NO TTS announcement
-  const celebrateWinner = async (prize, winnerName) => {
+  // Celebrate winner with name and prize - Enhanced announcement
+  const celebrateWinner = async (prize, winnerName, ticketNumber) => {
     // Big confetti burst
     confetti({
       particleCount: 150,
@@ -70,17 +70,18 @@ export default function LiveGame() {
       });
     }, 300);
     
-    // Show toast with "Prize Gone" message and winner name(s)
+    // Show toast with "Congratulations! Prize Gone!" and winner info
     toast.success(
       <div className="text-center">
-        <p className="text-xl font-black text-amber-400">🎉 Congratulations!</p>
-        <p className="text-lg font-bold text-white">{prize} Gone!</p>
-        <p className="text-sm text-green-300">Winner: {winnerName}</p>
+        <p className="text-2xl font-black text-amber-400 mb-1">🎉 Congratulations!</p>
+        <p className="text-xl font-bold text-white">{prize} Gone!</p>
+        <p className="text-base text-green-300 mt-1">
+          Winner: <span className="font-bold">{winnerName}</span>
+          {ticketNumber && <span className="text-amber-300 ml-1">({ticketNumber})</span>}
+        </p>
       </div>,
-      { duration: 6000 }
+      { duration: 8000 }
     );
-    
-    // NO TTS announcement for winner name
   };
 
   // Play TTS announcement using Howler.js for mobile compatibility
