@@ -222,6 +222,19 @@ export default function UserGamePlay() {
       });
     }, 300);
     
+    // Voice announcement: "Congratulations! Prize gone!"
+    if (soundEnabled && audioUnlocked) {
+      try {
+        const announcementText = `Congratulations! ${prize} gone!`;
+        const played = await playTTSWithHowler(announcementText);
+        if (!played) {
+          await speakText(announcementText);
+        }
+      } catch (e) {
+        console.log('Winner announcement TTS error:', e);
+      }
+    }
+    
     // Show toast with "Congratulations! Prize Gone!" and winner info
     toast.success(
       <div className="text-center">
