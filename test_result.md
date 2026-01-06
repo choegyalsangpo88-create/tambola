@@ -645,7 +645,7 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Enhanced Results History Page - Winner Details & Ticket Modal - COMPLETED"
+    - "Six Seven Tambola Live Game Fixes - 3D Ball, Winner Announcement, Dividends - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
