@@ -43,13 +43,39 @@ export default function Results() {
 
   const fetchGameDetails = async (game) => {
     try {
-      const sessionResponse = await axios.get(`${API}/games/${game.game_id}/session`);
+      const [sessionResponse, ticketsResponse] = await Promise.all([
+        axios.get(`${API}/games/${game.game_id}/session`),
+        axios.get(`${API}/games/${game.game_id}/tickets?page=1&limit=600`).catch(() => ({ data: { tickets: [] } }))
+      ]);
       setGameSession(sessionResponse.data);
+      setGameTickets(ticketsResponse.data.tickets || []);
       setSelectedGame(game);
     } catch (error) {
       console.error('Failed to fetch game details:', error);
       toast.error('Failed to load game results');
     }
+  };
+
+  // Find winning ticket by ticket_id or ticket_number
+  const findWinningTicket = (winner) => {
+    if (!winner) return null;
+    return gameTickets.find(t => 
+      t.ticket_id === winner.ticket_id || 
+      t.ticket_number === winner.ticket_number
+    );
+  };
+
+  // Get ball color based on number range
+  const getBallColor = (num) => {
+    if (num <= 10) return 'from-red-400 to-red-600';
+    if (num <= 20) return 'from-orange-400 to-orange-600';
+    if (num <= 30) return 'from-yellow-400 to-yellow-600';
+    if (num <= 40) return 'from-green-400 to-green-600';
+    if (num <= 50) return 'from-teal-400 to-teal-600';
+    if (num <= 60) return 'from-cyan-400 to-cyan-600';
+    if (num <= 70) return 'from-blue-400 to-blue-600';
+    if (num <= 80) return 'from-indigo-400 to-indigo-600';
+    return 'from-purple-400 to-purple-600';
   };
 
   const formatDate = (dateStr) => {
