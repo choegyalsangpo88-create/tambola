@@ -26,7 +26,9 @@ export default function UserGamePlay() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [currentBall, setCurrentBall] = useState(null);
+  const [previousBall, setPreviousBall] = useState(null); // For exit animation
   const [showBallAnimation, setShowBallAnimation] = useState(false);
+  const [showBallTransition, setShowBallTransition] = useState(false);
   const [dividends, setDividends] = useState({});
   const [allWinners, setAllWinners] = useState({});
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null); // For viewing winning ticket
