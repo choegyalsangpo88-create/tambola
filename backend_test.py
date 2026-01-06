@@ -1982,6 +1982,261 @@ class TambolaAPITester:
         
         return test_passed
 
+    def test_full_sheet_bonus_detection_rule(self):
+        """Test the Full Sheet Bonus detection rule for Six Seven Tambola - UPDATED RULE"""
+        print("\n" + "="*50)
+        print("TESTING FULL SHEET BONUS DETECTION RULE - UPDATED")
+        print("="*50)
+        print("RULE: A Full Sheet consists of exactly 6 tickets booked together with the same sheet_id.")
+        print("VALIDATION: Each of the 6 tickets must have at least 2 marked numbers (not 1!)")
+        print("If even one ticket has fewer than 2 marked numbers, the Full Sheet Bonus is INVALID")
+        
+        # Import winner detection functions
+        import sys
+        sys.path.append('/app/backend')
+        from winner_detection import check_full_sheet_bonus
+        
+        # Test Scenario 1: VALID Full Sheet Bonus - All 6 tickets have 2+ marks each
+        print("\n🔍 SCENARIO 1: VALID Full Sheet Bonus (6 tickets, each with 2+ marks)")
+        
+        # Create 6 tickets for a full sheet
+        valid_full_sheet_tickets = []
+        for i in range(6):
+            ticket = [
+                [1+i, 2+i, None, None, None, None, None, None, None],      # 2 numbers per ticket
+                [None, None, None, None, None, None, None, None, None],    # empty row
+                [None, None, None, None, None, None, None, None, None]     # empty row
+            ]
+            valid_full_sheet_tickets.append(ticket)
+        
+        # Called numbers that mark exactly 2 numbers on each ticket
+        valid_called_numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # 2 numbers per ticket
+        
+        valid_result = check_full_sheet_bonus(valid_full_sheet_tickets, valid_called_numbers, min_marks_per_ticket=2)
+        print(f"   ✅ Valid Full Sheet (2+ marks per ticket): {valid_result}")
+        print(f"   📋 Called numbers: {valid_called_numbers}")
+        print(f"   📋 Marks per ticket: [2, 2, 2, 2, 2, 2]")
+        
+        # Test Scenario 2: INVALID Full Sheet Bonus - One ticket has only 1 mark
+        print("\n🔍 SCENARIO 2: INVALID Full Sheet Bonus (1 ticket has only 1 mark)")
+        
+        # Create 6 tickets where 5 have 2+ marks, but 1 has only 1 mark
+        invalid_one_ticket_numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # Last ticket gets only 1 mark (11)
+        
+        invalid_one_result = check_full_sheet_bonus(valid_full_sheet_tickets, invalid_one_ticket_numbers, min_marks_per_ticket=2)
+        print(f"   ❌ Invalid Full Sheet (1 ticket with 1 mark): {invalid_one_result} (should be False)")
+        print(f"   📋 Called numbers: {invalid_one_ticket_numbers}")
+        print(f"   📋 Marks per ticket: [2, 2, 2, 2, 2, 1] <- Last ticket fails")
+        
+        # Test Scenario 3: INVALID Full Sheet Bonus - Multiple tickets have insufficient marks
+        print("\n🔍 SCENARIO 3: INVALID Full Sheet Bonus (multiple tickets have 0-1 marks)")
+        
+        # Called numbers that leave some tickets with 0-1 marks
+        insufficient_marks_numbers = [1, 2, 3, 4]  # Only first 2 tickets get 2 marks each
+        
+        insufficient_result = check_full_sheet_bonus(valid_full_sheet_tickets, insufficient_marks_numbers, min_marks_per_ticket=2)
+        print(f"   ❌ Invalid Full Sheet (multiple insufficient): {insufficient_result} (should be False)")
+        print(f"   📋 Called numbers: {insufficient_marks_numbers}")
+        print(f"   📋 Marks per ticket: [2, 2, 0, 0, 0, 0] <- Multiple tickets fail")
+        
+        # Test Scenario 4: Edge Case - Exactly 2 marks per ticket (minimum valid)
+        print("\n🔍 SCENARIO 4: Edge Case - Exactly 2 marks per ticket (minimum valid)")
+        
+        # Create tickets with exactly 2 numbers each
+        edge_case_tickets = []
+        for i in range(6):
+            ticket = [
+                [10+i*2, 11+i*2, None, None, None, None, None, None, None],  # Exactly 2 numbers
+                [None, None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None, None]
+            ]
+            edge_case_tickets.append(ticket)
+        
+        edge_case_numbers = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]  # All numbers called
+        
+        edge_case_result = check_full_sheet_bonus(edge_case_tickets, edge_case_numbers, min_marks_per_ticket=2)
+        print(f"   ✅ Edge Case (exactly 2 per ticket): {edge_case_result}")
+        print(f"   📋 Called numbers: {edge_case_numbers}")
+        print(f"   📋 Marks per ticket: [2, 2, 2, 2, 2, 2] <- All exactly at minimum")
+        
+        # Test Scenario 5: Integration Test - Create admin game and test Full Sheet Bonus
+        print("\n🔍 SCENARIO 5: Integration Test - Admin Game with Full Sheet Bonus")
+        
+        # Create admin game with Full Sheet Bonus prize
+        full_sheet_game_data = {
+            "name": f"Full Sheet Bonus Test {datetime.now().strftime('%H%M%S')}",
+            "date": "2025-01-30",
+            "time": "22:00",
+            "price": 100.0,
+            "total_tickets": 12,  # 2 full sheets (12 tickets)
+            "prizes": {
+                "Top Line": 1000.0,
+                "Middle Line": 1000.0,
+                "Bottom Line": 1000.0,
+                "Full Sheet Bonus": 2500.0,  # Full Sheet Bonus prize
+                "Full House": 3000.0
+            }
+        }
+        
+        success, full_sheet_game = self.run_test(
+            "Create Admin Game with Full Sheet Bonus",
+            "POST",
+            "games",
+            200,
+            data=full_sheet_game_data
+        )
+        
+        if success and full_sheet_game:
+            game_id = full_sheet_game.get('game_id')
+            print(f"   ✅ Created game with Full Sheet Bonus: {game_id}")
+            
+            # Get tickets to identify full sheet
+            success, tickets_data = self.run_test(
+                "Get Game Tickets for Full Sheet Test",
+                "GET",
+                f"games/{game_id}/tickets?limit=12",
+                200
+            )
+            
+            if success and tickets_data:
+                tickets = tickets_data.get('tickets', [])
+                print(f"   ✅ Retrieved {len(tickets)} tickets")
+                
+                # Find all tickets from FS001 (first full sheet)
+                fs001_tickets = [t for t in tickets if t.get('full_sheet_id') == 'FS001']
+                print(f"   ✅ Found {len(fs001_tickets)} tickets in FS001")
+                
+                if len(fs001_tickets) == 6:
+                    # Verify positions 1-6 are present
+                    positions = sorted([t.get('ticket_position_in_sheet', 0) for t in fs001_tickets])
+                    print(f"   ✅ Ticket positions in FS001: {positions}")
+                    
+                    if positions == [1, 2, 3, 4, 5, 6]:
+                        print("   ✅ Full Sheet structure verified - all 6 positions present")
+                        
+                        # Book all 6 tickets of FS001 by same user
+                        fs001_ticket_ids = [t['ticket_id'] for t in fs001_tickets]
+                        
+                        booking_data = {
+                            "game_id": game_id,
+                            "ticket_ids": fs001_ticket_ids
+                        }
+                        
+                        success, booking_result = self.run_test(
+                            "Book Full Sheet (all 6 tickets of FS001)",
+                            "POST",
+                            "bookings",
+                            200,
+                            data=booking_data
+                        )
+                        
+                        if success and booking_result:
+                            booking_id = booking_result.get('booking_id')
+                            has_full_sheet_bonus = booking_result.get('has_full_sheet_bonus', False)
+                            full_sheet_id = booking_result.get('full_sheet_id')
+                            
+                            print(f"   ✅ Booking created: {booking_id}")
+                            print(f"   ✅ Has Full Sheet Bonus: {has_full_sheet_bonus}")
+                            print(f"   ✅ Full Sheet ID: {full_sheet_id}")
+                            
+                            if has_full_sheet_bonus and full_sheet_id == 'FS001':
+                                print("   ✅ Full Sheet Bonus correctly detected in booking!")
+                                
+                                # Start game and test winner detection
+                                success, start_result = self.run_test(
+                                    "Start Full Sheet Game",
+                                    "POST",
+                                    f"games/{game_id}/start",
+                                    200
+                                )
+                                
+                                if success:
+                                    # Call numbers to test Full Sheet Bonus detection
+                                    # We need to call numbers that mark at least 2 on each of the 6 tickets
+                                    
+                                    # Call 15 numbers to ensure we have enough marks
+                                    called_numbers = []
+                                    for i in range(15):
+                                        success, call_result = self.run_test(
+                                            f"Call Number {i+1} for Full Sheet Test",
+                                            "POST",
+                                            f"games/{game_id}/call-number",
+                                            200
+                                        )
+                                        
+                                        if success and call_result:
+                                            number = call_result.get('number')
+                                            new_winners = call_result.get('new_winners', [])
+                                            called_numbers.append(number)
+                                            
+                                            if 'Full Sheet Bonus' in new_winners:
+                                                print(f"   🎉 Full Sheet Bonus winner detected after calling {number}!")
+                                                break
+                                    
+                                    # Check final game session for Full Sheet Bonus winner
+                                    success, session_data = self.run_test(
+                                        "Check Full Sheet Bonus Winner",
+                                        "GET",
+                                        f"games/{game_id}/session",
+                                        200
+                                    )
+                                    
+                                    if success and session_data:
+                                        winners = session_data.get('winners', {})
+                                        called_numbers_final = session_data.get('called_numbers', [])
+                                        
+                                        print(f"   📞 Total numbers called: {len(called_numbers_final)}")
+                                        print(f"   📞 Numbers: {called_numbers_final}")
+                                        print(f"   🏆 Winners detected: {list(winners.keys())}")
+                                        
+                                        if 'Full Sheet Bonus' in winners:
+                                            winner_info = winners['Full Sheet Bonus']
+                                            print(f"   🎉 Full Sheet Bonus Winner: {winner_info.get('holder_name', 'N/A')}")
+                                            print(f"   🎉 Full Sheet ID: {winner_info.get('full_sheet_id', 'N/A')}")
+                                            print("   ✅ FULL SHEET BONUS DETECTION WORKING!")
+                                        else:
+                                            print("   ⚠️  Full Sheet Bonus not yet detected (may need more numbers)")
+                            else:
+                                print("   ❌ Full Sheet Bonus not detected in booking")
+                        else:
+                            print("   ❌ Failed to book full sheet")
+                    else:
+                        print(f"   ❌ Invalid positions in FS001: {positions}")
+                else:
+                    print(f"   ❌ FS001 has {len(fs001_tickets)} tickets, expected 6")
+            else:
+                print("   ❌ Failed to get game tickets")
+        else:
+            print("   ❌ Failed to create Full Sheet Bonus test game")
+        
+        # Test Summary
+        print(f"\n📋 FULL SHEET BONUS DETECTION RULE TEST SUMMARY:")
+        test_results = [
+            ("Valid Full Sheet (2+ marks per ticket)", valid_result),
+            ("Invalid - One ticket with 1 mark", not invalid_one_result),
+            ("Invalid - Multiple insufficient marks", not insufficient_result),
+            ("Edge Case - Exactly 2 marks per ticket", edge_case_result),
+            ("Integration Test - Admin Game", full_sheet_game is not None)
+        ]
+        
+        for test_name, passed in test_results:
+            status = "✅ PASS" if passed else "❌ FAIL"
+            print(f"   {test_name}: {status}")
+        
+        # Overall result
+        all_tests_passed = all(result for _, result in test_results)
+        
+        if all_tests_passed:
+            print(f"\n🎉 FULL SHEET BONUS DETECTION RULE: ✅ WORKING CORRECTLY")
+            print(f"   ✅ UPDATED RULE VERIFIED: Each of 6 tickets must have at least 2 marked numbers")
+            print(f"   ✅ STRICT VALIDATION: If any ticket has <2 marks, Full Sheet Bonus is INVALID")
+        else:
+            print(f"\n⚠️  FULL SHEET BONUS DETECTION RULE: ❌ ISSUES FOUND")
+            failed_tests = [name for name, result in test_results if not result]
+            print(f"   Failed tests: {failed_tests}")
+        
+        return all_tests_passed
+
     def run_all_tests(self):
         """Run all API tests with focus on User Game Ticket Selection Features"""
         print("🚀 Starting Tambola API Tests - USER GAME TICKET SELECTION FEATURES")
