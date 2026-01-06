@@ -419,7 +419,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         # ONLY include if booking_type is FULL_SHEET or full_sheet_booked is True
         is_full_sheet_booking = (
             ticket.get("booking_type") == "FULL_SHEET" or 
-            ticket.get("full_sheet_booked") == True
+            ticket.get("full_sheet_booked")
         )
         
         group_key = user_id or holder_name
