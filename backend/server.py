@@ -2569,9 +2569,10 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
                         if positions != {1, 2, 3, 4, 5, 6}:
                             continue
                         
-                        # Check if each ticket has at least 1 number marked
+                        # Check if each ticket has at least 2 numbers marked (STRICT RULE)
                         called_set = set(called_numbers)
                         all_have_marks = True
+                        marks_per_ticket = []
                         
                         for ticket in sheet_tickets:
                             ticket_numbers = ticket.get("numbers", [])
@@ -2580,9 +2581,12 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
                                 for num in row 
                                 if num is not None and num != 0 and num in called_set
                             )
-                            if marked_count < 1:
+                            marks_per_ticket.append(marked_count)
+                            if marked_count < 2:  # Each ticket must have at least 2 marked numbers
                                 all_have_marks = False
                                 break
+                        
+                        logger.debug(f"Full Sheet Bonus Check - Player: {player_name}, Sheet: {sheet_id}, Marks: {marks_per_ticket}, Eligible: {all_have_marks} (need >=2 per ticket)")
                         
                         if all_have_marks:
                             current_winners[prize_type] = {
