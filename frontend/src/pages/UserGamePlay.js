@@ -148,7 +148,9 @@ export default function UserGamePlay() {
         Object.keys(newSession.winners).forEach(prize => {
           if (!previousWinnersRef.current[prize]) {
             const winner = newSession.winners[prize];
-            celebrateWinner(prize, winner.holder_name || winner.name || 'Player');
+            const winnerName = winner.holder_name || winner.name || 'Player';
+            const ticketNum = winner.ticket_number || '';
+            celebrateWinner(prize, winnerName, ticketNum);
           }
         });
         previousWinnersRef.current = newSession.winners;
@@ -158,6 +160,16 @@ export default function UserGamePlay() {
       // Check for new number - show animation and play TTS
       if (newSession.current_number && newSession.current_number !== session?.current_number) {
         if (newSession.status === 'live') {
+          // Store previous number for exit animation
+          if (currentBall) {
+            setPreviousBall(currentBall);
+          }
+          setShowBallTransition(true);
+          setTimeout(() => {
+            setShowBallTransition(false);
+            setPreviousBall(null);
+          }, 1200);
+          
           showNewNumber(newSession.current_number);
         }
       }
