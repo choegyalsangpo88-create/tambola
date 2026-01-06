@@ -44,7 +44,7 @@ export default function LiveGame() {
     }
   }, []);
 
-  // Celebrate winner with name and prize - Enhanced announcement
+  // Celebrate winner with name and prize - Enhanced announcement with Voice
   const celebrateWinner = async (prize, winnerName, ticketNumber) => {
     // Big confetti burst
     confetti({
@@ -69,6 +69,19 @@ export default function LiveGame() {
         colors: ['#FFD700', '#FFA500', '#00FF00']
       });
     }, 300);
+    
+    // Voice announcement: "Congratulations! Top line gone!"
+    if (soundEnabled && audioUnlocked) {
+      try {
+        const announcementText = `Congratulations! ${prize} gone!`;
+        const played = await playTTSWithHowler(announcementText);
+        if (!played) {
+          await speakText(announcementText);
+        }
+      } catch (e) {
+        console.log('Winner announcement TTS error:', e);
+      }
+    }
     
     // Show toast with "Congratulations! Prize Gone!" and winner info
     toast.success(
