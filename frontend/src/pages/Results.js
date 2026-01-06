@@ -102,7 +102,8 @@ export default function Results() {
   // Game Details View
   if (selectedGame && gameSession) {
     const winners = gameSession.winners || {};
-    const totalNumbers = gameSession.called_numbers?.length || 0;
+    const calledNumbers = gameSession.called_numbers || [];
+    const totalNumbers = calledNumbers.length;
 
     return (
       <div className="min-h-screen bg-[#0a0a0c]">
@@ -114,7 +115,7 @@ export default function Results() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => { setSelectedGame(null); setGameSession(null); }}
+                  onClick={() => { setSelectedGame(null); setGameSession(null); setGameTickets([]); }}
                   className="h-8 w-8 text-white"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -158,7 +159,7 @@ export default function Results() {
             </div>
           </div>
 
-          {/* Winners List */}
+          {/* Winners List with Details */}
           <div className="bg-[#1a1a1e] rounded-xl p-6 border border-white/10">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Award className="w-5 h-5 text-amber-500" />
@@ -171,28 +172,48 @@ export default function Results() {
               <div className="space-y-3">
                 {selectedGame.prizes && Object.entries(selectedGame.prizes).map(([prize, amount]) => {
                   const winner = winners[prize];
+                  const winningTicket = findWinningTicket(winner);
+                  
                   return (
                     <div 
                       key={prize} 
                       className={`rounded-lg p-4 ${winner ? 'bg-gradient-to-r from-emerald-900/30 to-teal-900/30 border border-emerald-500/30' : 'bg-white/5'}`}
                     >
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="flex-1">
                           <p className={`font-semibold ${winner ? 'text-emerald-400' : 'text-gray-400'}`}>
                             {prize}
                           </p>
                           {winner ? (
-                            <p className="text-white text-lg font-bold mt-1">
-                              🏆 {winner.holder_name || winner.name || 'Winner'}
-                            </p>
+                            <div className="mt-1">
+                              <p className="text-white text-lg font-bold">
+                                🏆 {winner.holder_name || winner.name || 'Winner'}
+                              </p>
+                              {winner.ticket_number && (
+                                <p className="text-amber-400 text-sm font-medium">
+                                  Ticket: {winner.ticket_number}
+                                </p>
+                              )}
+                              {winner.won_at && (
+                                <p className="text-gray-500 text-xs mt-1">
+                                  Won at: {new Date(winner.won_at).toLocaleTimeString('en-IN')}
+                                </p>
+                              )}
+                            </div>
                           ) : (
                             <p className="text-gray-500 text-sm mt-1">Not claimed</p>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-2">
                           <p className="text-amber-400 font-bold text-xl">₹{amount}</p>
-                          {winner?.ticket_number && (
-                            <p className="text-xs text-gray-400">Ticket: {winner.ticket_number}</p>
+                          {winner && winningTicket && (
+                            <Button
+                              size="sm"
+                              onClick={() => setSelectedWinnerTicket({ ...winningTicket, prize, winner })}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1 h-7"
+                            >
+                              <Eye className="w-3 h-3 mr-1" /> View Ticket
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -203,21 +224,154 @@ export default function Results() {
             )}
           </div>
 
-          {/* Called Numbers */}
+          {/* All Called Numbers - Vertical Lines Display */}
           <div className="bg-[#1a1a1e] rounded-xl p-6 border border-white/10">
-            <h2 className="text-lg font-bold text-white mb-4">All Called Numbers</h2>
-            <div className="flex flex-wrap gap-2">
-              {gameSession.called_numbers?.map((num, idx) => (
-                <div 
-                  key={num}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xs font-bold text-white shadow-md"
-                >
-                  {num}
-                </div>
-              ))}
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="text-xl">🎱</span>
+              All Called Numbers ({totalNumbers}/90)
+            </h2>
+            
+            {/* Vertical columns of balls - 10 columns, 9 rows */}
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-10 gap-2 min-w-[400px]">
+                {/* Column headers 1-10, 11-20, etc */}
+                {[1, 11, 21, 31, 41, 51, 61, 71, 81].map((start, colIdx) => (
+                  <div key={colIdx} className="space-y-2">
+                    <div className="text-center text-xs text-gray-500 font-medium pb-1 border-b border-white/10">
+                      {start}-{start + 9 > 90 ? 90 : start + 9}
+                    </div>
+                    {Array.from({ length: colIdx === 8 ? 10 : 10 }, (_, i) => {
+                      const num = start + i;
+                      if (num > 90) return null;
+                      const isCalled = calledNumbers.includes(num);
+                      const callOrder = calledNumbers.indexOf(num);
+                      
+                      return (
+                        <div
+                          key={num}
+                          className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                            isCalled 
+                              ? `bg-gradient-to-br ${getBallColor(num)} text-white shadow-lg` 
+                              : 'bg-white/5 text-gray-600'
+                          }`}
+                          title={isCalled ? `Called #${callOrder + 1}` : 'Not called'}
+                        >
+                          {num}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Called order display */}
+            <div className="mt-6 pt-4 border-t border-white/10">
+              <p className="text-sm text-gray-400 mb-3">Call Order (first → last):</p>
+              <div className="flex flex-wrap gap-1.5">
+                {calledNumbers.map((num, idx) => (
+                  <div
+                    key={idx}
+                    className={`w-7 h-7 rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[10px] font-bold text-white shadow-sm`}
+                    title={`Called #${idx + 1}`}
+                  >
+                    {num}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Winner Ticket Modal */}
+        {selectedWinnerTicket && (
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedWinnerTicket(null)}
+          >
+            <div 
+              className="bg-[#1a1a1e] rounded-xl p-5 max-w-md w-full border border-emerald-500/30 shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                    🏆 {selectedWinnerTicket.prize}
+                  </h3>
+                  <p className="text-sm text-gray-400">Winning Ticket Details</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedWinnerTicket(null)} 
+                  className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Winner Info */}
+              <div className="bg-white/5 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-400">Winner</p>
+                    <p className="text-white font-bold text-lg">
+                      {selectedWinnerTicket.winner?.holder_name || selectedWinnerTicket.winner?.name}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400">Ticket Number</p>
+                    <p className="text-amber-400 font-bold text-lg">{selectedWinnerTicket.ticket_number}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Ticket Grid */}
+              <div className="bg-amber-50 rounded-lg p-4">
+                <div className="grid grid-cols-9 gap-1">
+                  {selectedWinnerTicket.numbers?.map((row, rowIdx) => (
+                    row.map((num, colIdx) => {
+                      const isCalled = calledNumbers.includes(num);
+                      return (
+                        <div
+                          key={`${rowIdx}-${colIdx}`}
+                          className={`aspect-square flex items-center justify-center text-sm font-bold rounded ${
+                            num 
+                              ? isCalled 
+                                ? 'bg-green-500 text-white ring-2 ring-green-600 shadow-md' 
+                                : 'bg-amber-100 text-amber-900'
+                              : 'bg-gray-200'
+                          }`}
+                        >
+                          {num || ''}
+                        </div>
+                      );
+                    })
+                  ))}
+                </div>
+              </div>
+              
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-4 mt-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-gray-400">Called</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-amber-100 rounded"></div>
+                  <span className="text-gray-400">Not Called</span>
+                </div>
+              </div>
+              
+              {/* Close Button */}
+              <Button
+                onClick={() => setSelectedWinnerTicket(null)}
+                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
