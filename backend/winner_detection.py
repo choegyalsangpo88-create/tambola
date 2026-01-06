@@ -172,21 +172,32 @@ def check_quick_five(ticket_numbers, called_numbers):
     return check_early_five(ticket_numbers, called_numbers)
 
 
-def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=1):
+def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=2):
     """
-    FULL SHEET BONUS:
-    - Player must have booked a FULL SHEET (6 tickets)
-    - Each of the 6 tickets must have AT LEAST 1 number marked
-    - Total minimum marks = 6 (one from each ticket)
-    - A ticket may have more than 1 mark, but all 6 tickets must have at least 1
+    FULL SHEET BONUS VALIDATION:
+    
+    A Full Sheet consists of exactly 6 tickets booked together
+    and identified by the same sheet_id.
+
+    ELIGIBILITY:
+    - Validate ONLY if booking_type = FULL_SHEET
+    - Exactly 6 tickets must be present
+    - If not, result is INVALID
+
+    VALIDATION RULE (STRICT):
+    - Each ticket must be checked independently
+    - Each of the 6 tickets must have at least 2 marked numbers
+    - Total marked numbers across the sheet must NOT be used
+    - If even one ticket has fewer than 2 marked numbers,
+      the Full Sheet Bonus is INVALID
     
     Args:
         tickets: List of 6 tickets from the same full sheet
         called_numbers: Set of called numbers
-        min_marks_per_ticket: Minimum marks required per ticket (default 1)
+        min_marks_per_ticket: Minimum marks required per ticket (default 2)
     
     Returns:
-        True if bonus condition is met (at least 1 mark on each of 6 tickets)
+        True if bonus condition is met (at least 2 marks on each of 6 tickets)
     """
     called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
     
