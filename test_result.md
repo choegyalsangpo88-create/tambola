@@ -648,8 +648,9 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Six Seven Tambola Live Game Fixes - 3D Ball, Winner Announcement, Dividends - COMPLETED"
-  stuck_tasks: []
+    - "Google Auth Redirect Flow - CRITICAL ISSUE IDENTIFIED"
+  stuck_tasks:
+    - "Google Auth Redirect Flow"
   test_all: false
   test_priority: "high_first"
 
