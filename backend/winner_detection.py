@@ -492,16 +492,16 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                         logger.debug(f"Full Sheet Check - User {user_id}, Sheet {sheet_id}: Positions {positions} (need 1-6)")
                         continue
                     
-                    # Check if all 6 tickets have at least 1 number marked
+                    # Check if all 6 tickets have at least 2 numbers marked (STRICT RULE)
                     all_have_marks = True
                     marks_per_ticket = []
                     for t in sheet_data["tickets"]:
                         marks = get_marked_count(t.get("numbers", []), called_set)
                         marks_per_ticket.append(marks)
-                        if marks < 1:
+                        if marks < 2:  # Each ticket must have at least 2 marked numbers
                             all_have_marks = False
                     
-                    logger.info(f"Full Sheet Bonus Check - User: {user_id}, Sheet: {sheet_id}, Positions: {positions}, Marks: {marks_per_ticket}, Eligible: {all_have_marks}")
+                    logger.info(f"Full Sheet Bonus Check - User: {user_id}, Sheet: {sheet_id}, Positions: {positions}, Marks: {marks_per_ticket}, Eligible: {all_have_marks} (need >=2 per ticket)")
                     
                     if all_have_marks:
                         new_winners[prize_check] = {
