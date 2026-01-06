@@ -23,7 +23,10 @@ function AppRouter() {
   
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
   // Detect session_id synchronously during render (NOT in useEffect)
-  if (location.hash?.includes('session_id=')) {
+  // Check both hash and search params for session_id
+  const hash = location.hash || window.location.hash;
+  if (hash?.includes('session_id=')) {
+    console.log('AppRouter: Detected session_id in hash, rendering AuthCallback');
     return <AuthCallback />;
   }
   
