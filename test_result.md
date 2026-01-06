@@ -627,7 +627,7 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Six Seven Tambola Live Game 3D Ball Animation and Winner Announcement - COMPLETED"
+    - "Enhanced Results History Page - Winner Details & Ticket Modal"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
