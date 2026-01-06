@@ -351,6 +351,22 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     if not tickets:
         return {}
     
+    # Filter to only booked tickets for winner detection
+    booked_tickets = [
+        t for t in tickets 
+        if (t.get("is_booked") == True or 
+            t.get("booking_status") in ["confirmed", "approved", "booked"] or
+            t.get("user_id") or 
+            t.get("holder_name") or
+            t.get("assigned_to"))
+    ]
+    
+    if not booked_tickets:
+        logger.debug("No booked tickets found for winner detection")
+        return {}
+    
+    logger.debug(f"Winner detection: {len(booked_tickets)} booked tickets out of {len(tickets)} total")
+    
     # Determine which prizes to check based on game_dividends
     prizes_to_check = []
     if game_dividends:
