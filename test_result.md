@@ -630,7 +630,7 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Enhanced Results History Page - Winner Details & Ticket Modal"
+    - "Enhanced Results History Page - Winner Details & Ticket Modal - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
