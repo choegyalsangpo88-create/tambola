@@ -543,9 +543,9 @@ export default function LiveGame() {
             </div>
           </div>
 
-          {/* CENTER: Real 3D Tambola Ball - 2026 Modern Design with number on both sides */}
+          {/* CENTER: Premium 3D Billiard-Style Ball with Spin Animation */}
           <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10 flex flex-col items-center justify-center overflow-hidden">
-            <div className="relative ball-container" style={{ perspective: '1200px', height: '160px', width: '160px' }}>
+            <div className="relative" style={{ perspective: '1200px', height: '160px', width: '160px' }}>
               
               {/* OLD BALL - Exits to the left when new number comes */}
               {showBallTransition && previousBall && (
@@ -553,71 +553,162 @@ export default function LiveGame() {
                   className="ball-exiting absolute inset-0 flex items-center justify-center"
                   style={{ transformStyle: 'preserve-3d' }}
                 >
-                  <div 
-                    className="w-32 h-32 rounded-full relative"
+                  <div className="premium-ball w-32 h-32 rounded-full relative"
                     style={{
-                      background: `radial-gradient(circle at 30% 30%, #ff6b6b 0%, #e63946 40%, #c9302c 70%, #9d0208 100%)`,
-                      boxShadow: `0 20px 40px rgba(0,0,0,0.5), inset -15px -15px 30px rgba(0,0,0,0.4), inset 10px 10px 20px rgba(255,255,255,0.15)`
+                      background: `radial-gradient(circle at 28% 28%, #ff5555 0%, #e53935 30%, #c62828 55%, #b71c1c 75%, #8b0000 100%)`,
+                      boxShadow: `0 20px 50px rgba(0,0,0,0.5), inset -18px -18px 40px rgba(0,0,0,0.4), inset 12px 12px 25px rgba(255,255,255,0.12)`
                     }}
                   >
-                    <div 
-                      className="absolute rounded-full flex items-center justify-center"
+                    <div className="absolute rounded-full flex items-center justify-center"
                       style={{
-                        width: '70px', height: '70px',
-                        top: '50%', left: '50%',
+                        width: '68px', height: '68px',
+                        top: '50%', left: '45%',
                         transform: 'translate(-50%, -50%)',
-                        background: 'radial-gradient(circle at 40% 35%, #ffffff 0%, #f5f5f5 50%, #e8e8e8 100%)',
-                        boxShadow: 'inset 0 3px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.2)'
+                        background: 'radial-gradient(circle at 40% 35%, #ffffff 0%, #fafafa 50%, #f0f0f0 100%)',
+                        boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.2)'
                       }}
                     >
-                      <span className="text-4xl font-black text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{previousBall}</span>
+                      <span className="text-4xl font-black" style={{ color: '#1a1a1a', fontFamily: 'Arial Black, sans-serif' }}>{previousBall}</span>
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* NEW BALL - Modern 2026 3D Design with numbers on both sides */}
+              {/* NEW BALL - Premium Billiard Style with Spin */}
               <div 
-                className={`absolute inset-0 flex items-center justify-center ${showBallTransition ? 'ball-entering' : 'ball-idle'}`}
+                className={`absolute inset-0 flex items-center justify-center ${showBallTransition ? 'ball-spin-enter' : ''}`}
                 style={{ transformStyle: 'preserve-3d' }}
               >
-                {/* Main 3D Ball Body */}
+                {/* Main Premium Ball */}
                 <div 
-                  className="w-32 h-32 rounded-full relative"
+                  className={`premium-ball w-32 h-32 rounded-full relative ${!showBallTransition ? 'ball-float' : ''}`}
                   style={{
-                    background: `radial-gradient(circle at 30% 25%, #ff7b7b 0%, #e63946 35%, #d32f2f 60%, #b71c1c 85%, #8b0000 100%)`,
+                    background: `radial-gradient(circle at 28% 28%, #ff5555 0%, #e53935 30%, #c62828 55%, #b71c1c 75%, #8b0000 100%)`,
                     boxShadow: `
-                      0 30px 60px rgba(0,0,0,0.5),
-                      0 15px 30px rgba(0,0,0,0.3),
-                      inset -25px -25px 50px rgba(0,0,0,0.35),
-                      inset 20px 20px 40px rgba(255,255,255,0.08),
-                      0 0 80px rgba(230,57,70,0.3)
+                      0 30px 60px rgba(0,0,0,0.55),
+                      0 15px 30px rgba(0,0,0,0.35),
+                      inset -22px -22px 45px rgba(0,0,0,0.4),
+                      inset 15px 15px 30px rgba(255,255,255,0.1),
+                      0 0 60px rgba(183,28,28,0.25)
                     `,
-                    transformStyle: 'preserve-3d',
-                    animation: showBallTransition ? 'none' : 'ballGlow 3s ease-in-out infinite'
+                    transformStyle: 'preserve-3d'
                   }}
                 >
-                  {/* Top highlight - main reflection */}
+                  {/* Primary glossy highlight - top left */}
                   <div 
-                    className="absolute"
+                    className="absolute rounded-full"
                     style={{ 
-                      top: '8px',
-                      left: '15px',
-                      width: '55px',
-                      height: '30px',
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, transparent 70%)',
-                      borderRadius: '50%',
-                      filter: 'blur(4px)',
-                      transform: 'rotate(-15deg)'
+                      top: '10px',
+                      left: '18px',
+                      width: '45px',
+                      height: '22px',
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 50%, transparent 100%)',
+                      filter: 'blur(3px)',
+                      transform: 'rotate(-20deg)'
                     }}
                   />
                   
-                  {/* Sharp highlight dot */}
+                  {/* Sharp specular highlight */}
                   <div 
                     className="absolute"
                     style={{ 
-                      top: '14px',
-                      left: '22px',
+                      top: '15px',
+                      left: '25px',
+                      width: '14px',
+                      height: '8px',
+                      background: 'rgba(255,255,255,0.98)',
+                      borderRadius: '50%',
+                      filter: 'blur(1px)'
+                    }}
+                  />
+                  
+                  {/* FRONT White Circle with Number */}
+                  <div 
+                    className="absolute rounded-full flex items-center justify-center"
+                    style={{
+                      width: '70px',
+                      height: '70px',
+                      top: '50%',
+                      left: '45%',
+                      transform: 'translate(-50%, -50%)',
+                      background: `radial-gradient(circle at 38% 32%, #ffffff 0%, #fafafa 40%, #f5f5f5 70%, #eeeeee 100%)`,
+                      boxShadow: `
+                        inset 0 4px 15px rgba(0,0,0,0.1),
+                        inset 0 -3px 10px rgba(255,255,255,0.9),
+                        0 3px 8px rgba(0,0,0,0.25),
+                        0 0 0 2px rgba(200,200,200,0.15)
+                      `
+                    }}
+                  >
+                    <span 
+                      className="text-5xl font-black" 
+                      style={{ 
+                        color: '#1a1a1a',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.15)',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        letterSpacing: '-3px'
+                      }}
+                    >
+                      {session.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* RIGHT SIDE White Circle - Creates 3D depth like billiard ball */}
+                  <div 
+                    className="absolute rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: '55px',
+                      height: '65px',
+                      top: '34%',
+                      right: '-14px',
+                      background: `linear-gradient(90deg, #d5d5d5 0%, #e8e8e8 25%, #f5f5f5 50%, #fafafa 75%, #f2f2f2 100%)`,
+                      boxShadow: `inset -5px 0 15px rgba(0,0,0,0.18), inset 3px 0 10px rgba(255,255,255,0.5)`,
+                      borderRadius: '50%',
+                      transform: 'rotateY(72deg) scaleX(0.38)',
+                      border: '1px solid rgba(180,180,180,0.3)'
+                    }}
+                  >
+                    <span 
+                      className="text-3xl font-black" 
+                      style={{ 
+                        color: '#2a2a2a',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        transform: 'scaleX(2.6)',
+                        letterSpacing: '-2px'
+                      }}
+                    >
+                      {session.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* Subtle bottom reflection */}
+                  <div 
+                    className="absolute rounded-full"
+                    style={{
+                      bottom: '6px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '45px',
+                      height: '8px',
+                      background: 'linear-gradient(to top, rgba(255,150,150,0.35), transparent)',
+                      filter: 'blur(2px)'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Ball shadow on surface */}
+              <div 
+                className="absolute -bottom-1 left-1/2 w-28 h-5 rounded-full"
+                style={{ 
+                  transform: 'translateX(-50%)',
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%)',
+                  filter: 'blur(5px)'
+                }}
+              />
+            </div>
+            <p className="text-sm text-amber-400 font-bold mt-4">{session.called_numbers?.length || 0} / 90</p>
+          </div>
                       width: '18px',
                       height: '10px',
                       background: 'rgba(255,255,255,0.95)',
