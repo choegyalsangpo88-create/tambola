@@ -354,7 +354,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     # Filter to only booked tickets for winner detection
     booked_tickets = [
         t for t in tickets 
-        if (t.get("is_booked") == True or 
+        if (t.get("is_booked") or 
             t.get("booking_status") in ["confirmed", "approved", "booked"] or
             t.get("user_id") or 
             t.get("holder_name") or
