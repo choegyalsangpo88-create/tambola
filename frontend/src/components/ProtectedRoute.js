@@ -22,8 +22,11 @@ export default function ProtectedRoute({ children }) {
 
     // If user data passed from AuthCallback, skip auth check
     if (location.state?.user) {
-      setUser(location.state.user);
-      setIsAuthenticated(true);
+      // Use a microtask to avoid synchronous state update within effect
+      queueMicrotask(() => {
+        setUser(location.state.user);
+        setIsAuthenticated(true);
+      });
       return;
     }
 
