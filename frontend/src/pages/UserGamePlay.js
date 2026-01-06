@@ -557,35 +557,73 @@ export default function UserGamePlay() {
       <div className="max-w-4xl mx-auto px-3 py-4">
         {/* Main Row: Caller Ball | Dividends - Equal Space */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* Left: Real 3D Tambola Ball with number on both sides */}
-          <div className="bg-black/30 rounded-xl p-3 flex flex-col items-center justify-center">
-            <div className="relative" style={{ perspective: '800px' }}>
+          {/* Left: Real 3D Tambola Ball with Entry/Exit Animation */}
+          <div className="bg-black/30 rounded-xl p-3 flex flex-col items-center justify-center overflow-hidden">
+            <div className="relative ball-container" style={{ perspective: '1000px', height: '140px', width: '140px' }}>
+              
+              {/* OLD BALL - Exits to the left when new number comes */}
+              {showBallTransition && previousBall && (
+                <div 
+                  className="ball-exiting absolute inset-0 flex items-center justify-center"
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  <div 
+                    className="w-28 h-28 rounded-full relative"
+                    style={{
+                      background: `
+                        radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.5) 0%, transparent 35%),
+                        radial-gradient(ellipse 100% 100% at 50% 50%, ${getBallGradient(previousBall)})
+                      `,
+                      boxShadow: `
+                        0 20px 40px rgba(0,0,0,0.5),
+                        inset -15px -15px 35px rgba(0,0,0,0.4),
+                        inset 12px 12px 25px rgba(255,255,255,0.1)
+                      `
+                    }}
+                  >
+                    <div 
+                      className="absolute rounded-full flex items-center justify-center"
+                      style={{
+                        width: '60px', height: '60px',
+                        top: '50%', left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        background: 'radial-gradient(ellipse 90% 90% at 40% 35%, #ffffff 0%, #f0f0f0 60%, #e5e5e5 100%)',
+                        boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.25)'
+                      }}
+                    >
+                      <span className="text-4xl font-black text-gray-900">{previousBall}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* NEW BALL - Enters from right/top with 3D spin */}
               <div 
-                className={`relative ${showBallAnimation ? 'ball-entry' : 'ball-idle'}`}
+                className={`absolute inset-0 flex items-center justify-center ${showBallTransition ? 'ball-entering' : 'ball-idle'}`}
                 style={{ transformStyle: 'preserve-3d' }}
               >
-                {/* Main Ball Body */}
+                {/* Main 3D Ball Body */}
                 <div 
-                  className="w-28 h-28 md:w-32 md:h-32 rounded-full relative"
+                  className="w-28 h-28 md:w-32 md:h-32 rounded-full relative tambola-ball-3d ball-glow-pulse"
                   style={{
                     background: `
-                      radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.5) 0%, transparent 35%),
+                      radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.6) 0%, transparent 35%),
                       radial-gradient(ellipse 100% 100% at 50% 50%, ${getBallGradient(currentBall || session?.current_number || 0)})
                     `,
                     boxShadow: `
-                      0 25px 50px rgba(0,0,0,0.5),
-                      0 10px 20px rgba(0,0,0,0.3),
-                      inset -20px -20px 40px rgba(0,0,0,0.4),
-                      inset 15px 15px 30px rgba(255,255,255,0.1)
+                      0 20px 45px rgba(0,0,0,0.5),
+                      0 8px 18px rgba(0,0,0,0.3),
+                      inset -18px -18px 35px rgba(0,0,0,0.4),
+                      inset 12px 12px 25px rgba(255,255,255,0.12)
                     `,
-                    transform: 'rotateY(-15deg) rotateX(5deg)'
+                    transformStyle: 'preserve-3d'
                   }}
                 >
                   {/* Main glossy highlight */}
                   <div 
-                    className="absolute top-3 left-4 w-10 h-6 md:w-12 md:h-7 rounded-full"
+                    className="absolute top-3 left-4 w-12 h-7 rounded-full"
                     style={{ 
-                      background: 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, transparent 70%)',
+                      background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 40%, transparent 70%)',
                       filter: 'blur(3px)',
                       transform: 'rotate(-20deg)'
                     }}
@@ -593,40 +631,41 @@ export default function UserGamePlay() {
                   
                   {/* Sharp highlight spot */}
                   <div 
-                    className="absolute top-5 left-7 w-3 h-2 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.95)' }}
+                    className="absolute top-5 left-7 w-4 h-2.5 rounded-full"
+                    style={{ background: 'rgba(255,255,255,0.98)' }}
                   />
                   
                   {/* FRONT White number circle (center) */}
                   <div 
-                    className="absolute rounded-full flex items-center justify-center"
+                    className="ball-face-front absolute rounded-full"
                     style={{
-                      width: '60px',
-                      height: '60px',
+                      width: '64px',
+                      height: '64px',
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
                       background: `
                         radial-gradient(ellipse 90% 90% at 40% 35%, 
                           #ffffff 0%, 
-                          #fafafa 30%,
-                          #f0f0f0 60%, 
-                          #e5e5e5 100%
+                          #fafafa 25%,
+                          #f5f5f5 50%, 
+                          #eeeeee 75%,
+                          #e0e0e0 100%
                         )
                       `,
                       boxShadow: `
-                        inset 0 4px 15px rgba(0,0,0,0.12),
-                        inset 0 -3px 10px rgba(255,255,255,0.9),
-                        0 2px 6px rgba(0,0,0,0.25)
+                        inset 0 4px 15px rgba(0,0,0,0.15),
+                        inset 0 -3px 10px rgba(255,255,255,0.95),
+                        0 2px 6px rgba(0,0,0,0.3)
                       `,
-                      border: '2px solid rgba(200,200,200,0.3)'
+                      border: '2px solid rgba(200,200,200,0.4)'
                     }}
                   >
                     <span 
-                      className="text-4xl font-black" 
+                      className="text-4xl font-black absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" 
                       style={{ 
                         color: '#111111',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.15)',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
                         fontFamily: 'Arial Black, Impact, sans-serif',
                         letterSpacing: '-2px'
                       }}
@@ -635,37 +674,77 @@ export default function UserGamePlay() {
                     </span>
                   </div>
                   
-                  {/* SIDE White number circle (right side - gives 3D depth) */}
+                  {/* RIGHT SIDE White number circle - Creates 3D depth */}
                   <div 
                     className="absolute rounded-full flex items-center justify-center overflow-hidden"
                     style={{
-                      width: '40px',
-                      height: '50px',
+                      width: '45px',
+                      height: '55px',
                       top: '38%',
-                      right: '-6px',
+                      right: '-8px',
                       background: `
                         linear-gradient(90deg, 
-                          #e8e8e8 0%,
-                          #f5f5f5 30%,
-                          #fafafa 50%,
+                          #d8d8d8 0%,
+                          #e8e8e8 20%,
+                          #f2f2f2 50%,
+                          #fafafa 70%,
                           #f0f0f0 100%
                         )
                       `,
                       boxShadow: `
-                        inset -3px 0 10px rgba(0,0,0,0.15),
+                        inset -4px 0 10px rgba(0,0,0,0.2),
                         inset 2px 0 8px rgba(255,255,255,0.5)
                       `,
                       borderRadius: '50%',
-                      transform: 'rotateY(60deg) scaleX(0.5)',
-                      border: '2px solid rgba(180,180,180,0.3)'
+                      transform: 'rotateY(65deg) scaleX(0.45)',
+                      border: '2px solid rgba(180,180,180,0.4)'
+                    }}
+                  >
+                    <span 
+                      className="text-2xl font-black" 
+                      style={{ 
+                        color: '#222222',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        transform: 'scaleX(2.2)',
+                        letterSpacing: '-1px'
+                      }}
+                    >
+                      {currentBall || session?.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* LEFT SIDE hint of number (back of ball) */}
+                  <div 
+                    className="absolute rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: '38px',
+                      height: '48px',
+                      top: '40%',
+                      left: '-6px',
+                      background: `
+                        linear-gradient(270deg, 
+                          #c8c8c8 0%,
+                          #d8d8d8 30%,
+                          #e0e0e0 60%,
+                          #e8e8e8 100%
+                        )
+                      `,
+                      boxShadow: `
+                        inset 3px 0 8px rgba(0,0,0,0.25),
+                        inset -2px 0 6px rgba(255,255,255,0.4)
+                      `,
+                      borderRadius: '50%',
+                      transform: 'rotateY(-65deg) scaleX(0.4)',
+                      border: '2px solid rgba(160,160,160,0.4)',
+                      opacity: 0.8
                     }}
                   >
                     <span 
                       className="text-xl font-black" 
                       style={{ 
-                        color: '#222222',
+                        color: '#444444',
                         fontFamily: 'Arial Black, Impact, sans-serif',
-                        transform: 'scaleX(2)',
+                        transform: 'scaleX(2.5)',
                         letterSpacing: '-1px'
                       }}
                     >
@@ -673,16 +752,16 @@ export default function UserGamePlay() {
                     </span>
                   </div>
                 </div>
-                
-                {/* Ball shadow */}
-                <div 
-                  className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-20 h-4 rounded-full"
-                  style={{ 
-                    background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%)',
-                    filter: 'blur(4px)'
-                  }}
-                />
               </div>
+              
+              {/* Ball shadow */}
+              <div 
+                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-24 h-5 rounded-full ball-shadow-animated"
+                style={{ 
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%)',
+                  filter: 'blur(4px)'
+                }}
+              />
             </div>
             <p className="text-amber-400 text-xs mt-3">{session?.called_numbers?.length || 0}/90 Numbers</p>
           </div>
