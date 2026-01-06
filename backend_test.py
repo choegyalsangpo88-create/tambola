@@ -2020,10 +2020,21 @@ class TambolaAPITester:
         # Test Scenario 2: INVALID Full Sheet Bonus - One ticket has only 1 mark
         print("\n🔍 SCENARIO 2: INVALID Full Sheet Bonus (1 ticket has only 1 mark)")
         
-        # Create 6 tickets where 5 have 2+ marks, but 1 has only 1 mark
-        invalid_one_ticket_numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # Last ticket gets only 1 mark (11)
+        # Create 6 tickets with NON-OVERLAPPING numbers so we can control marks per ticket
+        invalid_test_tickets = []
+        for i in range(6):
+            ticket = [
+                [10+i*10, 11+i*10, None, None, None, None, None, None, None],  # Non-overlapping numbers
+                [None, None, None, None, None, None, None, None, None],
+                [None, None, None, None, None, None, None, None, None]
+            ]
+            invalid_test_tickets.append(ticket)
         
-        invalid_one_result = check_full_sheet_bonus(valid_full_sheet_tickets, invalid_one_ticket_numbers, min_marks_per_ticket=2)
+        # Called numbers: Give 2 marks to first 5 tickets, only 1 mark to last ticket
+        # Tickets have numbers: [10,11], [20,21], [30,31], [40,41], [50,51], [60,61]
+        invalid_one_ticket_numbers = [10, 11, 20, 21, 30, 31, 40, 41, 50, 51, 60]  # Last ticket gets only 1 mark (60)
+        
+        invalid_one_result = check_full_sheet_bonus(invalid_test_tickets, invalid_one_ticket_numbers, min_marks_per_ticket=2)
         print(f"   ❌ Invalid Full Sheet (1 ticket with 1 mark): {invalid_one_result} (should be False)")
         print(f"   📋 Called numbers: {invalid_one_ticket_numbers}")
         print(f"   📋 Marks per ticket: [2, 2, 2, 2, 2, 1] <- Last ticket fails")
