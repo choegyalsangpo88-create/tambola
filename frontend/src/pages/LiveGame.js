@@ -546,10 +546,11 @@ export default function LiveGame() {
                   return topPlayers.map((p, idx) => (
                     <div key={idx} className="bg-white/5 rounded px-1.5 py-1">
                       <span className="text-[9px] text-white font-medium truncate block">
-                        {p.name.split(' ')[0]}
+                        {p.name}
+                        <span className="text-amber-400 ml-1">({p.prize})</span>
                       </span>
                       <div className="flex gap-0.5 mt-0.5">
-                        {Array.from({ length: Math.min(p.bestRemaining, 5) }).map((_, i) => (
+                        {Array.from({ length: Math.min(p.remaining, 5) }).map((_, i) => (
                           <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
                         ))}
                       </div>
@@ -557,7 +558,7 @@ export default function LiveGame() {
                   ));
                 })()
               ) : (
-                <p className="text-[7px] text-gray-500 text-center">Waiting...</p>
+                <p className="text-[8px] text-gray-500 text-center py-2">Waiting for players...</p>
               )}
             </div>
           </div>
