@@ -2107,7 +2107,12 @@ app.include_router(api_router)
 cors_origins = [
     "http://localhost:3000",
     "https://localhost:3000",
-    "https://auth.emergentagent.com"
+    "https://auth.emergentagent.com",
+    # Custom domain
+    "https://sixseventambola.com",
+    "https://www.sixseventambola.com",
+    "http://sixseventambola.com",
+    "http://www.sixseventambola.com",
 ]
 
 # Add frontend URL from environment if available
@@ -2124,6 +2129,14 @@ if backend_url:
     origin = f"{parsed.scheme}://{parsed.netloc}"
     if origin not in cors_origins:
         cors_origins.append(origin)
+
+# Add any custom origins from CORS_ORIGINS env var
+custom_origins = os.environ.get('CORS_ORIGINS', '')
+if custom_origins and custom_origins != '*':
+    for origin in custom_origins.split(','):
+        origin = origin.strip()
+        if origin and origin not in cors_origins:
+            cors_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
