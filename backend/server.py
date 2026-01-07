@@ -300,19 +300,25 @@ async def verify_admin(request: Request):
 async def exchange_session(request: SessionExchangeRequest, response: Response):
     """Exchange session_id for session_token"""
     try:
-        async with httpx.AsyncClient() as client:
+        logger.info(f"Auth session exchange started for session_id: {request.session_id[:10]}...")
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(
                 "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
                 headers={"X-Session-ID": request.session_id}
             )
+            logger.info(f"Emergent auth response status: {resp.status_code}")
             resp.raise_for_status()
             data = resp.json()
+        
+        logger.info(f"User email from OAuth: {data.get('email', 'N/A')}")
         
         # Check if user exists
         user_doc = await db.users.find_one({"email": data["email"]}, {"_id": 0})
         
         if not user_doc:
             # Create new user
+            logger.info("Creating new user...")
             user_id = f"user_{uuid.uuid4().hex[:12]}"
             user_data = {
                 "user_id": user_id,
@@ -324,8 +330,10 @@ async def exchange_session(request: SessionExchangeRequest, response: Response):
             }
             await db.users.insert_one(user_data)
             user_doc = user_data
+            logger.info(f"New user created: {user_id}")
         else:
             # Update existing user info
+            logger.info(f"Updating existing user: {user_doc['user_id']}")
             await db.users.update_one(
                 {"user_id": user_doc["user_id"]},
                 {"$set": {"name": data["name"], "picture": data.get("picture")}}
@@ -342,6 +350,8 @@ async def exchange_session(request: SessionExchangeRequest, response: Response):
             "created_at": datetime.now(timezone.utc)
         })
         
+        logger.info("Session created successfully")
+        
         # Set cookie
         response.set_cookie(
             key="session_token",
@@ -354,12 +364,18 @@ async def exchange_session(request: SessionExchangeRequest, response: Response):
         )
         
         # Return user AND session_token in body for mobile fallback
-        return {
+        result = {
             "user": User(**user_doc).model_dump(),
             "session_token": session_token  # Fallback for mobile
         }
+        logger.info("Auth session exchange completed successfully")
+        return result
     
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Emergent auth API error: {e.response.status_code} - {e.response.text}")
+        raise HTTPException(status_code=400, detail=f"OAuth provider error: {str(e)}")
     except Exception as e:
+        logger.error(f"Auth session exchange error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.get("/auth/me")
