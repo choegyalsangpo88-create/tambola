@@ -167,12 +167,8 @@ export default function LiveGame() {
         previousWinnersRef.current = session.winners;
       }
       
-      // Play TTS for new number with 3D ball animation
+      // Play TTS for new number with ball animation
       if (session.current_number && session.current_number !== lastPlayedNumber) {
-        // Trigger new number animation
-        setIsNewNumber(true);
-        setTimeout(() => setIsNewNumber(false), 100);
-        
         playTTSAnnouncement(session.current_number);
       }
     }
