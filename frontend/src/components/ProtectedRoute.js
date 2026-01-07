@@ -14,8 +14,11 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     // If user data passed from AuthCallback, use it directly
     if (location.state?.user) {
-      setUser(location.state.user);
-      setIsAuthenticated(true);
+      // Use Promise.resolve to avoid synchronous setState in effect
+      Promise.resolve().then(() => {
+        setUser(location.state.user);
+        setIsAuthenticated(true);
+      });
       return;
     }
 
