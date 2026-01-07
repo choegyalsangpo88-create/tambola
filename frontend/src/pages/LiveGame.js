@@ -563,19 +563,124 @@ export default function LiveGame() {
             </div>
           </div>
 
-          {/* CENTER: Premium 3D Tambola Ball using Three.js */}
+          {/* CENTER: Premium Tambola Ball with CSS 3D Animation */}
           <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-2 border border-white/10 flex flex-col items-center justify-center overflow-hidden">
-            {use3DBall ? (
-              <Suspense fallback={<FallbackBall number={session.current_number} />}>
-                <TambolaBall3D 
-                  number={session.current_number}
-                  previousNumber={lastPlayedNumber}
-                  isNewNumber={isNewNumber}
-                />
-              </Suspense>
-            ) : (
-              <FallbackBall number={session.current_number} />
-            )}
+            <div className="relative" style={{ height: '140px', width: '140px', perspective: '1000px' }}>
+              {/* Ball Container with Animation */}
+              <div 
+                key={session.current_number}
+                className="absolute inset-0 flex items-center justify-center premium-ball-animate"
+              >
+                {/* Main Ball */}
+                <div 
+                  className="relative"
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    background: `
+                      radial-gradient(circle at 30% 30%, #ff6b6b 0%, #e53935 25%, #c62828 50%, #b71c1c 75%, #8b0000 100%)
+                    `,
+                    boxShadow: `
+                      0 25px 50px rgba(0,0,0,0.5),
+                      0 10px 20px rgba(0,0,0,0.3),
+                      inset -20px -20px 40px rgba(0,0,0,0.4),
+                      inset 15px 15px 30px rgba(255,255,255,0.1),
+                      0 0 60px rgba(200,0,0,0.3)
+                    `,
+                    transformStyle: 'preserve-3d'
+                  }}
+                >
+                  {/* Top Highlight */}
+                  <div 
+                    className="absolute"
+                    style={{
+                      top: '10px',
+                      left: '20px',
+                      width: '50px',
+                      height: '25px',
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                      borderRadius: '50%',
+                      filter: 'blur(3px)'
+                    }}
+                  />
+                  
+                  {/* Sharp Highlight */}
+                  <div 
+                    className="absolute"
+                    style={{
+                      top: '18px',
+                      left: '30px',
+                      width: '15px',
+                      height: '8px',
+                      background: 'rgba(255,255,255,0.95)',
+                      borderRadius: '50%'
+                    }}
+                  />
+                  
+                  {/* Front White Circle with Number */}
+                  <div 
+                    className="absolute flex items-center justify-center"
+                    style={{
+                      width: '65px',
+                      height: '65px',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle at 40% 35%, #ffffff 0%, #f5f5f5 50%, #e8e8e8 100%)',
+                      boxShadow: 'inset 0 3px 12px rgba(0,0,0,0.15), 0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    <span 
+                      className="text-4xl font-black"
+                      style={{ 
+                        color: '#1a1a1a', 
+                        fontFamily: 'Arial Black, sans-serif',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      {session.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* Right Side Number (3D effect) */}
+                  <div 
+                    className="absolute flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: '45px',
+                      height: '55px',
+                      top: '35%',
+                      right: '-8px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(90deg, #d0d0d0 0%, #e8e8e8 30%, #f5f5f5 60%, #eeeeee 100%)',
+                      boxShadow: 'inset -4px 0 10px rgba(0,0,0,0.2)',
+                      transform: 'rotateY(70deg) scaleX(0.4)'
+                    }}
+                  >
+                    <span 
+                      className="text-2xl font-black"
+                      style={{ 
+                        color: '#333', 
+                        transform: 'scaleX(2.5)',
+                        fontFamily: 'Arial Black, sans-serif'
+                      }}
+                    >
+                      {session.current_number || '?'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Shadow */}
+              <div 
+                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-24 h-5 rounded-full"
+                style={{
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%)',
+                  filter: 'blur(4px)'
+                }}
+              />
+            </div>
             <p className="text-sm text-amber-400 font-bold">{session.called_numbers?.length || 0} / 90</p>
           </div>
 
