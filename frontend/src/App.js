@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
+import { useState, useEffect } from 'react';
 import LoginScreen from './pages/LoginScreen';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
@@ -60,6 +61,23 @@ function AppRouter() {
 }
 
 function App() {
+  // CRITICAL: Check for OAuth callback BEFORE React Router kicks in
+  // This handles the case where user is redirected to /#session_id=xxx
+  const [isProcessingAuth, setIsProcessingAuth] = useState(() => {
+    // Check synchronously on initial load
+    return window.location.hash?.includes('session_id=');
+  });
+
+  // If we detected session_id on initial load, render AuthCallback directly
+  // This bypasses React Router completely to avoid race conditions
+  if (isProcessingAuth) {
+    return (
+      <BrowserRouter>
+        <AuthCallback onComplete={() => setIsProcessingAuth(false)} />
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <AppRouter />
