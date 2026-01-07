@@ -64,30 +64,26 @@ h1, h2, h3, h4, h5, h6 {
    Casino-style ball with realistic spin
    ======================================== */
 
-/* Premium ball entry animation - Casino style */
+/* Premium ball entry animation - Casino style pop */
 @keyframes premiumBallEntry {
     0% {
-        transform: scale(0) rotateY(0deg) rotateX(0deg);
+        transform: scale(0) rotate(0deg);
         opacity: 0;
     }
-    30% {
-        transform: scale(0.5) rotateY(360deg) rotateX(180deg);
-        opacity: 0.7;
-    }
-    50% {
-        transform: scale(1.2) rotateY(540deg) rotateX(270deg);
+    40% {
+        transform: scale(1.15) rotate(360deg);
         opacity: 1;
     }
-    70% {
-        transform: scale(0.95) rotateY(660deg) rotateX(330deg);
+    60% {
+        transform: scale(0.95) rotate(540deg);
         opacity: 1;
     }
-    85% {
-        transform: scale(1.05) rotateY(700deg) rotateX(350deg);
+    80% {
+        transform: scale(1.05) rotate(660deg);
         opacity: 1;
     }
     100% {
-        transform: scale(1) rotateY(720deg) rotateX(360deg);
+        transform: scale(1) rotate(720deg);
         opacity: 1;
     }
 }
@@ -105,29 +101,19 @@ h1, h2, h3, h4, h5, h6 {
 /* Premium ball glow pulse */
 @keyframes premiumGlow {
     0%, 100% {
-        box-shadow: 
-            0 25px 50px rgba(0,0,0,0.5),
-            0 10px 20px rgba(0,0,0,0.3),
-            inset -20px -20px 40px rgba(0,0,0,0.4),
-            inset 15px 15px 30px rgba(255,255,255,0.1),
-            0 0 40px rgba(200,0,0,0.2);
+        filter: drop-shadow(0 0 20px rgba(200,0,0,0.3));
     }
     50% {
-        box-shadow: 
-            0 30px 60px rgba(0,0,0,0.55),
-            0 12px 25px rgba(0,0,0,0.35),
-            inset -22px -22px 45px rgba(0,0,0,0.45),
-            inset 18px 18px 35px rgba(255,255,255,0.12),
-            0 0 70px rgba(200,0,0,0.4);
+        filter: drop-shadow(0 0 40px rgba(200,0,0,0.5));
     }
 }
 
 .premium-ball-animate {
-    animation: premiumBallEntry 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: premiumBallEntry 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.premium-ball-animate > div {
-    animation: premiumBallFloat 3s ease-in-out infinite 1.2s, premiumGlow 2.5s ease-in-out infinite 1.2s;
+.premium-ball-idle {
+    animation: premiumBallFloat 3s ease-in-out infinite, premiumGlow 2s ease-in-out infinite;
 }
 
 /* OLD BALL EXITS - Gets kicked out to the side */
