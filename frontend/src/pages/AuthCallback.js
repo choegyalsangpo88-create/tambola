@@ -19,51 +19,69 @@ export default function AuthCallback() {
       try {
         // Get session_id from hash - read it ONCE and store it
         const currentHash = window.location.hash;
+        console.log('AuthCallback: Current hash:', currentHash);
+        
         const hash = currentHash.substring(1);
         const params = new URLSearchParams(hash);
         const sessionId = params.get('session_id');
 
-        console.log('AuthCallback: Starting session exchange, session_id:', sessionId ? 'present' : 'missing');
+        console.log('AuthCallback: Session ID:', sessionId ? 'present' : 'missing');
 
         if (!sessionId) {
           throw new Error('No session ID found in URL');
         }
 
         // Exchange session_id for session_token
-        console.log('AuthCallback: Calling backend to exchange session...');
+        console.log('AuthCallback: Exchanging session...');
         const response = await axios.post(
           `${API}/auth/session`,
           { session_id: sessionId },
-          { withCredentials: true }
+          { 
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
         );
 
-        console.log('AuthCallback: Session exchange successful!');
+        console.log('AuthCallback: Exchange successful!', response.status);
 
         // Clear the hash AFTER successful exchange
         window.history.replaceState(null, '', window.location.pathname);
 
         const user = response.data.user;
         
+        // Store user in localStorage as backup for mobile
+        if (user) {
+          try {
+            localStorage.setItem('tambola_user', JSON.stringify(user));
+          } catch (e) {
+            console.log('Could not store user in localStorage');
+          }
+        }
+        
         toast.success('Logged in successfully!');
 
-        // Navigate to dashboard with user data
-        navigate('/', { state: { user }, replace: true });
+        // Use window.location for more reliable redirect on mobile
+        window.location.href = '/';
         
       } catch (error) {
-        console.error('AuthCallback: Error -', error.message || error);
+        console.error('AuthCallback: Error -', error);
         
         // Clear hash on error
         window.history.replaceState(null, '', window.location.pathname);
         
         const errorMsg = error.response?.data?.detail || error.message || 'Authentication failed';
+        console.error('AuthCallback: Error message -', errorMsg);
         toast.error(`Login failed: ${errorMsg}`);
         
         // Redirect to login
-        navigate('/login', { replace: true });
+        window.location.href = '/login';
       }
     };
 
-    processSession();
+    // Small delay to ensure hash is properly read on mobile
+    setTimeout(processSession, 100);
   }, [navigate]);
 
   return (
