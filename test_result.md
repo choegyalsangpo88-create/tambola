@@ -774,3 +774,16 @@ agent_communication:
   - agent: "main"
     message: "FIXES IMPLEMENTED: 1) Full Sheet Bonus - Now only checks BOOKED tickets (is_booked=True OR booking_status in [confirmed,approved,booked] OR user_id/holder_name/assigned_to present). 2) 3D Ball - Modern 2026 design with number on CENTER + RIGHT side + LEFT side (back hint), realistic glowing red ball with proper highlights and shadows. 3) Winner Voice Announcement - Now says Congratulations! [Prize] gone! via TTS. 4) Dividends - Full height scrollable section with clickable winners. Please test all these features."
 
+
+  - agent: "main"
+    message: "FIXES IMPLEMENTED (New Fork Session): 
+    1) Google Login Redirect Loop Fix - Simplified auth flow in App.js, AuthCallback.js, and ProtectedRoute.js. Now stores session token in localStorage FIRST before any navigation. Added proper logging and race condition handling. Key changes: AuthCallback stores credentials before redirect, ProtectedRoute checks localStorage first (most reliable for mobile), App.js properly catches OAuth callbacks.
+    2) Caller Ball CSS Animation Fix - Simplified premiumBallEntry animation from complex 720deg rotation to simple bounce-in effect. Removed potentially problematic opacity:0 and complex transform that might hide the number.
+    3) Winner Name Display Fix - Backend server.py now properly reads 'holder_name' from winner_detection instead of non-existent 'user_name' field.
+    
+    Please test:
+    a) Google Login flow - click 'Continue with Google', complete OAuth, verify redirect to Dashboard (not back to login)
+    b) Live Game Ball - verify the caller ball shows the current number clearly and animates smoothly
+    c) Winner Names in Dividends - verify winner names show in the dividends list when a prize is won
+    
+    Backend URL: https://ticket-master-128.preview.emergentagent.com"
