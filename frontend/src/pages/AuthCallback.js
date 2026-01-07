@@ -17,18 +17,18 @@ export default function AuthCallback() {
 
     const processSession = async () => {
       try {
-        // Get session_id from hash - read it ONCE and store it
+        // Get session_id from hash
         const currentHash = window.location.hash;
-        console.log('AuthCallback: Current hash:', currentHash);
+        console.log('AuthCallback: Hash:', currentHash);
         
         const hash = currentHash.substring(1);
         const params = new URLSearchParams(hash);
         const sessionId = params.get('session_id');
 
-        console.log('AuthCallback: Session ID:', sessionId ? 'present' : 'missing');
+        console.log('AuthCallback: Session ID:', sessionId ? 'found' : 'not found');
 
         if (!sessionId) {
-          throw new Error('No session ID found in URL');
+          throw new Error('No session ID found');
         }
 
         // Exchange session_id for session_token
@@ -38,32 +38,29 @@ export default function AuthCallback() {
           { session_id: sessionId },
           { 
             withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json',
-            }
+            headers: { 'Content-Type': 'application/json' }
           }
         );
 
-        console.log('AuthCallback: Exchange successful!', response.status);
+        console.log('AuthCallback: Success!');
 
-        // Clear the hash AFTER successful exchange
+        // Clear the hash
         window.history.replaceState(null, '', window.location.pathname);
 
-        const user = response.data.user;
+        const { user, session_token } = response.data;
         
-        // Store user in localStorage as backup for mobile
+        // Store in localStorage as fallback for mobile
         if (user) {
-          try {
-            localStorage.setItem('tambola_user', JSON.stringify(user));
-          } catch (e) {
-            console.log('Could not store user in localStorage');
-          }
+          localStorage.setItem('tambola_user', JSON.stringify(user));
+        }
+        if (session_token) {
+          localStorage.setItem('tambola_session', session_token);
         }
         
         toast.success('Logged in successfully!');
 
-        // Use window.location for more reliable redirect on mobile
-        window.location.href = '/';
+        // Force redirect using window.location for mobile compatibility
+        window.location.replace('/');
         
       } catch (error) {
         console.error('AuthCallback: Error -', error);
@@ -71,17 +68,16 @@ export default function AuthCallback() {
         // Clear hash on error
         window.history.replaceState(null, '', window.location.pathname);
         
-        const errorMsg = error.response?.data?.detail || error.message || 'Authentication failed';
-        console.error('AuthCallback: Error message -', errorMsg);
-        toast.error(`Login failed: ${errorMsg}`);
+        const errorMsg = error.response?.data?.detail || error.message || 'Login failed';
+        toast.error(errorMsg);
         
         // Redirect to login
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     };
 
-    // Small delay to ensure hash is properly read on mobile
-    setTimeout(processSession, 100);
+    // Small delay to ensure hash is properly read
+    setTimeout(processSession, 50);
   }, [navigate]);
 
   return (
