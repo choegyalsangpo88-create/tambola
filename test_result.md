@@ -658,6 +658,8 @@ frontend:
     needs_retesting: false
     status_history:
       - working: "NA"
+  - agent: "testing"
+    message: "🚨 CRITICAL ISSUE FOUND: Six Seven Tambola New Features Testing reveals ticket generator bug. Review request requires 'All 90 numbers (1-90) should be distributed uniquely across the 6 tickets' but current generate_full_sheet() only produces ~60 unique numbers with duplicates. This breaks Full Sheet Bonus detection. WORKING: Full Sheet Bonus detection logic ✅, Sequential Full House shared winners ✅, Backend APIs ✅, Admin credentials ✅. BROKEN: Ticket generator unique number distribution ❌. Main agent must fix generate_full_sheet() in ticket_generator.py to ensure exactly 90 unique numbers (1-90) across 6 tickets with no duplicates."
         agent: "main"
         comment: "NEW TASK: Testing enhanced Results History page with winner details, winning ticket modal, and called numbers display. Features implemented: 1) Winner Details - Each winner shows holder_name, ticket number, time won, 'View Ticket' button, 2) Winning Ticket Modal - Shows prize name, winner info, full 3x9 ticket grid with called numbers highlighted in green, legend for called vs not called, 3) Called Numbers Display - Vertical grid (1-90) in 10 columns with colored balls for called numbers, call order row showing sequence. Need to verify code structure, API integration (/api/games/completed, /api/games/{game_id}/session, /api/games/{game_id}/tickets), and UI elements."
       - working: true
