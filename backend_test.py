@@ -2460,8 +2460,8 @@ class TambolaAPITester:
         return True
 
     def run_all_tests(self):
-        """Run all API tests with focus on User Game Ticket Selection Features"""
-        print("🚀 Starting Tambola API Tests - USER GAME TICKET SELECTION FEATURES")
+        """Run all API tests with focus on Critical Fixes from Review Request"""
+        print("🚀 Starting Tambola API Tests - SIX SEVEN TAMBOLA CRITICAL FIXES")
         print(f"🔗 Base URL: {self.base_url}")
         print(f"👤 Test User ID: {self.user_id}")
         print(f"🔑 Session Token: {self.session_token[:20]}...")
@@ -2472,17 +2472,25 @@ class TambolaAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
-        # PRIORITY 1: User Game Ticket Selection Features Testing (Review Request)
+        # PRIORITY 1: Critical Fixes from Review Request
         print("\n" + "🎯"*60)
-        print("USER GAME TICKET SELECTION FEATURES TESTING - PRIORITY 1")
+        print("SIX SEVEN TAMBOLA CRITICAL FIXES TESTING - PRIORITY 1")
+        print("🎯"*60)
+        
+        # Test the critical fixes from review request FIRST
+        critical_fixes_success = self.test_six_seven_tambola_critical_fixes()
+        
+        # PRIORITY 2: User Game Ticket Selection Features Testing (Review Request)
+        print("\n" + "🎯"*60)
+        print("USER GAME TICKET SELECTION FEATURES TESTING - PRIORITY 2")
         print("🎯"*60)
         
         # Test the specific ticket selection features from review request
         ticket_selection_success = self.test_user_game_ticket_selection_features()
         
-        # PRIORITY 2: Join User Game Functionality Testing
+        # PRIORITY 3: Join User Game Functionality Testing
         print("\n" + "🎯"*60)
-        print("JOIN USER GAME FUNCTIONALITY TESTING - PRIORITY 2")
+        print("JOIN USER GAME FUNCTIONALITY TESTING - PRIORITY 3")
         print("🎯"*60)
         
         # Test the general join functionality
