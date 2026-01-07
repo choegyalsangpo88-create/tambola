@@ -61,29 +61,25 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ========================================
    PREMIUM 3D TAMBOLA BALL ANIMATION
-   Casino-style ball with realistic spin
+   Simple, reliable casino-style ball
    ======================================== */
 
-/* Premium ball entry animation - Casino style pop */
+/* Ball entry animation - simple bounce in */
 @keyframes premiumBallEntry {
     0% {
-        transform: scale(0) rotate(0deg);
+        transform: scale(0.3) translateY(-50px);
         opacity: 0;
     }
-    40% {
-        transform: scale(1.15) rotate(360deg);
+    50% {
+        transform: scale(1.1) translateY(0);
         opacity: 1;
     }
-    60% {
-        transform: scale(0.95) rotate(540deg);
-        opacity: 1;
-    }
-    80% {
-        transform: scale(1.05) rotate(660deg);
+    70% {
+        transform: scale(0.95) translateY(0);
         opacity: 1;
     }
     100% {
-        transform: scale(1) rotate(720deg);
+        transform: scale(1) translateY(0);
         opacity: 1;
     }
 }
@@ -91,25 +87,25 @@ h1, h2, h3, h4, h5, h6 {
 /* Premium ball idle floating */
 @keyframes premiumBallFloat {
     0%, 100% {
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
     50% {
-        transform: translateY(-5px) scale(1.02);
+        transform: translateY(-5px);
     }
 }
 
 /* Premium ball glow pulse */
 @keyframes premiumGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 20px rgba(200,0,0,0.3));
+        filter: drop-shadow(0 0 15px rgba(200,0,0,0.4));
     }
     50% {
-        filter: drop-shadow(0 0 40px rgba(200,0,0,0.5));
+        filter: drop-shadow(0 0 30px rgba(200,0,0,0.6));
     }
 }
 
 .premium-ball-animate {
-    animation: premiumBallEntry 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: premiumBallEntry 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .premium-ball-idle {
