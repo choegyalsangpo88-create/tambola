@@ -1489,26 +1489,32 @@ async def call_number(game_id: str):
         for prize_type, winner_info in new_winners.items():
             prize_amount = game["prizes"].get(prize_type, 0)
             
+            # Get winner name - check holder_name first (from winner_detection), then fallback
+            winner_name = winner_info.get("holder_name") or winner_info.get("user_name") or winner_info.get("name") or "Player"
+            winner_email = winner_info.get("user_email", "")
+            
             # Send email
             send_winner_email(
-                winner_info.get("user_email", ""),
-                winner_info["user_name"],
+                winner_email,
+                winner_name,
                 prize_type,
                 prize_amount,
                 game["name"]
             )
             
             # Send SMS (if phone number available)
-            user = await db.users.find_one({"user_id": winner_info["user_id"]}, {"_id": 0})
-            if user and user.get("phone"):
-                send_winner_sms(
-                    user["phone"],
-                    winner_info["user_name"],
-                    prize_type,
-                    prize_amount
-                )
+            user_id = winner_info.get("user_id")
+            if user_id:
+                user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+                if user and user.get("phone"):
+                    send_winner_sms(
+                        user["phone"],
+                        winner_name,
+                        prize_type,
+                        prize_amount
+                    )
             
-            logger.info(f"🎉 Winner notified: {winner_info['user_name']} - {prize_type} - ₹{prize_amount}")
+            logger.info(f"🎉 Winner notified: {winner_name} - {prize_type} - ₹{prize_amount}")
     
     return {"number": next_number, "called_numbers": called_numbers + [next_number], "new_winners": list(new_winners.keys())}
 
