@@ -353,7 +353,11 @@ async def exchange_session(request: SessionExchangeRequest, response: Response):
             max_age=7*24*60*60
         )
         
-        return {"user": User(**user_doc).model_dump()}
+        # Return user AND session_token in body for mobile fallback
+        return {
+            "user": User(**user_doc).model_dump(),
+            "session_token": session_token  # Fallback for mobile
+        }
     
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
