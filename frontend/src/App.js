@@ -22,10 +22,11 @@ import './App.css';
 function AppRouter() {
   const location = useLocation();
   
-  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  // Check for session_id in hash - catches OAuth callbacks
-  const hash = location.hash || window.location.hash;
+  // CRITICAL: Check for session_id in hash - handles OAuth callbacks
+  // This must happen BEFORE any routing to prevent redirect loops
+  const hash = window.location.hash;
   if (hash?.includes('session_id=')) {
+    console.log('AppRouter: OAuth callback detected, rendering AuthCallback');
     return <AuthCallback />;
   }
   
@@ -59,33 +60,29 @@ function AppRouter() {
 }
 
 function App() {
-  // Check for OAuth session_id on EVERY render, not just initial
-  // This is critical because the redirect happens as a full page navigation
-  const [showAuthCallback, setShowAuthCallback] = useState(false);
+  // CRITICAL: Check for OAuth session_id on initial page load
+  // This runs synchronously before render to catch OAuth callbacks immediately
+  const [isOAuthCallback, setIsOAuthCallback] = useState(false);
   
   useEffect(() => {
-    // Check hash on mount AND on hashchange events
-    const checkForSessionId = () => {
-      if (window.location.hash?.includes('session_id=')) {
-        setShowAuthCallback(true);
-      }
-    };
+    // Check if this is an OAuth callback on mount
+    if (window.location.hash?.includes('session_id=')) {
+      console.log('App: OAuth callback detected on mount');
+      setIsOAuthCallback(true);
+    }
     
-    // Check immediately
-    checkForSessionId();
-    
-    // Listen for hash changes (for OAuth redirects)
-    window.addEventListener('hashchange', checkForSessionId);
-    
-    return () => {
-      window.removeEventListener('hashchange', checkForSessionId);
-    };
+    // Clean up auth_complete flag after it's been used
+    const authComplete = localStorage.getItem('tambola_auth_complete');
+    if (authComplete) {
+      // Clear the flag after a short delay to ensure it's been read
+      setTimeout(() => {
+        localStorage.removeItem('tambola_auth_complete');
+      }, 1000);
+    }
   }, []);
   
-  // Also check synchronously on render (for initial page load with hash)
-  const hasHashSessionId = window.location.hash?.includes('session_id=');
-  
-  if (showAuthCallback || hasHashSessionId) {
+  // If OAuth callback, render AuthCallback directly (outside of routing)
+  if (isOAuthCallback || window.location.hash?.includes('session_id=')) {
     return (
       <BrowserRouter>
         <AuthCallback />
