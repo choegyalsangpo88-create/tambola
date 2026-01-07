@@ -588,6 +588,8 @@ export default function LiveGame() {
             <div className="flex-1 space-y-0.5 overflow-y-auto pr-1" style={{ maxHeight: '150px' }}>
               {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                 const winner = session.winners?.[prize];
+                // Get first name only for cleaner display
+                const winnerFirstName = winner?.holder_name?.split(' ')[0] || winner?.name?.split(' ')[0] || '';
                 return (
                   <div 
                     key={prize} 
@@ -605,8 +607,8 @@ export default function LiveGame() {
                     </div>
                     {winner && (
                       <p className="text-[8px] text-green-300 mt-0.5 truncate">
-                        🎉 {winner.holder_name || winner.name || 'Winner'} 
-                        {winner.ticket_number && <span className="text-amber-400 ml-1">({winner.ticket_number})</span>}
+                        🎉 {winnerFirstName || 'Winner'}
+                        {winner.ticket_number && <span className="text-amber-300">({winner.ticket_number})</span>}
                       </p>
                     )}
                   </div>
