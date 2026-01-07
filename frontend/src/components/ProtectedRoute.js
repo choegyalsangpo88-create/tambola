@@ -23,37 +23,38 @@ export default function ProtectedRoute({ children }) {
 
     const checkAuth = async () => {
       try {
+        // First try cookie-based auth
         const response = await axios.get(`${API}/auth/me`, {
           withCredentials: true
         });
         setUser(response.data);
         setIsAuthenticated(true);
-        
-        // Update localStorage
-        try {
-          localStorage.setItem('tambola_user', JSON.stringify(response.data));
-        } catch (e) {}
+        localStorage.setItem('tambola_user', JSON.stringify(response.data));
         
       } catch (error) {
-        console.log('ProtectedRoute: Cookie auth failed, checking localStorage...');
+        console.log('ProtectedRoute: Cookie auth failed, trying localStorage...');
         
-        // Try localStorage fallback for mobile
-        try {
-          const storedUser = localStorage.getItem('tambola_user');
-          if (storedUser) {
-            const parsed = JSON.parse(storedUser);
-            // Verify the stored user is still valid by making a request
-            // For now, trust the localStorage
-            setUser(parsed);
+        // Try localStorage session token
+        const storedSession = localStorage.getItem('tambola_session');
+        const storedUser = localStorage.getItem('tambola_user');
+        
+        if (storedSession && storedUser) {
+          try {
+            // Verify with backend using Authorization header
+            const response = await axios.get(`${API}/auth/me`, {
+              headers: { 'Authorization': `Bearer ${storedSession}` }
+            });
+            setUser(response.data);
             setIsAuthenticated(true);
-            console.log('ProtectedRoute: Using localStorage user');
+            console.log('ProtectedRoute: localStorage auth successful');
             return;
+          } catch (e) {
+            console.log('ProtectedRoute: localStorage session invalid');
+            localStorage.removeItem('tambola_session');
+            localStorage.removeItem('tambola_user');
           }
-        } catch (e) {
-          console.log('ProtectedRoute: localStorage check failed');
         }
         
-        console.log('ProtectedRoute: Not authenticated, redirecting to login');
         setIsAuthenticated(false);
         navigate('/login', { replace: true });
       }
