@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -8,27 +8,8 @@ import confetti from 'canvas-confetti';
 import { getCallName } from '@/utils/tambolaCallNames';
 import { unlockMobileAudio, playBase64Audio, speakText } from '@/utils/audioHelper';
 
-// Lazy load Three.js ball component for performance
-const TambolaBall3D = lazy(() => import('@/components/TambolaBall3D'));
-
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
-
-// Fallback ball component when Three.js is loading
-function FallbackBall({ number }) {
-  return (
-    <div className="w-32 h-32 rounded-full relative mx-auto flex items-center justify-center"
-      style={{
-        background: 'radial-gradient(circle at 28% 28%, #ff5555 0%, #cc0000 50%, #8b0000 100%)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.5), inset -15px -15px 30px rgba(0,0,0,0.4)'
-      }}
-    >
-      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-inner">
-        <span className="text-4xl font-black text-gray-900">{number || '?'}</span>
-      </div>
-    </div>
-  );
-}
 
 export default function LiveGame() {
   const { gameId } = useParams();
