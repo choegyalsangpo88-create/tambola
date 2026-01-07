@@ -23,9 +23,7 @@ export default function LiveGame() {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
-  const [isNewNumber, setIsNewNumber] = useState(false);
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null);
-  const [use3DBall, setUse3DBall] = useState(true); // Toggle for 3D ball
   const pollInterval = useRef(null);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
