@@ -548,46 +548,21 @@ export default function LiveGame() {
             </div>
           </div>
 
-          {/* CENTER: Premium 3D Billiard-Style Ball with Spin Animation */}
-          <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10 flex flex-col items-center justify-center overflow-hidden">
-            <div className="relative" style={{ perspective: '1200px', height: '160px', width: '160px' }}>
-              
-              {/* OLD BALL - Exits to the left when new number comes */}
-              {showBallTransition && previousBall && (
-                <div 
-                  className="ball-exiting absolute inset-0 flex items-center justify-center"
-                  style={{ transformStyle: 'preserve-3d' }}
-                >
-                  <div className="premium-ball w-32 h-32 rounded-full relative"
-                    style={{
-                      background: `radial-gradient(circle at 28% 28%, #ff5555 0%, #e53935 30%, #c62828 55%, #b71c1c 75%, #8b0000 100%)`,
-                      boxShadow: `0 20px 50px rgba(0,0,0,0.5), inset -18px -18px 40px rgba(0,0,0,0.4), inset 12px 12px 25px rgba(255,255,255,0.12)`
-                    }}
-                  >
-                    <div className="absolute rounded-full flex items-center justify-center"
-                      style={{
-                        width: '68px', height: '68px',
-                        top: '50%', left: '45%',
-                        transform: 'translate(-50%, -50%)',
-                        background: 'radial-gradient(circle at 40% 35%, #ffffff 0%, #fafafa 50%, #f0f0f0 100%)',
-                        boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.2)'
-                      }}
-                    >
-                      <span className="text-4xl font-black" style={{ color: '#1a1a1a', fontFamily: 'Arial Black, sans-serif' }}>{previousBall}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* NEW BALL - Premium Billiard Style with Spin */}
-              <div 
-                className={`absolute inset-0 flex items-center justify-center ${showBallTransition ? 'ball-spin-enter' : ''}`}
-                style={{ transformStyle: 'preserve-3d' }}
-              >
-                {/* Main Premium Ball */}
-                <div 
-                  className={`premium-ball w-32 h-32 rounded-full relative ${!showBallTransition ? 'ball-float' : ''}`}
-                  style={{
+          {/* CENTER: Premium 3D Tambola Ball using Three.js */}
+          <div className="col-span-5 bg-gradient-to-b from-black/40 to-black/20 backdrop-blur-sm rounded-lg p-2 border border-white/10 flex flex-col items-center justify-center overflow-hidden">
+            {use3DBall ? (
+              <Suspense fallback={<FallbackBall number={session.current_number} />}>
+                <TambolaBall3D 
+                  number={session.current_number}
+                  previousNumber={lastPlayedNumber}
+                  isNewNumber={isNewNumber}
+                />
+              </Suspense>
+            ) : (
+              <FallbackBall number={session.current_number} />
+            )}
+            <p className="text-sm text-amber-400 font-bold">{session.called_numbers?.length || 0} / 90</p>
+          </div>
                     background: `radial-gradient(circle at 28% 28%, #ff5555 0%, #e53935 30%, #c62828 55%, #b71c1c 75%, #8b0000 100%)`,
                     boxShadow: `
                       0 30px 60px rgba(0,0,0,0.55),
