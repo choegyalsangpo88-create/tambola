@@ -442,91 +442,105 @@ export default function LiveGame() {
                   const playerProgress = [];
                   const gamePrizes = Object.keys(game.prizes || {});
                   
-                  // Calculate who is closest to winning each prize (only check prizes in dividends)
+                  // Prize abbreviations
+                  const prizeAbbr = {
+                    'Top Line': 'TL',
+                    'Middle Line': 'ML', 
+                    'Bottom Line': 'BL',
+                    'Four Corners': '4C',
+                    'Quick Five': 'Q5',
+                    '1st Full House': '1FH',
+                    '2nd Full House': '2FH',
+                    '3rd Full House': '3FH',
+                    'Full House': 'FH',
+                    'Full Sheet Bonus': 'FSB'
+                  };
+                  
+                  // Calculate who is closest to winning each prize
                   allBookedTickets.forEach(ticket => {
                     const name = ticket.holder_name || ticket.booked_by_name || 'Player';
+                    const firstName = name.split(' ')[0]; // Use first name only
                     if (!ticket.numbers || ticket.numbers.length < 3) return;
                     
-                    // Check Top Line only if it's in dividends
+                    // Check Top Line
                     if (gamePrizes.includes('Top Line') && !session.winners?.['Top Line']) {
                       const topRow = ticket.numbers[0].filter(n => n !== null);
                       const topMarked = topRow.filter(n => calledSet.has(n)).length;
-                      const topRemaining = Math.min(5 - topMarked, 5);
+                      const topRemaining = 5 - topMarked;
                       if (topRemaining > 0 && topRemaining <= 3) {
-                        playerProgress.push({ name, remaining: topRemaining });
+                        playerProgress.push({ name: firstName, remaining: topRemaining, prize: 'TL' });
                       }
                     }
                     
-                    // Check Middle Line only if it's in dividends
+                    // Check Middle Line
                     if (gamePrizes.includes('Middle Line') && !session.winners?.['Middle Line']) {
                       const midRow = ticket.numbers[1].filter(n => n !== null);
                       const midMarked = midRow.filter(n => calledSet.has(n)).length;
-                      const midRemaining = Math.min(5 - midMarked, 5);
+                      const midRemaining = 5 - midMarked;
                       if (midRemaining > 0 && midRemaining <= 3) {
-                        playerProgress.push({ name, remaining: midRemaining });
+                        playerProgress.push({ name: firstName, remaining: midRemaining, prize: 'ML' });
                       }
                     }
                     
-                    // Check Bottom Line only if it's in dividends
+                    // Check Bottom Line
                     if (gamePrizes.includes('Bottom Line') && !session.winners?.['Bottom Line']) {
                       const botRow = ticket.numbers[2].filter(n => n !== null);
                       const botMarked = botRow.filter(n => calledSet.has(n)).length;
-                      const botRemaining = Math.min(5 - botMarked, 5);
+                      const botRemaining = 5 - botMarked;
                       if (botRemaining > 0 && botRemaining <= 3) {
-                        playerProgress.push({ name, remaining: botRemaining });
+                        playerProgress.push({ name: firstName, remaining: botRemaining, prize: 'BL' });
                       }
                     }
                     
-                    // Check Four Corners only if it's in dividends
+                    // Check Four Corners
                     if (gamePrizes.includes('Four Corners') && !session.winners?.['Four Corners']) {
-                      // Get first and last numbers in top and bottom rows
                       const topNums = ticket.numbers[0].map((n, i) => ({n, i})).filter(x => x.n !== null);
                       const botNums = ticket.numbers[2].map((n, i) => ({n, i})).filter(x => x.n !== null);
                       if (topNums.length >= 2 && botNums.length >= 2) {
                         const corners = [topNums[0].n, topNums[topNums.length-1].n, botNums[0].n, botNums[botNums.length-1].n];
                         const cornersMarked = corners.filter(n => calledSet.has(n)).length;
-                        const cornersRemaining = Math.min(4 - cornersMarked, 5);
+                        const cornersRemaining = 4 - cornersMarked;
                         if (cornersRemaining > 0 && cornersRemaining <= 2) {
-                          playerProgress.push({ name, remaining: cornersRemaining });
+                          playerProgress.push({ name: firstName, remaining: cornersRemaining, prize: '4C' });
                         }
                       }
                     }
                     
-                    // Check Full House variants
-                    const fullHousePrizes = gamePrizes.filter(p => p.includes('Full House'));
-                    if (fullHousePrizes.length > 0 && !session.winners?.['1st Full House']) {
-                      const allNums = ticket.numbers.flat().filter(n => n !== null);
-                      const fullMarked = allNums.filter(n => calledSet.has(n)).length;
-                      const fullRemaining = Math.min(15 - fullMarked, 5);
-                      if (fullRemaining > 0 && fullRemaining <= 5) {
-                        playerProgress.push({ name, remaining: fullRemaining });
+                    // Check Full House - sequential order
+                    const fullHouseOrder = ['1st Full House', '2nd Full House', '3rd Full House'];
+                    for (const fhPrize of fullHouseOrder) {
+                      if (gamePrizes.includes(fhPrize) && !session.winners?.[fhPrize]) {
+                        const allNums = ticket.numbers.flat().filter(n => n !== null);
+                        const fullMarked = allNums.filter(n => calledSet.has(n)).length;
+                        const fullRemaining = 15 - fullMarked;
+                        if (fullRemaining > 0 && fullRemaining <= 5) {
+                          playerProgress.push({ name: firstName, remaining: fullRemaining, prize: prizeAbbr[fhPrize] || 'FH' });
+                        }
+                        break; // Only show for first unclaimed Full House
                       }
                     }
                   });
                   
-                  // Sort by remaining (fewer = closer to winning)
-                  // Group by player name, keep best remaining
+                  // Group by player name with their closest prize
                   const playerStats = {};
                   playerProgress.forEach(p => {
-                    if (!playerStats[p.name]) {
-                      playerStats[p.name] = { 
+                    const key = `${p.name}_${p.prize}`;
+                    if (!playerStats[key] || p.remaining < playerStats[key].remaining) {
+                      playerStats[key] = { 
                         name: p.name, 
-                        bestRemaining: p.remaining
+                        remaining: p.remaining,
+                        prize: p.prize
                       };
-                    } else {
-                      if (p.remaining < playerStats[p.name].bestRemaining) {
-                        playerStats[p.name].bestRemaining = p.remaining;
-                      }
                     }
                   });
                   
-                  // Sort by remaining (ascending), show up to 6 players
+                  // Sort by remaining (ascending), show up to 6
                   const topPlayers = Object.values(playerStats)
-                    .sort((a, b) => a.bestRemaining - b.bestRemaining)
+                    .sort((a, b) => a.remaining - b.remaining)
                     .slice(0, 6);
                   
                   if (topPlayers.length === 0) {
-                    return <p className="text-[7px] text-gray-500 text-center">Waiting...</p>;
+                    return <p className="text-[8px] text-gray-500 text-center py-2">Waiting for players...</p>;
                   }
                   
                   return topPlayers.map((p, idx) => (
