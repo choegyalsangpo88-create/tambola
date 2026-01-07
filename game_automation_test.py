@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 class GameAutomationTester:
-    def __init__(self, base_url="https://tambola-housie.preview.emergentagent.com"):
+    def __init__(self, base_url="https://ticket-master-128.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.session_token = None  # Will try to get valid session

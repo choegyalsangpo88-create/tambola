@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 class SixSevenTambolaReviewTester:
     def __init__(self):
-        self.base_url = "https://tambola-housie.preview.emergentagent.com"
+        self.base_url = "https://ticket-master-128.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.admin_credentials = {
             "username": "sixtysevenceo",
