@@ -2106,7 +2106,14 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=[
+        "http://localhost:3000",
+        "https://localhost:3000",
+        os.environ.get('REACT_APP_FRONTEND_URL', 'http://localhost:3000'),
+        # Add production URLs
+        "https://ticket-master-128.preview.emergentagent.com",
+        "https://auth.emergentagent.com"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
