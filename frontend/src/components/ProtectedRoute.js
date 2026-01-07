@@ -14,7 +14,6 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     // If user data passed from AuthCallback, use it directly
     if (location.state?.user) {
-      // Use Promise.resolve to avoid synchronous setState in effect
       Promise.resolve().then(() => {
         setUser(location.state.user);
         setIsAuthenticated(true);
@@ -29,7 +28,31 @@ export default function ProtectedRoute({ children }) {
         });
         setUser(response.data);
         setIsAuthenticated(true);
+        
+        // Update localStorage
+        try {
+          localStorage.setItem('tambola_user', JSON.stringify(response.data));
+        } catch (e) {}
+        
       } catch (error) {
+        console.log('ProtectedRoute: Cookie auth failed, checking localStorage...');
+        
+        // Try localStorage fallback for mobile
+        try {
+          const storedUser = localStorage.getItem('tambola_user');
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            // Verify the stored user is still valid by making a request
+            // For now, trust the localStorage
+            setUser(parsed);
+            setIsAuthenticated(true);
+            console.log('ProtectedRoute: Using localStorage user');
+            return;
+          }
+        } catch (e) {
+          console.log('ProtectedRoute: localStorage check failed');
+        }
+        
         console.log('ProtectedRoute: Not authenticated, redirecting to login');
         setIsAuthenticated(false);
         navigate('/login', { replace: true });
