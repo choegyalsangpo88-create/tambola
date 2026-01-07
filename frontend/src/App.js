@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
+import { useState, useEffect } from 'react';
 import LoginScreen from './pages/LoginScreen';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
@@ -18,17 +19,11 @@ import UserGamePlay from './pages/UserGamePlay';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
-// CRITICAL: Check for OAuth callback BEFORE any React component renders
-// This runs synchronously when the module loads
-const hasSessionIdInHash = () => {
-  return window.location.hash?.includes('session_id=');
-};
-
 function AppRouter() {
   const location = useLocation();
   
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  // Check for session_id - this catches OAuth callbacks
+  // Check for session_id in hash - catches OAuth callbacks
   const hash = location.hash || window.location.hash;
   if (hash?.includes('session_id=')) {
     return <AuthCallback />;
@@ -64,9 +59,33 @@ function AppRouter() {
 }
 
 function App() {
-  // CRITICAL: If session_id is in hash on initial load, render AuthCallback directly
-  // This bypasses all routing to prevent ProtectedRoute from interfering
-  if (hasSessionIdInHash()) {
+  // Check for OAuth session_id on EVERY render, not just initial
+  // This is critical because the redirect happens as a full page navigation
+  const [showAuthCallback, setShowAuthCallback] = useState(false);
+  
+  useEffect(() => {
+    // Check hash on mount AND on hashchange events
+    const checkForSessionId = () => {
+      if (window.location.hash?.includes('session_id=')) {
+        setShowAuthCallback(true);
+      }
+    };
+    
+    // Check immediately
+    checkForSessionId();
+    
+    // Listen for hash changes (for OAuth redirects)
+    window.addEventListener('hashchange', checkForSessionId);
+    
+    return () => {
+      window.removeEventListener('hashchange', checkForSessionId);
+    };
+  }, []);
+  
+  // Also check synchronously on render (for initial page load with hash)
+  const hasHashSessionId = window.location.hash?.includes('session_id=');
+  
+  if (showAuthCallback || hasHashSessionId) {
     return (
       <BrowserRouter>
         <AuthCallback />
