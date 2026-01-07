@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { useState, useEffect } from 'react';
 import LoginScreen from './pages/LoginScreen';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
@@ -19,15 +18,19 @@ import UserGamePlay from './pages/UserGamePlay';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
+// CRITICAL: Check for OAuth callback BEFORE any React component renders
+// This runs synchronously when the module loads
+const hasSessionIdInHash = () => {
+  return window.location.hash?.includes('session_id=');
+};
+
 function AppRouter() {
   const location = useLocation();
   
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  // Detect session_id synchronously during render (NOT in useEffect)
-  // Check both hash and search params for session_id
+  // Check for session_id - this catches OAuth callbacks
   const hash = location.hash || window.location.hash;
   if (hash?.includes('session_id=')) {
-    console.log('AppRouter: Detected session_id in hash, rendering AuthCallback');
     return <AuthCallback />;
   }
   
@@ -61,19 +64,12 @@ function AppRouter() {
 }
 
 function App() {
-  // CRITICAL: Check for OAuth callback BEFORE React Router kicks in
-  // This handles the case where user is redirected to /#session_id=xxx
-  const [isProcessingAuth, setIsProcessingAuth] = useState(() => {
-    // Check synchronously on initial load
-    return window.location.hash?.includes('session_id=');
-  });
-
-  // If we detected session_id on initial load, render AuthCallback directly
-  // This bypasses React Router completely to avoid race conditions
-  if (isProcessingAuth) {
+  // CRITICAL: If session_id is in hash on initial load, render AuthCallback directly
+  // This bypasses all routing to prevent ProtectedRoute from interfering
+  if (hasSessionIdInHash()) {
     return (
       <BrowserRouter>
-        <AuthCallback onComplete={() => setIsProcessingAuth(false)} />
+        <AuthCallback />
       </BrowserRouter>
     );
   }
