@@ -443,7 +443,7 @@ export default function LiveGame() {
                       const topMarked = topRow.filter(n => calledSet.has(n)).length;
                       const topRemaining = 5 - topMarked;
                       if (topRemaining > 0 && topRemaining <= 3) {
-                        playerProgress.push({ name: firstName, remaining: topRemaining, prize: 'TL' });
+                        playerProgress.push({ name: firstName, remaining: topRemaining, prize: 'TL', ticketNum: ticket.ticket_number });
                       }
                     }
                     
@@ -453,7 +453,7 @@ export default function LiveGame() {
                       const midMarked = midRow.filter(n => calledSet.has(n)).length;
                       const midRemaining = 5 - midMarked;
                       if (midRemaining > 0 && midRemaining <= 3) {
-                        playerProgress.push({ name: firstName, remaining: midRemaining, prize: 'ML' });
+                        playerProgress.push({ name: firstName, remaining: midRemaining, prize: 'ML', ticketNum: ticket.ticket_number });
                       }
                     }
                     
@@ -463,7 +463,7 @@ export default function LiveGame() {
                       const botMarked = botRow.filter(n => calledSet.has(n)).length;
                       const botRemaining = 5 - botMarked;
                       if (botRemaining > 0 && botRemaining <= 3) {
-                        playerProgress.push({ name: firstName, remaining: botRemaining, prize: 'BL' });
+                        playerProgress.push({ name: firstName, remaining: botRemaining, prize: 'BL', ticketNum: ticket.ticket_number });
                       }
                     }
                     
@@ -476,7 +476,7 @@ export default function LiveGame() {
                         const cornersMarked = corners.filter(n => calledSet.has(n)).length;
                         const cornersRemaining = 4 - cornersMarked;
                         if (cornersRemaining > 0 && cornersRemaining <= 2) {
-                          playerProgress.push({ name: firstName, remaining: cornersRemaining, prize: '4C' });
+                          playerProgress.push({ name: firstName, remaining: cornersRemaining, prize: '4C', ticketNum: ticket.ticket_number });
                         }
                       }
                     }
@@ -489,29 +489,46 @@ export default function LiveGame() {
                         const fullMarked = allNums.filter(n => calledSet.has(n)).length;
                         const fullRemaining = 15 - fullMarked;
                         if (fullRemaining > 0 && fullRemaining <= 5) {
-                          playerProgress.push({ name: firstName, remaining: fullRemaining, prize: prizeAbbr[fhPrize] || 'FH' });
+                          playerProgress.push({ name: firstName, remaining: fullRemaining, prize: prizeAbbr[fhPrize] || 'FH', ticketNum: ticket.ticket_number });
                         }
                         break; // Only show for first unclaimed Full House
                       }
                     }
                   });
                   
-                  // Group by player name with their closest prize
+                  // Group by player name AND prize, counting tickets
                   const playerStats = {};
                   playerProgress.forEach(p => {
                     const key = `${p.name}_${p.prize}`;
-                    if (!playerStats[key] || p.remaining < playerStats[key].remaining) {
+                    if (!playerStats[key]) {
                       playerStats[key] = { 
                         name: p.name, 
                         remaining: p.remaining,
-                        prize: p.prize
+                        prize: p.prize,
+                        ticketCount: 1
                       };
+                    } else {
+                      // Same player, same prize - count multiple tickets
+                      playerStats[key].ticketCount += 1;
+                      // Keep the lowest remaining (closest to winning)
+                      if (p.remaining < playerStats[key].remaining) {
+                        playerStats[key].remaining = p.remaining;
+                      }
                     }
                   });
                   
-                  // Sort by remaining (ascending), show up to 6
+                  // Sort by:
+                  // 1. Remaining (ascending - closest to winning first)
+                  // 2. Number of tickets (descending - more tickets = higher priority)
                   const topPlayers = Object.values(playerStats)
-                    .sort((a, b) => a.remaining - b.remaining)
+                    .sort((a, b) => {
+                      // Primary: ascending by remaining (closest first)
+                      if (a.remaining !== b.remaining) {
+                        return a.remaining - b.remaining;
+                      }
+                      // Secondary: descending by ticket count (more tickets = higher priority)
+                      return b.ticketCount - a.ticketCount;
+                    })
                     .slice(0, 6);
                   
                   if (topPlayers.length === 0) {
@@ -522,6 +539,7 @@ export default function LiveGame() {
                     <div key={idx} className="bg-white/5 rounded px-1.5 py-1">
                       <span className="text-[9px] text-white font-medium truncate block">
                         {p.name}
+                        {p.ticketCount > 1 && <span className="text-green-400 ml-0.5">×{p.ticketCount}</span>}
                         <span className="text-amber-400 ml-1">({p.prize})</span>
                       </span>
                       <div className="flex gap-0.5 mt-0.5">
