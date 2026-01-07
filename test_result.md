@@ -648,9 +648,8 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Google Auth Redirect Flow - CRITICAL ISSUE IDENTIFIED"
-  stuck_tasks:
-    - "Google Auth Redirect Flow"
+    - "Winner Name in Dividends - holder_name field population"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
