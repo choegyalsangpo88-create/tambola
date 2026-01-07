@@ -792,3 +792,38 @@ agent_communication:
     c) Winner Names in Dividends - verify winner names show in the dividends list when a prize is won
     
     Backend URL: https://ticket-master-128.preview.emergentagent.com"
+
+  - agent: "main"
+    message: "IMPLEMENTED NEW FEATURES:
+    
+    1) TOP PLAYERS SORTING (LiveGame.js):
+       - Now sorts by: (a) Remaining numbers ascending (closest to winning first), (b) Ticket count descending (more tickets = higher priority)
+       - Shows ticket count with ×N indicator for players with multiple tickets for same prize
+    
+    2) FULL SHEET BONUS - NEW RULE (winner_detection.py):
+       - Rule 1: Player booked exactly 6 tickets from same full sheet
+       - Rule 2: All 90 numbers across 6 tickets are unique (no overlap)
+       - Rule 3: Each ticket has at least 2 marked numbers
+       - Rule 4: Total marked numbers across all 6 tickets >= 12
+       - NO call limit, timing doesn't matter, only completion matters
+    
+    3) SEQUENTIAL FULL HOUSE with SHARED WINNERS (winner_detection.py):
+       - Multiple users can win SAME dividend if they complete on SAME call
+       - If 3 users complete at call 70, they SHARE 1st Full House (not all three prizes)
+       - After that, 2nd Full House can be claimed on next eligible call
+       - Winners stored with 'shared': true and 'winners': [...] array
+    
+    4) TICKET GENERATOR - Full sheets already generate unique numbers (ticket_generator.py has generate_full_sheet() that ensures all 90 numbers unique across 6 tickets)
+    
+    5) BACKEND MODULAR ROUTES:
+       - Created /app/backend/routes/games.py with game management endpoints
+       - Existing: auth.py, tts.py
+       - Updated __init__.py to export games_router
+    
+    Please test:
+    a) Top Players sorting - verify players closest to winning show first, with ticket counts
+    b) Full Sheet Bonus detection - verify the new 4 rules work correctly
+    c) Sequential Full House - verify multiple winners share same prize
+    d) Routes work correctly - POST /api/games, GET /api/games/{id}/session
+    
+    Backend URL: https://ticket-master-128.preview.emergentagent.com"
