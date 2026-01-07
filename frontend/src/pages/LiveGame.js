@@ -188,24 +188,11 @@ export default function LiveGame() {
         previousWinnersRef.current = session.winners;
       }
       
-      // Play TTS for new number with ball transition animation
+      // Play TTS for new number with 3D ball animation
       if (session.current_number && session.current_number !== lastPlayedNumber) {
-        // Store previous number for exit animation
-        if (lastPlayedNumber) {
-          setPreviousBall(lastPlayedNumber);
-        }
-        
-        // Trigger ball transition animation
-        setShowBallTransition(true);
-        setIsSpinning(true);
-        
-        // Clear transition state after animation
-        setTimeout(() => {
-          setShowBallTransition(false);
-          setPreviousBall(null);
-        }, 1200);
-        
-        setTimeout(() => setIsSpinning(false), 1200);
+        // Trigger new number animation
+        setIsNewNumber(true);
+        setTimeout(() => setIsNewNumber(false), 100);
         
         playTTSAnnouncement(session.current_number);
       }
