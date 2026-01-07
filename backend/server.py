@@ -2103,17 +2103,32 @@ async def health_check():
 
 app.include_router(api_router)
 
+# Build CORS origins from environment variables
+cors_origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "https://auth.emergentagent.com"
+]
+
+# Add frontend URL from environment if available
+frontend_url = os.environ.get('REACT_APP_FRONTEND_URL')
+if frontend_url and frontend_url not in cors_origins:
+    cors_origins.append(frontend_url)
+
+# Add backend URL (for same-origin requests) if available
+backend_url = os.environ.get('REACT_APP_BACKEND_URL')
+if backend_url:
+    # Extract origin from backend URL
+    from urllib.parse import urlparse
+    parsed = urlparse(backend_url)
+    origin = f"{parsed.scheme}://{parsed.netloc}"
+    if origin not in cors_origins:
+        cors_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://localhost:3000",
-        os.environ.get('REACT_APP_FRONTEND_URL', 'http://localhost:3000'),
-        # Add production URLs
-        "https://ticket-master-128.preview.emergentagent.com",
-        "https://auth.emergentagent.com"
-    ],
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
