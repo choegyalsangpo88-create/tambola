@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function AuthCallback() {
+export default function AuthCallback({ onComplete }) {
   const navigate = useNavigate();
   const hasProcessed = useRef(false);
 
@@ -44,6 +44,11 @@ export default function AuthCallback() {
         
         toast.success('Logged in successfully!');
 
+        // Call onComplete if provided (to update App state)
+        if (onComplete) {
+          onComplete();
+        }
+
         // Small delay to ensure cookie is set before redirect
         setTimeout(() => {
           // Navigate to dashboard with user data
@@ -54,12 +59,18 @@ export default function AuthCallback() {
         // Clear hash on error too
         window.history.replaceState(null, '', window.location.pathname);
         toast.error('Authentication failed. Please try again.');
+        
+        // Call onComplete if provided
+        if (onComplete) {
+          onComplete();
+        }
+        
         navigate('/login', { replace: true });
       }
     };
 
     processSession();
-  }, [navigate]);
+  }, [navigate, onComplete]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c]">
