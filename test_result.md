@@ -648,8 +648,11 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Winner Name in Dividends - holder_name field population"
-  stuck_tasks: []
+    - "Six Seven Tambola New Features Testing"
+    - "Full Sheet Bonus Detection - NEW RULES"
+    - "Ticket Generator Fix - Unique Numbers Issue"
+  stuck_tasks:
+    - "Ticket Generator - Full Sheet Unique Numbers"
   test_all: false
   test_priority: "high_first"
 
