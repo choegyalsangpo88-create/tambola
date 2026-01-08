@@ -82,7 +82,7 @@ Rules enforced:
 Each log entry shows:
 - User (recipient name)
 - Game ID
-- Template name (booking_confirmation_v1, game_reminder_v1, join_link_v1)
+- Template name (booking_confirmation_v1, game_reminder_v1, join_link_v1, winner_announcement_v1)
 - Status (sent / delivered / failed)
 - Timestamp
 - Failure reason (if any)
@@ -90,6 +90,22 @@ Each log entry shows:
 Rules:
 - Logs are **immutable** (read-only, no update/delete operations)
 - Logs stored in `whatsapp_logs` collection
+
+**E. Winner Declaration ✅ (NEW)**
+For Live/Completed games only:
+- **Game Winners Table** showing: Prize, Winner name, Ticket, Amount, WA Status, Action
+- **Send WA button** to send individual winner announcement via WhatsApp
+- **Prize Pool Reference** showing all prizes with checkmark for claimed prizes
+
+Admin actions:
+- Send winner announcement WhatsApp message (one per prize, no bulk)
+- View all winners with announcement status
+
+Rules enforced:
+- One winner per prize
+- No bulk winner messages
+- Winner announcement can only be sent once per prize
+- Only available for live/completed games (upcoming shows "Winners Available After Game Starts")
 
 #### Requests Tab ✅
 - Booking approval workflow
