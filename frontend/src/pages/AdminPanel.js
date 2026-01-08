@@ -94,6 +94,8 @@ export default function AdminPanel() {
   const [newPrefixLine, setNewPrefixLine] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showGameDetailsModal, setShowGameDetailsModal] = useState(false);
+  const [gameDetails, setGameDetails] = useState(null);
 
   const [gameForm, setGameForm] = useState({
     name: '',
