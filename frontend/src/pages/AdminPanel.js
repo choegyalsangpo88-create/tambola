@@ -1402,6 +1402,143 @@ export default function AdminPanel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Game Details Modal */}
+      <Dialog open={showGameDetailsModal} onOpenChange={setShowGameDetailsModal}>
+        <DialogContent className="max-w-2xl bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-amber-500" />
+              Game Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {gameDetails && (
+            <div className="space-y-4">
+              {/* Game Info Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-white">{gameDetails.name}</h3>
+                  <p className="text-sm text-zinc-400">{gameDetails.date} at {gameDetails.time}</p>
+                </div>
+                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                  gameDetails.status === 'live' ? 'bg-red-500/20 text-red-400' :
+                  gameDetails.status === 'upcoming' ? 'bg-amber-500/20 text-amber-400' :
+                  'bg-zinc-700 text-zinc-400'
+                }`}>
+                  {gameDetails.status.toUpperCase()}
+                </span>
+              </div>
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500">Total Tickets</p>
+                  <p className="text-lg font-bold text-white">{gameDetails.ticket_count}</p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500">Tickets Sold</p>
+                  <p className="text-lg font-bold text-amber-400">{gameDetails.stats?.confirmedTickets || 0}</p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500">Price per Ticket</p>
+                  <p className="text-lg font-bold text-white">₹{gameDetails.price}</p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500">Revenue</p>
+                  <p className="text-lg font-bold text-emerald-400">₹{gameDetails.stats?.revenue?.toLocaleString() || 0}</p>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="bg-zinc-800 rounded-lg p-3">
+                <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                  <span>Tickets Sold</span>
+                  <span>{gameDetails.stats?.soldPercentage || 0}%</span>
+                </div>
+                <div className="w-full h-2 bg-zinc-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-amber-500 rounded-full transition-all"
+                    style={{ width: `${gameDetails.stats?.soldPercentage || 0}%` }}
+                  />
+                </div>
+              </div>
+              
+              {/* Prizes Configuration */}
+              <div className="bg-zinc-800 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-white mb-2">Prize Configuration</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {Object.entries(gameDetails.prizes || {}).map(([prize, amount]) => (
+                    <div key={prize} className="flex justify-between items-center p-2 bg-zinc-900 rounded">
+                      <span className="text-xs text-zinc-400">{prize}</span>
+                      <span className="text-xs text-amber-400 font-medium">₹{amount}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Winners (if any) */}
+              {gameDetails.winners && Object.keys(gameDetails.winners).length > 0 && (
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    Winners
+                  </h4>
+                  <div className="space-y-2">
+                    {Object.entries(gameDetails.winners).map(([prize, winner]) => (
+                      <div key={prize} className="flex justify-between items-center p-2 bg-zinc-900 rounded">
+                        <div>
+                          <span className="text-xs text-amber-400 font-medium">{prize}</span>
+                          <p className="text-sm text-white">{winner.holder_name || winner.user_name || 'Unknown'}</p>
+                        </div>
+                        <span className="text-xs text-zinc-500">{winner.ticket_id}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Actions */}
+              <div className="flex gap-2 pt-2 border-t border-zinc-800">
+                <Button 
+                  onClick={() => { openTicketsModal(gameDetails); setShowGameDetailsModal(false); }}
+                  variant="outline"
+                  className="flex-1 border-zinc-700"
+                >
+                  <Ticket className="w-4 h-4 mr-1" /> View Tickets
+                </Button>
+                
+                {gameDetails.status === 'upcoming' && (
+                  <Button 
+                    onClick={() => { handleStartGame(gameDetails.game_id); setShowGameDetailsModal(false); }}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Play className="w-4 h-4 mr-1" /> Start Game
+                  </Button>
+                )}
+                
+                {gameDetails.status === 'live' && (
+                  <>
+                    <Button 
+                      onClick={() => { navigate(`/live/${gameDetails.game_id}`); }}
+                      className="flex-1 bg-red-600 hover:bg-red-700"
+                    >
+                      <Play className="w-4 h-4 mr-1" /> View Live
+                    </Button>
+                    <Button 
+                      onClick={() => { handleEndGame(gameDetails.game_id); setShowGameDetailsModal(false); }}
+                      variant="outline"
+                      className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                    >
+                      <Check className="w-4 h-4 mr-1" /> End Game
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
