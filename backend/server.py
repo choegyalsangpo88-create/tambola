@@ -2542,7 +2542,9 @@ See you there! 🎉"""
 
 @api_router.put("/admin/bookings/{booking_id}/confirm-payment")
 async def confirm_booking_payment(booking_id: str, request: Request, _: bool = Depends(verify_admin)):
-    """Confirm payment for a booking"""
+    """Confirm payment for a booking and auto-send WhatsApp confirmation if opted in"""
+    from notifications import send_whatsapp_message
+    
     booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -2572,7 +2574,69 @@ async def confirm_booking_payment(booking_id: str, request: Request, _: bool = D
         "timestamp": datetime.now(timezone.utc)
     })
     
-    return {"success": True, "message": "Payment confirmed"}
+    # Auto-send WhatsApp confirmation if opted in
+    whatsapp_sent = False
+    if booking.get("whatsapp_opt_in", True):
+        user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0})
+        if user and user.get("phone"):
+            game = await db.games.find_one({"game_id": booking["game_id"]}, {"_id": 0})
+            
+            # Check if confirmation not already sent
+            existing = await db.whatsapp_logs.find_one({
+                "booking_id": booking_id,
+                "message_type": "booking_confirmation"
+            })
+            
+            if not existing and game:
+                # Get ticket numbers
+                tickets = await db.tickets.find(
+                    {"ticket_id": {"$in": booking["ticket_ids"]}},
+                    {"_id": 0, "ticket_number": 1}
+                ).to_list(10)
+                ticket_numbers = [t["ticket_number"] for t in tickets]
+                
+                template_name = "booking_confirmation_v1"
+                message = f"""✅ *Booking Confirmed - Six Seven Tambola*
+
+Hi {user.get('name', 'Player')}! 🎉
+
+Your booking for *{game['name']}* has been confirmed!
+
+📋 *Booking Details:*
+• Game: {game['name']}
+• Date: {game['date']}
+• Time: {game['time']}
+• Tickets: {', '.join(ticket_numbers)}
+• Amount Paid: ₹{booking['total_amount']}
+
+🎮 Join the game at the scheduled time. Good luck! 🍀"""
+                
+                result = send_whatsapp_message(user["phone"], message)
+                whatsapp_sent = result
+                
+                # Log the message (immutable)
+                log_id = f"wl_{uuid.uuid4().hex[:8]}"
+                await db.whatsapp_logs.insert_one({
+                    "log_id": log_id,
+                    "game_id": booking["game_id"],
+                    "message_type": "booking_confirmation",
+                    "template_name": template_name,
+                    "recipient_user_id": user.get("user_id"),
+                    "recipient_phone": user["phone"],
+                    "recipient_name": user.get("name", "Player"),
+                    "booking_id": booking_id,
+                    "sent_at": datetime.now(timezone.utc),
+                    "sent_by_admin": True,
+                    "status": "sent" if result else "failed",
+                    "delivery_status": "pending" if result else "failed",
+                    "failure_reason": None if result else "Twilio API error"
+                })
+    
+    return {
+        "success": True, 
+        "message": "Payment confirmed",
+        "whatsapp_sent": whatsapp_sent
+    }
 
 # ============ HEALTH CHECK ENDPOINT ============
 @app.get("/health")
