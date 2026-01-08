@@ -2307,33 +2307,99 @@ async def check_winners_for_session(game_id: str, called_numbers: List[int]):
         prizes = game.get("prizes", {})
         current_winners = session.get("winners", {})
         
+        # Build set of ticket_ids that already won a Full House
+        # These tickets cannot win another Full House
+        fh_winner_tickets = set()
+        for prize_key, winner_data in current_winners.items():
+            if "full" in prize_key.lower() and "house" in prize_key.lower() and "sheet" not in prize_key.lower():
+                if winner_data.get("shared"):
+                    for w in winner_data.get("winners", []):
+                        if w.get("ticket_id"):
+                            fh_winner_tickets.add(w["ticket_id"])
+                else:
+                    if winner_data.get("ticket_id"):
+                        fh_winner_tickets.add(winner_data["ticket_id"])
+        
         for prize_type in prizes.keys():
             if prize_type in current_winners:
                 continue  # Already won
             
-            # Check each ticket for this prize
-            for ticket in booked_tickets:
-                winner_info = check_all_winners(ticket, called_numbers, prize_type)
-                if winner_info:
-                    # Get holder name
-                    holder_name = ticket.get("holder_name") or ticket.get("booked_by_name")
-                    if not holder_name and ticket.get("user_id"):
-                        user = await db.users.find_one({"user_id": ticket.get("user_id")}, {"_id": 0})
-                        holder_name = user.get("name") if user else None
+            prize_lower = prize_type.lower()
+            is_full_house = "full" in prize_lower and "house" in prize_lower and "sheet" not in prize_lower
+            
+            # For Full House prizes, collect all candidates on this call
+            if is_full_house:
+                fh_candidates = []
+                for ticket in booked_tickets:
+                    ticket_id = ticket.get("ticket_id")
+                    # Skip if this ticket already won a Full House
+                    if ticket_id in fh_winner_tickets:
+                        continue
                     
-                    current_winners[prize_type] = {
-                        "user_id": ticket.get("user_id"),
-                        "ticket_id": ticket.get("ticket_id"),
-                        "ticket_number": ticket.get("ticket_number"),
-                        "holder_name": holder_name or "Player",
-                        "won_at": datetime.now(timezone.utc).isoformat()
-                    }
+                    winner_info = check_all_winners(ticket, called_numbers, prize_type)
+                    if winner_info:
+                        holder_name = ticket.get("holder_name") or ticket.get("booked_by_name")
+                        if not holder_name and ticket.get("user_id"):
+                            user = await db.users.find_one({"user_id": ticket.get("user_id")}, {"_id": 0})
+                            holder_name = user.get("name") if user else None
+                        
+                        fh_candidates.append({
+                            "user_id": ticket.get("user_id"),
+                            "ticket_id": ticket_id,
+                            "ticket_number": ticket.get("ticket_number"),
+                            "holder_name": holder_name or "Player"
+                        })
+                
+                # Award prize to all candidates (they share it)
+                if fh_candidates:
+                    if len(fh_candidates) == 1:
+                        # Single winner
+                        current_winners[prize_type] = {
+                            **fh_candidates[0],
+                            "won_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    else:
+                        # Multiple winners share
+                        current_winners[prize_type] = {
+                            "shared": True,
+                            "winners": fh_candidates,
+                            "holder_name": ", ".join([c["holder_name"] for c in fh_candidates]),
+                            "won_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    
                     await db.game_sessions.update_one(
                         {"session_id": session["session_id"]},
                         {"$set": {"winners": current_winners}}
                     )
-                    logger.info(f"🎉 Winner found for {prize_type} in game {game_id}: {holder_name}")
-                    break
+                    
+                    # Add these tickets to the fh_winner_tickets set for next iteration
+                    for c in fh_candidates:
+                        fh_winner_tickets.add(c["ticket_id"])
+                    
+                    logger.info(f"🎉 {len(fh_candidates)} winner(s) found for {prize_type} in game {game_id}")
+            else:
+                # Non-Full House prize - first ticket wins
+                for ticket in booked_tickets:
+                    winner_info = check_all_winners(ticket, called_numbers, prize_type)
+                    if winner_info:
+                        holder_name = ticket.get("holder_name") or ticket.get("booked_by_name")
+                        if not holder_name and ticket.get("user_id"):
+                            user = await db.users.find_one({"user_id": ticket.get("user_id")}, {"_id": 0})
+                            holder_name = user.get("name") if user else None
+                        
+                        current_winners[prize_type] = {
+                            "user_id": ticket.get("user_id"),
+                            "ticket_id": ticket.get("ticket_id"),
+                            "ticket_number": ticket.get("ticket_number"),
+                            "holder_name": holder_name or "Player",
+                            "won_at": datetime.now(timezone.utc).isoformat()
+                        }
+                        await db.game_sessions.update_one(
+                            {"session_id": session["session_id"]},
+                            {"$set": {"winners": current_winners}}
+                        )
+                        logger.info(f"🎉 Winner found for {prize_type} in game {game_id}: {holder_name}")
+                        break
         
         # Check if all prizes are won - end game automatically
         if len(current_winners) >= len(prizes) and len(prizes) > 0:
