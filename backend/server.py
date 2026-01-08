@@ -2166,17 +2166,31 @@ async def get_game_control_data(game_id: str, request: Request, _: bool = Depend
     booked_tickets = [t for t in tickets if t.get("is_booked")]
     confirmed_tickets = [t for t in booked_tickets if t.get("booking_status") == "confirmed"]
     
-    # Get bookings with user info
+    # Get bookings with user info and ticket details
     bookings = await db.bookings.find({"game_id": game_id}, {"_id": 0}).to_list(100)
     for booking in bookings:
         user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
         booking["user"] = user
-        # Check if booking confirmation was sent
-        confirmation_sent = await db.whatsapp_logs.find_one({
+        
+        # Get ticket numbers for this booking
+        booking_tickets = await db.tickets.find(
+            {"ticket_id": {"$in": booking.get("ticket_ids", [])}},
+            {"_id": 0, "ticket_number": 1, "ticket_id": 1, "numbers": 1}
+        ).to_list(20)
+        booking["tickets"] = booking_tickets
+        booking["ticket_numbers"] = [t["ticket_number"] for t in booking_tickets]
+        
+        # Get WhatsApp opt-in status (default to True for backwards compatibility)
+        booking["whatsapp_opt_in"] = booking.get("whatsapp_opt_in", True)
+        
+        # Check if booking confirmation was sent and get details
+        confirmation_log = await db.whatsapp_logs.find_one({
             "booking_id": booking["booking_id"],
             "message_type": "booking_confirmation"
-        })
-        booking["confirmation_sent"] = confirmation_sent is not None
+        }, {"_id": 0})
+        booking["confirmation_sent"] = confirmation_log is not None
+        booking["whatsapp_message_status"] = confirmation_log.get("status") if confirmation_log else None
+        booking["whatsapp_sent_at"] = confirmation_log.get("sent_at") if confirmation_log else None
     
     # Check if game reminder was sent
     reminder_sent = await db.whatsapp_logs.find_one({
