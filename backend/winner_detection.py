@@ -654,6 +654,65 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     return new_winners
 
 
+def check_all_winners(ticket: dict, called_numbers: list, prize_type: str) -> dict:
+    """
+    Check if a single ticket wins a specific prize type.
+    Used by auto-call for simpler winner detection.
+    
+    Args:
+        ticket: The ticket document with 'numbers' field
+        called_numbers: List of called numbers
+        prize_type: The prize type to check (e.g., "Top Line", "Quick Five")
+    
+    Returns:
+        Winner info dict if won, None otherwise
+    """
+    ticket_numbers = ticket.get("numbers", [])
+    if not ticket_numbers or len(ticket_numbers) < 3:
+        return None
+    
+    called_set = set(called_numbers)
+    
+    # Normalize prize type for comparison
+    prize_lower = prize_type.lower().replace("_", " ").replace("-", " ")
+    
+    # Check Quick Five / Early Five
+    if "quick" in prize_lower or "early" in prize_lower or "five" in prize_lower:
+        if check_early_five(ticket_numbers, called_set):
+            return {"won": True, "pattern": prize_type}
+    
+    # Check Top Line / First Line
+    if "top" in prize_lower or "first" in prize_lower:
+        if "house" not in prize_lower:  # Exclude "First Full House"
+            if check_top_line(ticket_numbers, called_set):
+                return {"won": True, "pattern": prize_type}
+    
+    # Check Middle Line / Second Line
+    if "middle" in prize_lower or "second" in prize_lower:
+        if "house" not in prize_lower:  # Exclude "Second Full House"
+            if check_middle_line(ticket_numbers, called_set):
+                return {"won": True, "pattern": prize_type}
+    
+    # Check Bottom Line / Third Line
+    if "bottom" in prize_lower or "third" in prize_lower:
+        if "house" not in prize_lower:  # Exclude "Third Full House"
+            if check_bottom_line(ticket_numbers, called_set):
+                return {"won": True, "pattern": prize_type}
+    
+    # Check Four Corners
+    if "corner" in prize_lower or "4" in prize_lower:
+        if check_four_corners(ticket_numbers, called_set):
+            return {"won": True, "pattern": prize_type}
+    
+    # Check Full House (any variation)
+    if "full" in prize_lower and "house" in prize_lower:
+        if "sheet" not in prize_lower:  # Exclude "Full Sheet"
+            if check_full_house(ticket_numbers, called_set):
+                return {"won": True, "pattern": prize_type}
+    
+    return None
+
+
 async def check_all_dividends_claimed(game_dividends: dict, current_winners: dict) -> bool:
     """
     Check if all dividends (prizes) have been claimed.
