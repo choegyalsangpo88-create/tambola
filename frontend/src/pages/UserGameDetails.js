@@ -13,6 +13,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 export default function UserGameDetails() {
   const { userGameId } = useParams();
   const navigate = useNavigate();
@@ -31,14 +37,25 @@ export default function UserGameDetails() {
   const fetchGameDetails = async () => {
     try {
       const [gameRes, playersRes] = await Promise.all([
-        axios.get(`${API}/user-games/${userGameId}`, { withCredentials: true }),
-        axios.get(`${API}/user-games/${userGameId}/players`, { withCredentials: true })
+        axios.get(`${API}/user-games/${userGameId}`, { 
+          headers: getAuthHeaders(),
+          withCredentials: true 
+        }),
+        axios.get(`${API}/user-games/${userGameId}/players`, { 
+          headers: getAuthHeaders(),
+          withCredentials: true 
+        })
       ]);
       setGame(gameRes.data);
       setPlayers(playersRes.data.players || []);
     } catch (error) {
       console.error('Failed to fetch game:', error);
-      toast.error('Failed to load game details');
+      if (error.response?.status === 401) {
+        toast.error('Please login to view this game');
+        navigate('/login');
+      } else {
+        toast.error('Failed to load game details');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +63,10 @@ export default function UserGameDetails() {
 
   const handleStartGame = async () => {
     try {
-      await axios.post(`${API}/user-games/${userGameId}/start`, {}, { withCredentials: true });
+      await axios.post(`${API}/user-games/${userGameId}/start`, {}, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Game started!');
       navigate(`/user-game-play/${userGameId}`);
     } catch (error) {
