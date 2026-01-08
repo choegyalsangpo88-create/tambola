@@ -225,6 +225,40 @@ class VerifyOTPRequest(BaseModel):
     otp: str
     name: Optional[str] = None  # Required for new users
 
+# WhatsApp Message Tracking Models
+class WhatsAppMessageLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    log_id: str
+    game_id: str
+    message_type: str  # booking_confirmation, game_reminder, join_link
+    recipient_user_id: Optional[str] = None
+    recipient_phone: str
+    recipient_name: str
+    booking_id: Optional[str] = None
+    sent_at: datetime
+    sent_by_admin: bool = True
+    status: str = "sent"  # sent, failed
+
+class SendBookingConfirmationRequest(BaseModel):
+    booking_id: str
+
+class SendGameReminderRequest(BaseModel):
+    game_id: str
+
+class SendJoinLinkRequest(BaseModel):
+    game_id: str
+    user_id: str
+
+# Game Control Log Models
+class GameControlLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    log_id: str
+    game_id: str
+    action: str
+    details: Dict[str, Any] = Field(default_factory=dict)
+    admin_user: str = "admin"
+    timestamp: datetime
+
 # ============ AUTH HELPER ============
 
 async def get_current_user(request: Request) -> User:
