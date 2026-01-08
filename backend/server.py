@@ -2487,6 +2487,7 @@ async def send_join_link(game_id: str, data: SendJoinLinkRequest, request: Reque
     frontend_url = os.environ.get("FRONTEND_URL", "https://sixseventambola.com")
     join_link = f"{frontend_url}/live/{game_id}"
     
+    template_name = "join_link_v1"
     message = f"""🎮 *Join Game - Six Seven Tambola*
 
 Hi {user.get('name', 'Player')}!
@@ -2501,20 +2502,24 @@ Your game *{game['name']}* is ready!
 See you there! 🎉"""
     
     result = send_whatsapp_message(user["phone"], message)
+    failure_reason = None if result else "Twilio API error or invalid phone number"
     
-    # Log the message
+    # Log the message (immutable)
     log_id = f"wl_{uuid.uuid4().hex[:8]}"
     await db.whatsapp_logs.insert_one({
         "log_id": log_id,
         "game_id": game_id,
         "message_type": "join_link",
+        "template_name": template_name,
         "recipient_user_id": data.user_id,
         "recipient_phone": user["phone"],
         "recipient_name": user.get("name", "Player"),
         "booking_id": None,
         "sent_at": datetime.now(timezone.utc),
         "sent_by_admin": True,
-        "status": "sent" if result else "failed"
+        "status": "sent" if result else "failed",
+        "delivery_status": "pending" if result else "failed",
+        "failure_reason": failure_reason
     })
     
     # Log to control logs
