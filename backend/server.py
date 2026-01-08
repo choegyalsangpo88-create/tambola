@@ -2384,21 +2384,27 @@ async def send_game_reminder(game_id: str, request: Request, _: bool = Depends(v
     except ValueError:
         pass  # If parsing fails, allow sending
     
-    # Get all confirmed bookings
+    # Get all confirmed bookings with WhatsApp opt-in
     bookings = await db.bookings.find({
         "game_id": game_id,
         "status": "confirmed"
     }, {"_id": 0}).to_list(100)
     
-    if not bookings:
-        raise HTTPException(status_code=400, detail="No confirmed bookings to send reminders to")
+    # Filter for opt-in users only
+    opt_in_bookings = [b for b in bookings if b.get("whatsapp_opt_in", True)]
+    
+    if not opt_in_bookings:
+        raise HTTPException(status_code=400, detail="No confirmed bookings with WhatsApp opt-in to send reminders to")
     
     sent_count = 0
     failed_count = 0
+    skipped_count = 0
+    template_name = "game_reminder_v1"
     
-    for booking in bookings:
+    for booking in opt_in_bookings:
         user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0})
         if not user or not user.get("phone"):
+            skipped_count += 1
             continue
         
         message = f"""⏰ *Game Reminder - Six Seven Tambola*
@@ -2422,19 +2428,22 @@ Good luck! 🍀"""
         else:
             failed_count += 1
     
-    # Log the reminder
+    # Log the reminder (immutable)
     log_id = f"wl_{uuid.uuid4().hex[:8]}"
     await db.whatsapp_logs.insert_one({
         "log_id": log_id,
         "game_id": game_id,
         "message_type": "game_reminder",
+        "template_name": template_name,
         "recipient_user_id": None,
         "recipient_phone": "multiple",
         "recipient_name": f"{sent_count} players",
         "booking_id": None,
         "sent_at": datetime.now(timezone.utc),
         "sent_by_admin": True,
-        "status": "sent"
+        "status": "sent" if sent_count > 0 else "failed",
+        "delivery_status": "pending" if sent_count > 0 else "failed",
+        "failure_reason": f"{failed_count} failed, {skipped_count} skipped" if failed_count > 0 or skipped_count > 0 else None
     })
     
     # Log to control logs
