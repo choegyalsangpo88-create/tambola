@@ -616,26 +616,6 @@ export default function LiveGame() {
                       {session.current_number || '?'}
                     </span>
                   </div>
-                  
-                  {/* Right Side Number (3D effect) */}
-                  <div 
-                    className="absolute flex items-center justify-center overflow-hidden"
-                    style={{
-                      width: '40px', height: '50px',
-                      top: '38%', right: '-5px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(90deg, #d0d0d0 0%, #e8e8e8 30%, #f5f5f5 60%, #eeeeee 100%)',
-                      boxShadow: 'inset -4px 0 10px rgba(0,0,0,0.2)',
-                      transform: 'rotateY(70deg) scaleX(0.4)'
-                    }}
-                  >
-                    <span 
-                      className="text-xl font-black"
-                      style={{ color: '#333', transform: 'scaleX(2.5)', fontFamily: 'Arial Black, sans-serif' }}
-                    >
-                      {session.current_number || '?'}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
