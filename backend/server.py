@@ -2146,6 +2146,392 @@ async def end_user_game(
     
     return {"message": "Game ended!"}
 
+# ============ GAME CONTROL & WHATSAPP ENDPOINTS ============
+
+@api_router.get("/admin/games/{game_id}/control")
+async def get_game_control_data(game_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Get comprehensive game control data including tickets, bookings, logs, and WhatsApp status"""
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Get ticket sales summary
+    total_tickets = game.get("ticket_count", 0)
+    tickets = await db.tickets.find({"game_id": game_id}, {"_id": 0}).to_list(1000)
+    booked_tickets = [t for t in tickets if t.get("is_booked")]
+    confirmed_tickets = [t for t in booked_tickets if t.get("booking_status") == "confirmed"]
+    
+    # Get bookings with user info
+    bookings = await db.bookings.find({"game_id": game_id}, {"_id": 0}).to_list(100)
+    for booking in bookings:
+        user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
+        booking["user"] = user
+        # Check if booking confirmation was sent
+        confirmation_sent = await db.whatsapp_logs.find_one({
+            "booking_id": booking["booking_id"],
+            "message_type": "booking_confirmation"
+        })
+        booking["confirmation_sent"] = confirmation_sent is not None
+    
+    # Check if game reminder was sent
+    reminder_sent = await db.whatsapp_logs.find_one({
+        "game_id": game_id,
+        "message_type": "game_reminder"
+    })
+    
+    # Get WhatsApp message logs for this game
+    whatsapp_logs = await db.whatsapp_logs.find(
+        {"game_id": game_id},
+        {"_id": 0}
+    ).sort("sent_at", -1).to_list(100)
+    
+    # Get game control logs
+    control_logs = await db.game_control_logs.find(
+        {"game_id": game_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(50)
+    
+    # Get game session if exists
+    session = await db.game_sessions.find_one({"game_id": game_id}, {"_id": 0})
+    
+    # Calculate revenue
+    confirmed_bookings = [b for b in bookings if b.get("status") == "confirmed"]
+    revenue = sum(b.get("total_amount", 0) for b in confirmed_bookings)
+    
+    # Check if tickets have been sold (for edit lock)
+    has_sold_tickets = len(confirmed_tickets) > 0
+    
+    # Check if within 24 hours of game time for reminder
+    can_send_reminder = False
+    try:
+        game_datetime_str = f"{game['date']}T{game['time']}"
+        game_datetime = datetime.fromisoformat(game_datetime_str)
+        now = datetime.now()
+        hours_until_game = (game_datetime - now).total_seconds() / 3600
+        can_send_reminder = 0 < hours_until_game <= 24 and reminder_sent is None
+    except:
+        pass
+    
+    return {
+        "game": game,
+        "session": session,
+        "ticket_summary": {
+            "total": total_tickets,
+            "booked": len(booked_tickets),
+            "confirmed": len(confirmed_tickets),
+            "available": total_tickets - len(booked_tickets),
+            "revenue": revenue
+        },
+        "bookings": bookings,
+        "has_sold_tickets": has_sold_tickets,
+        "whatsapp_status": {
+            "reminder_sent": reminder_sent is not None,
+            "reminder_sent_at": reminder_sent.get("sent_at") if reminder_sent else None,
+            "can_send_reminder": can_send_reminder
+        },
+        "whatsapp_logs": whatsapp_logs,
+        "control_logs": control_logs
+    }
+
+@api_router.post("/admin/games/{game_id}/whatsapp/booking-confirmation")
+async def send_booking_confirmation(game_id: str, data: SendBookingConfirmationRequest, request: Request, _: bool = Depends(verify_admin)):
+    """Send booking confirmation to a specific booking (once per booking, after payment approved)"""
+    from notifications import send_whatsapp_message
+    
+    # Get booking
+    booking = await db.bookings.find_one({"booking_id": data.booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if booking["game_id"] != game_id:
+        raise HTTPException(status_code=400, detail="Booking does not belong to this game")
+    
+    # Check if booking is confirmed (payment approved)
+    if booking.get("status") != "confirmed":
+        raise HTTPException(status_code=400, detail="Can only send confirmation for approved/confirmed bookings")
+    
+    # Check if already sent
+    existing = await db.whatsapp_logs.find_one({
+        "booking_id": data.booking_id,
+        "message_type": "booking_confirmation"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Booking confirmation already sent")
+    
+    # Get user info
+    user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0})
+    if not user or not user.get("phone"):
+        raise HTTPException(status_code=400, detail="User has no phone number")
+    
+    # Get game info
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    
+    # Get ticket numbers
+    tickets = await db.tickets.find(
+        {"ticket_id": {"$in": booking["ticket_ids"]}},
+        {"_id": 0, "ticket_number": 1}
+    ).to_list(10)
+    ticket_numbers = [t["ticket_number"] for t in tickets]
+    
+    # Send WhatsApp message
+    message = f"""✅ *Booking Confirmed - Six Seven Tambola*
+
+Hi {user.get('name', 'Player')}! 🎉
+
+Your booking for *{game['name']}* has been confirmed!
+
+📋 *Booking Details:*
+• Game: {game['name']}
+• Date: {game['date']}
+• Time: {game['time']}
+• Tickets: {', '.join(ticket_numbers)}
+• Amount Paid: ₹{booking['total_amount']}
+
+🎮 Join the game at the scheduled time. Good luck! 🍀"""
+    
+    result = send_whatsapp_message(user["phone"], message)
+    
+    # Log the message
+    log_id = f"wl_{uuid.uuid4().hex[:8]}"
+    await db.whatsapp_logs.insert_one({
+        "log_id": log_id,
+        "game_id": game_id,
+        "message_type": "booking_confirmation",
+        "recipient_user_id": user.get("user_id"),
+        "recipient_phone": user["phone"],
+        "recipient_name": user.get("name", "Player"),
+        "booking_id": data.booking_id,
+        "sent_at": datetime.now(timezone.utc),
+        "sent_by_admin": True,
+        "status": "sent" if result else "failed"
+    })
+    
+    # Also log to control logs
+    await db.game_control_logs.insert_one({
+        "log_id": f"gcl_{uuid.uuid4().hex[:8]}",
+        "game_id": game_id,
+        "action": "BOOKING_CONFIRMATION_SENT",
+        "details": {
+            "booking_id": data.booking_id,
+            "recipient": user.get("name"),
+            "phone": user["phone"][-4:]  # Last 4 digits only for privacy
+        },
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    if result:
+        return {"success": True, "message": "Booking confirmation sent"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
+
+@api_router.post("/admin/games/{game_id}/whatsapp/game-reminder")
+async def send_game_reminder(game_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Send game reminder to all confirmed bookings (once per game, within 24 hours)"""
+    from notifications import send_whatsapp_message
+    
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Check if reminder already sent
+    existing = await db.whatsapp_logs.find_one({
+        "game_id": game_id,
+        "message_type": "game_reminder"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Game reminder already sent for this game")
+    
+    # Check if within 24 hours of game time
+    try:
+        game_datetime_str = f"{game['date']}T{game['time']}"
+        game_datetime = datetime.fromisoformat(game_datetime_str)
+        now = datetime.now()
+        hours_until_game = (game_datetime - now).total_seconds() / 3600
+        
+        if hours_until_game > 24:
+            raise HTTPException(status_code=400, detail=f"Game reminder can only be sent within 24 hours of game time. Currently {int(hours_until_game)} hours away.")
+        if hours_until_game < 0:
+            raise HTTPException(status_code=400, detail="Game has already started/ended")
+    except ValueError:
+        pass  # If parsing fails, allow sending
+    
+    # Get all confirmed bookings
+    bookings = await db.bookings.find({
+        "game_id": game_id,
+        "status": "confirmed"
+    }, {"_id": 0}).to_list(100)
+    
+    if not bookings:
+        raise HTTPException(status_code=400, detail="No confirmed bookings to send reminders to")
+    
+    sent_count = 0
+    failed_count = 0
+    
+    for booking in bookings:
+        user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0})
+        if not user or not user.get("phone"):
+            continue
+        
+        message = f"""⏰ *Game Reminder - Six Seven Tambola*
+
+Hi {user.get('name', 'Player')}! 🎲
+
+Your game *{game['name']}* is starting soon!
+
+📅 *Game Details:*
+• Date: {game['date']}
+• Time: {game['time']}
+• Your Tickets: {len(booking.get('ticket_ids', []))}
+
+🎮 Don't miss it! Join on time for the best experience.
+
+Good luck! 🍀"""
+        
+        result = send_whatsapp_message(user["phone"], message)
+        if result:
+            sent_count += 1
+        else:
+            failed_count += 1
+    
+    # Log the reminder
+    log_id = f"wl_{uuid.uuid4().hex[:8]}"
+    await db.whatsapp_logs.insert_one({
+        "log_id": log_id,
+        "game_id": game_id,
+        "message_type": "game_reminder",
+        "recipient_user_id": None,
+        "recipient_phone": "multiple",
+        "recipient_name": f"{sent_count} players",
+        "booking_id": None,
+        "sent_at": datetime.now(timezone.utc),
+        "sent_by_admin": True,
+        "status": "sent"
+    })
+    
+    # Log to control logs
+    await db.game_control_logs.insert_one({
+        "log_id": f"gcl_{uuid.uuid4().hex[:8]}",
+        "game_id": game_id,
+        "action": "GAME_REMINDER_SENT",
+        "details": {
+            "sent_count": sent_count,
+            "failed_count": failed_count,
+            "total_bookings": len(bookings)
+        },
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    return {
+        "success": True,
+        "message": f"Game reminder sent to {sent_count} players",
+        "sent_count": sent_count,
+        "failed_count": failed_count
+    }
+
+@api_router.post("/admin/games/{game_id}/whatsapp/join-link")
+async def send_join_link(game_id: str, data: SendJoinLinkRequest, request: Request, _: bool = Depends(verify_admin)):
+    """Send game join link to a specific user (can resend)"""
+    from notifications import send_whatsapp_message
+    
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    user = await db.users.find_one({"user_id": data.user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.get("phone"):
+        raise HTTPException(status_code=400, detail="User has no phone number")
+    
+    # Get frontend URL for join link
+    frontend_url = os.environ.get("FRONTEND_URL", "https://sixseventambola.com")
+    join_link = f"{frontend_url}/live/{game_id}"
+    
+    message = f"""🎮 *Join Game - Six Seven Tambola*
+
+Hi {user.get('name', 'Player')}!
+
+Your game *{game['name']}* is ready!
+
+👉 *Click to Join:*
+{join_link}
+
+📅 {game['date']} at {game['time']}
+
+See you there! 🎉"""
+    
+    result = send_whatsapp_message(user["phone"], message)
+    
+    # Log the message
+    log_id = f"wl_{uuid.uuid4().hex[:8]}"
+    await db.whatsapp_logs.insert_one({
+        "log_id": log_id,
+        "game_id": game_id,
+        "message_type": "join_link",
+        "recipient_user_id": data.user_id,
+        "recipient_phone": user["phone"],
+        "recipient_name": user.get("name", "Player"),
+        "booking_id": None,
+        "sent_at": datetime.now(timezone.utc),
+        "sent_by_admin": True,
+        "status": "sent" if result else "failed"
+    })
+    
+    # Log to control logs
+    await db.game_control_logs.insert_one({
+        "log_id": f"gcl_{uuid.uuid4().hex[:8]}",
+        "game_id": game_id,
+        "action": "JOIN_LINK_SENT",
+        "details": {
+            "recipient": user.get("name"),
+            "phone": user["phone"][-4:]
+        },
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    if result:
+        return {"success": True, "message": "Join link sent"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
+
+@api_router.put("/admin/bookings/{booking_id}/confirm-payment")
+async def confirm_booking_payment(booking_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Confirm payment for a booking"""
+    booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Update booking status
+    await db.bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": {"status": "confirmed", "payment_confirmed_at": datetime.now(timezone.utc)}}
+    )
+    
+    # Update ticket statuses
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": booking["ticket_ids"]}},
+        {"$set": {"booking_status": "confirmed"}}
+    )
+    
+    # Log action
+    await db.game_control_logs.insert_one({
+        "log_id": f"gcl_{uuid.uuid4().hex[:8]}",
+        "game_id": booking["game_id"],
+        "action": "PAYMENT_CONFIRMED",
+        "details": {
+            "booking_id": booking_id,
+            "amount": booking.get("total_amount", 0)
+        },
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    return {"success": True, "message": "Payment confirmed"}
+
 # ============ HEALTH CHECK ENDPOINT ============
 @app.get("/health")
 async def health_check():
