@@ -149,6 +149,20 @@ Rules:
 
 ## Changelog
 
+### 2025-01-08 (Session 2 - Continued)
+- **Bookings Management Section**
+  - Added Bookings tab with table showing: Player, Phone, Tickets, Payment status, WA Opt-in, WA Status
+  - Approve Payment auto-triggers WhatsApp confirmation if opt-in=true
+  - View ticket details button shows ticket grid preview
+  - Auto WhatsApp note: "When you approve payment, confirmation is sent automatically"
+
+- **WhatsApp Message Logs**
+  - Added immutable WhatsApp logs table with columns: User, Game ID, Template, Status, Timestamp, Failure Reason
+  - Enhanced WhatsAppMessageLog model: template_name, delivery_status, failure_reason
+  - New endpoint: GET /api/admin/whatsapp-logs
+  - Added whatsapp_opt_in field to Booking model
+  - All 14 backend tests passing
+
 ### 2025-01-08 (Session 2)
 - **Game Control Page Implementation**
   - Created `/app/frontend/src/components/GameControlModal.js` with 4 tabs
