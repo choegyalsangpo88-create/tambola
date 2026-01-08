@@ -617,7 +617,10 @@ export default function AdminPanel() {
           <TabsContent value="games" className="space-y-6">
             {/* Create Game Form */}
             <div className="bg-zinc-900 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Create New Game</h2>
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-amber-500" />
+                Create New Game
+              </h2>
               <form onSubmit={handleCreateGame} className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-2">
@@ -628,6 +631,7 @@ export default function AdminPanel() {
                       placeholder="Saturday Night Game"
                       required
                       className="bg-zinc-800 border-zinc-700 text-white h-10"
+                      data-testid="create-game-name"
                     />
                   </div>
                   <div>
@@ -638,6 +642,7 @@ export default function AdminPanel() {
                       onChange={(e) => setGameForm({ ...gameForm, date: e.target.value })}
                       required
                       className="bg-zinc-800 border-zinc-700 text-white h-10"
+                      data-testid="create-game-date"
                     />
                   </div>
                   <div>
@@ -648,10 +653,11 @@ export default function AdminPanel() {
                       onChange={(e) => setGameForm({ ...gameForm, time: e.target.value })}
                       required
                       className="bg-zinc-800 border-zinc-700 text-white h-10"
+                      data-testid="create-game-time"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-zinc-500 block mb-1">Tickets</label>
+                    <label className="text-xs text-zinc-500 block mb-1">Tickets (Full Sheets × 6)</label>
                     <Input
                       type="number"
                       value={gameForm.total_tickets}
@@ -660,23 +666,25 @@ export default function AdminPanel() {
                       step="6"
                       required
                       className="bg-zinc-800 border-zinc-700 text-white h-10"
+                      data-testid="create-game-tickets"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-zinc-500 block mb-1">Price (₹)</label>
+                    <label className="text-xs text-zinc-500 block mb-1">Price per Ticket (₹)</label>
                     <Input
                       type="number"
                       value={gameForm.price}
                       onChange={(e) => setGameForm({ ...gameForm, price: parseInt(e.target.value) })}
                       required
                       className="bg-zinc-800 border-zinc-700 text-white h-10"
+                      data-testid="create-game-price"
                     />
                   </div>
                 </div>
 
                 {/* Dividends Grid */}
                 <div>
-                  <label className="text-xs text-zinc-500 block mb-2">Dividends</label>
+                  <label className="text-xs text-zinc-500 block mb-2">Prize Configuration</label>
                   <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                     {Object.entries(gameForm.dividends).map(([name, data]) => (
                       <div 
@@ -687,6 +695,7 @@ export default function AdminPanel() {
                             : 'bg-zinc-800 border-zinc-700'
                         }`}
                         onClick={() => toggleDividend(name)}
+                        data-testid={`dividend-${name.replace(/\s+/g, '-').toLowerCase()}`}
                       >
                         <div className="flex items-center gap-1.5 mb-1">
                           <div className={`w-3 h-3 rounded-full border-2 ${data.enabled ? 'bg-amber-500 border-amber-500' : 'border-zinc-500'}`} />
@@ -699,6 +708,7 @@ export default function AdminPanel() {
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => updateDividendAmount(name, e.target.value)}
                             className="bg-zinc-900 border-zinc-600 text-white h-7 text-xs"
+                            placeholder="₹"
                           />
                         )}
                       </div>
@@ -706,68 +716,269 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold h-10">
+                <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold h-10" data-testid="create-game-submit">
                   <Plus className="w-4 h-4 mr-1" /> Create Game
                 </Button>
               </form>
             </div>
 
-            {/* Games List */}
-            <div className="space-y-3">
-              {games.map((game) => {
-                const stats = getGameStats(game);
-                return (
-                  <div key={game.game_id} className="bg-zinc-900 rounded-xl p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-white">{game.name}</h3>
-                        <p className="text-xs text-zinc-500">{game.date} • {game.time} • ₹{game.price}</p>
-                      </div>
-                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
-                        game.status === 'live' ? 'bg-red-500/20 text-red-400' :
-                        game.status === 'upcoming' ? 'bg-amber-500/20 text-amber-400' :
-                        'bg-zinc-700 text-zinc-400'
-                      }`}>
-                        {game.status.toUpperCase()}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-xs mb-3">
-                      <span className="text-emerald-400">
-                        <IndianRupee className="w-3 h-3 inline" /> {stats.revenue.toLocaleString()}
-                      </span>
-                      <span className="text-zinc-400">
-                        <Ticket className="w-3 h-3 inline" /> {stats.confirmedTickets}/{game.ticket_count}
-                      </span>
-                      <span className="text-zinc-400">{stats.soldPercentage}% sold</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {game.status === 'upcoming' && (
-                        <>
-                          <Button onClick={() => openEditModal(game)} variant="outline" size="sm" className="h-7 text-xs border-zinc-700">
-                            <Edit className="w-3 h-3 mr-1" /> Edit
-                          </Button>
-                          <Button onClick={() => handleStartGame(game.game_id)} size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700">
-                            <Play className="w-3 h-3 mr-1" /> Start
-                          </Button>
-                        </>
-                      )}
-                      {game.status === 'live' && (
-                        <Button onClick={() => navigate(`/live/${game.game_id}`)} size="sm" className="h-7 text-xs bg-red-600 hover:bg-red-700">
-                          <Play className="w-3 h-3 mr-1" /> Live
-                        </Button>
-                      )}
-                      <Button onClick={() => openTicketsModal(game)} variant="outline" size="sm" className="h-7 text-xs border-zinc-700">
-                        <Ticket className="w-3 h-3 mr-1" /> Tickets
-                      </Button>
-                      <Button onClick={() => { setSelectedGame(game); setShowDeleteModal(true); }} variant="outline" size="sm" className="h-7 text-xs border-red-500/50 text-red-400 hover:bg-red-500/10">
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+            {/* Manage Games Section */}
+            <div className="bg-zinc-900 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-amber-500" />
+                Manage Games
+              </h2>
+              
+              {games.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
+                  <p className="text-zinc-500 text-sm">No games created yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Section Headers */}
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-zinc-500 border-b border-zinc-800">
+                    <div className="col-span-3">Game</div>
+                    <div className="col-span-2">Date & Time</div>
+                    <div className="col-span-2">Tickets</div>
+                    <div className="col-span-2">Revenue</div>
+                    <div className="col-span-1">Status</div>
+                    <div className="col-span-2 text-right">Actions</div>
                   </div>
-                );
-              })}
+                  
+                  {/* Games List */}
+                  {games.map((game) => {
+                    const stats = getGameStats(game);
+                    const isScheduledTime = () => {
+                      const now = new Date();
+                      const gameDateTime = new Date(`${game.date}T${game.time}`);
+                      const diffMins = (now - gameDateTime) / (1000 * 60);
+                      return diffMins >= -30 && diffMins <= 120; // 30 min before to 2 hours after
+                    };
+                    
+                    return (
+                      <div 
+                        key={game.game_id} 
+                        className={`bg-zinc-800/50 rounded-lg p-4 border-l-4 ${
+                          game.status === 'live' ? 'border-red-500' :
+                          game.status === 'upcoming' ? 'border-amber-500' :
+                          'border-zinc-600'
+                        }`}
+                        data-testid={`game-card-${game.game_id}`}
+                      >
+                        {/* Mobile View */}
+                        <div className="md:hidden space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-white">{game.name}</h3>
+                              <p className="text-xs text-zinc-500">{game.date} • {game.time}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                              game.status === 'live' ? 'bg-red-500/20 text-red-400 animate-pulse' :
+                              game.status === 'upcoming' ? 'bg-amber-500/20 text-amber-400' :
+                              'bg-zinc-700 text-zinc-400'
+                            }`}>
+                              {game.status.toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 text-xs">
+                            <span className="text-zinc-400">
+                              <Ticket className="w-3 h-3 inline mr-1" />
+                              {stats.confirmedTickets}/{game.ticket_count}
+                            </span>
+                            <span className="text-emerald-400">
+                              <IndianRupee className="w-3 h-3 inline" />
+                              {stats.revenue.toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <Button 
+                              onClick={() => openGameDetailsModal(game)} 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 text-xs border-zinc-700"
+                              data-testid={`view-details-${game.game_id}`}
+                            >
+                              <FileText className="w-3 h-3 mr-1" /> Details
+                            </Button>
+                            
+                            {game.status === 'upcoming' && (
+                              <>
+                                <Button 
+                                  onClick={() => handleStartGame(game.game_id)} 
+                                  size="sm" 
+                                  className={`h-7 text-xs ${isScheduledTime() ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-zinc-600 hover:bg-zinc-500'}`}
+                                  data-testid={`start-game-${game.game_id}`}
+                                >
+                                  <Play className="w-3 h-3 mr-1" /> Start
+                                </Button>
+                                <Button 
+                                  onClick={() => openEditModal(game)} 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-7 text-xs border-zinc-700"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                              </>
+                            )}
+                            
+                            {game.status === 'live' && (
+                              <>
+                                <Button 
+                                  onClick={() => navigate(`/live/${game.game_id}`)} 
+                                  size="sm" 
+                                  className="h-7 text-xs bg-red-600 hover:bg-red-700"
+                                >
+                                  <Play className="w-3 h-3 mr-1" /> View Live
+                                </Button>
+                                <Button 
+                                  onClick={() => handleEndGame(game.game_id)} 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-7 text-xs border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                                  data-testid={`end-game-${game.game_id}`}
+                                >
+                                  <Check className="w-3 h-3 mr-1" /> End
+                                </Button>
+                              </>
+                            )}
+                            
+                            {game.status !== 'completed' && (
+                              <Button 
+                                onClick={() => { setSelectedGame(game); setShowDeleteModal(true); }} 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 text-xs border-red-500/50 text-red-400 hover:bg-red-500/10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Desktop View */}
+                        <div className="hidden md:grid grid-cols-12 gap-4 items-center">
+                          <div className="col-span-3">
+                            <h3 className="font-semibold text-white truncate">{game.name}</h3>
+                            <p className="text-xs text-zinc-500">₹{game.price}/ticket</p>
+                          </div>
+                          
+                          <div className="col-span-2">
+                            <p className="text-sm text-white">{game.date}</p>
+                            <p className="text-xs text-zinc-500">{game.time}</p>
+                          </div>
+                          
+                          <div className="col-span-2">
+                            <div className="flex items-center gap-2">
+                              <Ticket className="w-4 h-4 text-zinc-500" />
+                              <div>
+                                <p className="text-sm text-white">{stats.confirmedTickets} / {game.ticket_count}</p>
+                                <div className="w-20 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-amber-500 rounded-full transition-all"
+                                    style={{ width: `${stats.soldPercentage}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-2">
+                            <p className="text-sm text-emerald-400 font-medium">
+                              <IndianRupee className="w-3 h-3 inline" />
+                              {stats.revenue.toLocaleString()}
+                            </p>
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <span className={`px-2 py-1 text-[10px] font-semibold rounded-full ${
+                              game.status === 'live' ? 'bg-red-500/20 text-red-400 animate-pulse' :
+                              game.status === 'upcoming' ? 'bg-amber-500/20 text-amber-400' :
+                              'bg-zinc-700 text-zinc-400'
+                            }`}>
+                              {game.status === 'live' ? '● LIVE' : game.status.toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          <div className="col-span-2 flex justify-end gap-1">
+                            <Button 
+                              onClick={() => openGameDetailsModal(game)} 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0 text-zinc-400 hover:text-white"
+                              title="View Details"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                            
+                            {game.status === 'upcoming' && (
+                              <>
+                                <Button 
+                                  onClick={() => handleStartGame(game.game_id)} 
+                                  size="sm" 
+                                  className={`h-7 text-xs ${isScheduledTime() ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-zinc-600 hover:bg-zinc-500'}`}
+                                  title={isScheduledTime() ? 'Start Game' : 'Start Game (Outside scheduled time)'}
+                                >
+                                  <Play className="w-3 h-3 mr-1" /> Start
+                                </Button>
+                                <Button 
+                                  onClick={() => openEditModal(game)} 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-7 w-7 p-0 text-zinc-400 hover:text-white"
+                                  title="Edit Game"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                            
+                            {game.status === 'live' && (
+                              <>
+                                <Button 
+                                  onClick={() => navigate(`/live/${game.game_id}`)} 
+                                  size="sm" 
+                                  className="h-7 text-xs bg-red-600 hover:bg-red-700"
+                                >
+                                  <Play className="w-3 h-3 mr-1" /> Live
+                                </Button>
+                                <Button 
+                                  onClick={() => handleEndGame(game.game_id)} 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-7 text-xs border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                                  title="End Game"
+                                >
+                                  <Check className="w-3 h-3" /> End
+                                </Button>
+                              </>
+                            )}
+                            
+                            {game.status !== 'completed' && (
+                              <Button 
+                                onClick={() => { setSelectedGame(game); setShowDeleteModal(true); }} 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
+                                title="Delete Game"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                            
+                            {game.status === 'completed' && (
+                              <span className="text-xs text-zinc-500 italic">Read-only</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </TabsContent>
 
