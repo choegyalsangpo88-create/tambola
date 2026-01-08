@@ -46,11 +46,42 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
     }
   }, [gameId]);
 
+  const fetchWinnersData = useCallback(async () => {
+    if (!gameId) return;
+    try {
+      const response = await adminAxios.get(`${API}/admin/games/${gameId}/winners`);
+      setWinnersData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch winners data:', error);
+    }
+  }, [gameId]);
+
   useEffect(() => {
     if (isOpen && gameId) {
       fetchControlData();
+      fetchWinnersData();
     }
-  }, [isOpen, gameId, fetchControlData]);
+  }, [isOpen, gameId, fetchControlData, fetchWinnersData]);
+
+  const handleSendWinnerAnnouncement = async (prizeType, winnerId, ticketId) => {
+    try {
+      setSendingAction(`winner_${prizeType}`);
+      await adminAxios.post(`${API}/admin/games/${gameId}/whatsapp/winner-announcement`, {
+        game_id: gameId,
+        prize_type: prizeType,
+        winner_user_id: winnerId,
+        ticket_id: ticketId
+      });
+      toast.success(`Winner announcement sent for ${prizeType}!`);
+      fetchWinnersData();
+      fetchControlData();
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to send winner announcement');
+    } finally {
+      setSendingAction(null);
+    }
+  };
 
   const handleConfirmPayment = async (bookingId) => {
     try {
