@@ -2282,6 +2282,10 @@ async def send_booking_confirmation(game_id: str, data: SendBookingConfirmationR
     if not user or not user.get("phone"):
         raise HTTPException(status_code=400, detail="User has no phone number")
     
+    # Check WhatsApp opt-in
+    if not booking.get("whatsapp_opt_in", True):
+        raise HTTPException(status_code=400, detail="User has opted out of WhatsApp notifications")
+    
     # Get game info
     game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
     
@@ -2293,6 +2297,7 @@ async def send_booking_confirmation(game_id: str, data: SendBookingConfirmationR
     ticket_numbers = [t["ticket_number"] for t in tickets]
     
     # Send WhatsApp message
+    template_name = "booking_confirmation_v1"
     message = f"""✅ *Booking Confirmed - Six Seven Tambola*
 
 Hi {user.get('name', 'Player')}! 🎉
@@ -2309,20 +2314,24 @@ Your booking for *{game['name']}* has been confirmed!
 🎮 Join the game at the scheduled time. Good luck! 🍀"""
     
     result = send_whatsapp_message(user["phone"], message)
+    failure_reason = None if result else "Twilio API error or invalid phone number"
     
-    # Log the message
+    # Log the message (immutable)
     log_id = f"wl_{uuid.uuid4().hex[:8]}"
     await db.whatsapp_logs.insert_one({
         "log_id": log_id,
         "game_id": game_id,
         "message_type": "booking_confirmation",
+        "template_name": template_name,
         "recipient_user_id": user.get("user_id"),
         "recipient_phone": user["phone"],
         "recipient_name": user.get("name", "Player"),
         "booking_id": data.booking_id,
         "sent_at": datetime.now(timezone.utc),
         "sent_by_admin": True,
-        "status": "sent" if result else "failed"
+        "status": "sent" if result else "failed",
+        "delivery_status": "pending" if result else "failed",
+        "failure_reason": failure_reason
     })
     
     # Also log to control logs
