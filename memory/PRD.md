@@ -37,38 +37,59 @@ A full-stack Tambola (Housie) game application designed for Indian players with 
 - Admin actions: View Details, Game Control, Start Game, End Game, Edit, Delete
 - Rules: Games can only be started around scheduled time, Completed games are read-only
 
-#### Game Control Page ✅ (NEW)
+#### Game Control Page ✅
 **A. Game Info (Read-Only)**
 - Game name, date, time, status badge
 - Price per ticket, Prize pool
 - Prize configuration list
 - "Locked" indicator when tickets are sold (cannot edit after tickets sold)
 
-**B. Ticket Sales Summary**
-- Total tickets, Booked, Confirmed, Revenue
-- Sales progress bar
-- Bookings list with user info and status
-- Payment confirmation button for pending bookings
+**B. Bookings Management ✅ (NEW)
+Shows for each booking:
+- Player name
+- Phone number (masked: ****1234)
+- Ticket numbers (with View Details button)
+- Payment status (Pending / Paid)
+- WhatsApp opt-in (YES/NO)
+- WhatsApp message status (SENT/DELIVERED/FAILED)
 
-**C. WhatsApp Controls (BUTTONS ONLY)**
+Admin actions:
+- Approve Payment → auto-triggers WhatsApp confirmation if opt-in=true
+- View ticket details (opens modal with ticket grid preview)
+
+Rules enforced:
+- WhatsApp message only sent if opt-in = true
+- No bulk resend option (individual only)
+
+**C. WhatsApp Controls (Buttons Only)**
 1. **Send Booking Confirmation**
    - Only after payment is approved
    - Can only be sent once per booking
    - Button disabled after sent
+   - Respects whatsapp_opt_in
 
 2. **Send Game Reminder**
    - Can only be sent once per game
    - Only allowed within 24 hours before game time
-   - Button shows "Not Available (24hr window)" if outside window
-   - Button disabled after sent
+   - Only sends to users with opt-in=true
+   - Button shows "Not Available" outside window
 
 3. **Send Join Link**
    - Manual per user
    - Can be resent (no limit)
 
-**D. Logs**
-- WhatsApp message logs (type, recipient, timestamp, status)
-- Activity/Control logs (action, details, timestamp)
+**D. WhatsApp Message Logs ✅ (NEW)**
+Each log entry shows:
+- User (recipient name)
+- Game ID
+- Template name (booking_confirmation_v1, game_reminder_v1, join_link_v1)
+- Status (sent / delivered / failed)
+- Timestamp
+- Failure reason (if any)
+
+Rules:
+- Logs are **immutable** (read-only, no update/delete operations)
+- Logs stored in `whatsapp_logs` collection
 
 #### Requests Tab ✅
 - Booking approval workflow
