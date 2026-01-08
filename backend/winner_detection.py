@@ -407,43 +407,98 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         # Check single-ticket patterns
         patterns = detect_all_patterns(ticket_numbers, called_set)
         
-        # Check Quick Five / Early Five
-        for prize_name in ["Quick Five", "Early Five"]:
-            if prize_name in prizes_to_check and prize_name not in existing_winners and prize_name not in new_winners:
-                if patterns.get(prize_name, False) or patterns.get("Early Five", False):
-                    new_winners[prize_name] = {
-                        "user_id": user_id,
-                        "ticket_id": ticket_id,
-                        "ticket_number": ticket.get("ticket_number"),
-                        "holder_name": holder_name,
-                        "pattern": prize_name
-                    }
-                    logger.info(f"🎉 Winner: {holder_name or user_id} - {prize_name}")
+        # Helper function to check if any variation of prize exists
+        def prize_exists(variations):
+            """Check if any prize name variation exists in prizes_to_check"""
+            for v in variations:
+                if v in prizes_to_check:
+                    return v
+                # Also check normalized versions
+                for p in prizes_to_check:
+                    if normalize_prize_name(p) == normalize_prize_name(v):
+                        return p
+            return None
         
-        # Check Four Corners
-        if "Four Corners" in prizes_to_check and "Four Corners" not in existing_winners and "Four Corners" not in new_winners:
-            if patterns.get("Four Corners", False):
-                new_winners["Four Corners"] = {
+        # Helper function to check if prize already won
+        def prize_already_won(variations):
+            """Check if any variation of prize already won"""
+            for v in variations:
+                if v in existing_winners or v in new_winners:
+                    return True
+                for won in list(existing_winners.keys()) + list(new_winners.keys()):
+                    if normalize_prize_name(won) == normalize_prize_name(v):
+                        return True
+            return False
+        
+        # Check Quick Five / Early Five
+        quick_five_variations = ["Quick Five", "Early Five", "quick_five", "early_five"]
+        actual_prize = prize_exists(quick_five_variations)
+        if actual_prize and not prize_already_won(quick_five_variations):
+            if patterns.get("Quick Five", False) or patterns.get("Early Five", False):
+                new_winners[actual_prize] = {
                     "user_id": user_id,
                     "ticket_id": ticket_id,
                     "ticket_number": ticket.get("ticket_number"),
                     "holder_name": holder_name,
-                    "pattern": "Four Corners"
+                    "pattern": actual_prize
                 }
-                logger.info(f"🎉 Winner: {holder_name or user_id} - Four Corners")
+                logger.info(f"🎉 Winner: {holder_name or user_id} - {actual_prize}")
         
-        # Check Line patterns
-        for line_name in ["Top Line", "Middle Line", "Bottom Line"]:
-            if line_name in prizes_to_check and line_name not in existing_winners and line_name not in new_winners:
-                if patterns.get(line_name, False):
-                    new_winners[line_name] = {
-                        "user_id": user_id,
-                        "ticket_id": ticket_id,
-                        "ticket_number": ticket.get("ticket_number"),
-                        "holder_name": holder_name,
-                        "pattern": line_name
-                    }
-                    logger.info(f"🎉 Winner: {holder_name or user_id} - {line_name}")
+        # Check Four Corners
+        corners_variations = ["Four Corners", "four_corners", "4 Corners"]
+        actual_prize = prize_exists(corners_variations)
+        if actual_prize and not prize_already_won(corners_variations):
+            if patterns.get("Four Corners", False):
+                new_winners[actual_prize] = {
+                    "user_id": user_id,
+                    "ticket_id": ticket_id,
+                    "ticket_number": ticket.get("ticket_number"),
+                    "holder_name": holder_name,
+                    "pattern": actual_prize
+                }
+                logger.info(f"🎉 Winner: {holder_name or user_id} - {actual_prize}")
+        
+        # Check Top Line / First Line
+        top_line_variations = ["Top Line", "First Line", "first_line", "top_line"]
+        actual_prize = prize_exists(top_line_variations)
+        if actual_prize and not prize_already_won(top_line_variations):
+            if patterns.get("Top Line", False):
+                new_winners[actual_prize] = {
+                    "user_id": user_id,
+                    "ticket_id": ticket_id,
+                    "ticket_number": ticket.get("ticket_number"),
+                    "holder_name": holder_name,
+                    "pattern": actual_prize
+                }
+                logger.info(f"🎉 Winner: {holder_name or user_id} - {actual_prize}")
+        
+        # Check Middle Line / Second Line
+        middle_line_variations = ["Middle Line", "Second Line", "second_line", "middle_line"]
+        actual_prize = prize_exists(middle_line_variations)
+        if actual_prize and not prize_already_won(middle_line_variations):
+            if patterns.get("Middle Line", False):
+                new_winners[actual_prize] = {
+                    "user_id": user_id,
+                    "ticket_id": ticket_id,
+                    "ticket_number": ticket.get("ticket_number"),
+                    "holder_name": holder_name,
+                    "pattern": actual_prize
+                }
+                logger.info(f"🎉 Winner: {holder_name or user_id} - {actual_prize}")
+        
+        # Check Bottom Line / Third Line
+        bottom_line_variations = ["Bottom Line", "Third Line", "third_line", "bottom_line"]
+        actual_prize = prize_exists(bottom_line_variations)
+        if actual_prize and not prize_already_won(bottom_line_variations):
+            if patterns.get("Bottom Line", False):
+                new_winners[actual_prize] = {
+                    "user_id": user_id,
+                    "ticket_id": ticket_id,
+                    "ticket_number": ticket.get("ticket_number"),
+                    "holder_name": holder_name,
+                    "pattern": actual_prize
+                }
+                logger.info(f"🎉 Winner: {holder_name or user_id} - {actual_prize}")
         
         # Check Full House - collect all candidates for sequential assignment
         if patterns.get("Full House", False):
