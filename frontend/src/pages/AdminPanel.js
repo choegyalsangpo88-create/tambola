@@ -922,6 +922,17 @@ export default function AdminPanel() {
                               <FileText className="w-4 h-4" />
                             </Button>
                             
+                            <Button 
+                              onClick={() => openGameControlModal(game)} 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300"
+                              title="Game Control"
+                              data-testid={`game-control-${game.game_id}`}
+                            >
+                              <Gamepad2 className="w-4 h-4" />
+                            </Button>
+                            
                             {game.status === 'upcoming' && (
                               <>
                                 <Button 
