@@ -437,6 +437,164 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
               </div>
             </TabsContent>
 
+            {/* Winners Declaration Section */}
+            <TabsContent value="winners" className="space-y-4">
+              {/* Only show for live or completed games */}
+              {(game?.status === 'live' || game?.status === 'completed') ? (
+                <>
+                  {/* Winners Summary */}
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy className="w-5 h-5 text-amber-400" />
+                      <h4 className="text-sm font-semibold text-amber-400">Winner Declaration</h4>
+                    </div>
+                    <p className="text-xs text-amber-400/70">
+                      Send individual WhatsApp announcements to winners. One message per prize - no bulk messages allowed.
+                    </p>
+                  </div>
+
+                  {/* Winners Table */}
+                  <div className="bg-zinc-800 rounded-lg overflow-hidden">
+                    <div className="p-3 border-b border-zinc-700 flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <Award className="w-4 h-4 text-amber-500" />
+                        Game Winners ({winnersData?.total_winners || 0})
+                      </h4>
+                      <Button
+                        onClick={fetchWinnersData}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-zinc-400"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+                      </Button>
+                    </div>
+                    
+                    {!winnersData?.winners || Object.keys(winnersData.winners).length === 0 ? (
+                      <div className="text-center py-8">
+                        <Trophy className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
+                        <p className="text-zinc-500 text-sm">No winners declared yet</p>
+                        <p className="text-zinc-600 text-xs mt-1">Winners are automatically detected during the game</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-zinc-900">
+                            <tr className="text-xs text-zinc-500 uppercase">
+                              <th className="px-3 py-2 text-left">Prize</th>
+                              <th className="px-3 py-2 text-left">Winner</th>
+                              <th className="px-3 py-2 text-left">Ticket</th>
+                              <th className="px-3 py-2 text-left">Amount</th>
+                              <th className="px-3 py-2 text-left">WA Status</th>
+                              <th className="px-3 py-2 text-right">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-700">
+                            {Object.entries(winnersData.winners).map(([prizeType, winner]) => (
+                              <tr key={prizeType} className="hover:bg-zinc-800/50">
+                                <td className="px-3 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                      <Trophy className="w-4 h-4 text-amber-400" />
+                                    </div>
+                                    <span className="text-white font-medium text-xs">{prizeType}</span>
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div>
+                                    <p className="text-white text-sm">{winner.user_name || winner.holder_name || 'Unknown'}</p>
+                                    {winner.user_phone && (
+                                      <p className="text-[10px] text-zinc-500 flex items-center gap-1">
+                                        <Phone className="w-3 h-3" /> ****{winner.user_phone.slice(-4)}
+                                      </p>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <span className="text-amber-400 font-mono text-xs">{winner.ticket_number || winner.ticket_id?.slice(0, 8) || 'N/A'}</span>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <span className="text-emerald-400 font-medium">₹{winner.prize_amount?.toLocaleString()}</span>
+                                </td>
+                                <td className="px-3 py-3">
+                                  {winner.announcement_sent ? (
+                                    <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${getStatusColor(winner.announcement_status || 'sent')}`}>
+                                      {(winner.announcement_status || 'SENT').toUpperCase()}
+                                    </span>
+                                  ) : (
+                                    <span className="text-zinc-500 text-xs">Not sent</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3 text-right">
+                                  {winner.announcement_sent ? (
+                                    <span className="text-xs text-zinc-500 flex items-center justify-end gap-1">
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Sent
+                                    </span>
+                                  ) : winner.user_phone ? (
+                                    <Button
+                                      onClick={() => handleSendWinnerAnnouncement(prizeType, winner.user_id, winner.ticket_id)}
+                                      disabled={sendingAction === `winner_${prizeType}`}
+                                      size="sm"
+                                      className="h-7 text-[10px] bg-amber-600 hover:bg-amber-700"
+                                      data-testid={`send-winner-${prizeType}`}
+                                    >
+                                      {sendingAction === `winner_${prizeType}` ? (
+                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <><Send className="w-3 h-3 mr-1" /> Send WA</>
+                                      )}
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs text-red-400">No phone</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Prize Pool Reference */}
+                  <div className="bg-zinc-800 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                      <IndianRupee className="w-4 h-4 text-emerald-500" />
+                      Prize Pool Reference
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.entries(game?.prizes || {}).map(([prize, amount]) => {
+                        const hasWinner = winnersData?.winners?.[prize];
+                        return (
+                          <div 
+                            key={prize} 
+                            className={`flex justify-between items-center p-2 rounded text-xs ${
+                              hasWinner ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-zinc-900'
+                            }`}
+                          >
+                            <span className={hasWinner ? 'text-emerald-400' : 'text-zinc-400'}>{prize}</span>
+                            <span className={hasWinner ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'}>
+                              ₹{amount}
+                              {hasWinner && <CheckCircle2 className="w-3 h-3 inline ml-1" />}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <Trophy className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                  <p className="text-zinc-400 font-medium">Winners Available After Game Starts</p>
+                  <p className="text-zinc-600 text-sm mt-1">
+                    This game is currently <span className="text-amber-400">{game?.status}</span>. 
+                    Winners will be detected automatically once the game goes live.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
             {/* C. WhatsApp Controls */}
             <TabsContent value="whatsapp" className="space-y-4">
               {/* Info Banner */}
