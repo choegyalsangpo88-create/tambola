@@ -165,7 +165,19 @@ Rules enforced:
 
 ## Changelog
 
-### 2025-01-08 (Session 2 - Continued)
+### 2025-01-08 (Session 2 - Part 3)
+- **Winner Declaration Section**
+  - Added Winners tab in Game Control Modal
+  - Winner Declaration banner with policy: "One message per prize - no bulk messages allowed"
+  - Game Winners table with columns: Prize, Winner, Ticket, Amount, WA Status, Action
+  - Send WA button to send individual winner announcements
+  - Prize Pool Reference showing prizes with checkmarks for claimed
+  - New endpoints:
+    - `POST /api/admin/games/{game_id}/whatsapp/winner-announcement`
+    - `GET /api/admin/games/{game_id}/winners`
+  - All 16 backend tests passing
+
+### 2025-01-08 (Session 2 - Part 2)
 - **Bookings Management Section**
   - Added Bookings tab with table showing: Player, Phone, Tickets, Payment status, WA Opt-in, WA Status
   - Approve Payment auto-triggers WhatsApp confirmation if opt-in=true
