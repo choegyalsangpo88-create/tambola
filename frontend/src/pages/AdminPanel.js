@@ -522,6 +522,11 @@ export default function AdminPanel() {
     setShowGameDetailsModal(true);
   };
 
+  const openGameControlModal = (game) => {
+    setControlGameId(game.game_id);
+    setShowGameControlModal(true);
+  };
+
   const resetForm = () => {
     setGameForm({
       name: '',
