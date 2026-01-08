@@ -1568,6 +1568,14 @@ export default function AdminPanel() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Game Control Modal */}
+      <GameControlModal
+        isOpen={showGameControlModal}
+        onClose={() => setShowGameControlModal(false)}
+        gameId={controlGameId}
+        onUpdate={fetchGames}
+      />
     </div>
   );
 }
