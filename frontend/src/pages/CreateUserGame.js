@@ -9,6 +9,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 // Default dividends for user games (family/party style)
 const DEFAULT_DIVIDENDS = {
   'Quick Five': { enabled: false, amount: 100, description: 'First to mark 5 numbers' },
