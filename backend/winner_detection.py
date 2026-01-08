@@ -325,6 +325,37 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         "1st Full House", "2nd Full House", "3rd Full House"
     ]
     
+    # Normalize prize names for comparison (handle different formats)
+    def normalize_prize_name(name):
+        """Normalize prize name for comparison"""
+        if not name:
+            return ""
+        return name.lower().replace("_", " ").replace("-", " ").strip()
+    
+    # Map normalized names to actual prize names
+    prize_name_map = {}
+    for prize in prizes_to_check:
+        normalized = normalize_prize_name(prize)
+        prize_name_map[normalized] = prize
+        # Also map common variations
+        if "first" in normalized or "top" in normalized:
+            prize_name_map["top line"] = prize
+            prize_name_map["first line"] = prize
+            prize_name_map["first_line"] = prize
+        if "second" in normalized or "middle" in normalized:
+            prize_name_map["middle line"] = prize
+            prize_name_map["second line"] = prize
+            prize_name_map["second_line"] = prize
+        if "third" in normalized or "bottom" in normalized:
+            prize_name_map["bottom line"] = prize
+            prize_name_map["third line"] = prize
+            prize_name_map["third_line"] = prize
+        if "full house" in normalized or "full_house" in normalized:
+            prize_name_map["full house"] = prize
+            prize_name_map["full_house"] = prize
+    
+    logger.info(f"Checking prizes: {prizes_to_check}")
+    
     # Build a cache of user names
     user_ids = set(t.get("user_id") for t in tickets if t.get("user_id"))
     user_names = {}
