@@ -89,6 +89,14 @@ export default function LoginScreen() {
         return;
       }
 
+      // Store session in localStorage for mobile compatibility
+      if (response.data.session_token) {
+        localStorage.setItem('tambola_session', response.data.session_token);
+      }
+      if (response.data.user) {
+        localStorage.setItem('tambola_user', JSON.stringify(response.data.user));
+      }
+
       toast.success('Login successful!');
       navigate('/', { state: { user: response.data.user }, replace: true });
     } catch (error) {
