@@ -86,6 +86,7 @@ class Booking(BaseModel):
     booking_date: datetime
     status: str  # pending, confirmed, cancelled
     whatsapp_confirmed: bool = False
+    whatsapp_opt_in: bool = True  # User opts in for WhatsApp notifications
     has_full_sheet_bonus: bool = False
     full_sheet_id: Optional[str] = None
 
