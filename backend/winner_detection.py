@@ -414,6 +414,10 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         
         # Check single-ticket patterns
         patterns = detect_all_patterns(ticket_numbers, called_set)
+        winning_patterns = [p for p, won in patterns.items() if won]
+        
+        if winning_patterns:
+            logger.info(f"Ticket {ticket.get('ticket_number')} has winning patterns: {winning_patterns}")
         
         # Helper function to check if any variation of prize exists
         def prize_exists(variations):
@@ -439,7 +443,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
             return False
         
         # Check Quick Five / Early Five
-        quick_five_variations = ["Quick Five", "Early Five", "quick_five", "early_five"]
+        quick_five_variations = ["Quick Five", "Early Five", "quick_five", "early_five", "Quick 5", "Early 5"]
         actual_prize = prize_exists(quick_five_variations)
         if actual_prize and not prize_already_won(quick_five_variations):
             if patterns.get("Quick Five", False) or patterns.get("Early Five", False):
