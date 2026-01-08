@@ -232,13 +232,17 @@ class WhatsAppMessageLog(BaseModel):
     log_id: str
     game_id: str
     message_type: str  # booking_confirmation, game_reminder, join_link
+    template_name: str = ""  # Template identifier used
     recipient_user_id: Optional[str] = None
     recipient_phone: str
     recipient_name: str
     booking_id: Optional[str] = None
     sent_at: datetime
     sent_by_admin: bool = True
-    status: str = "sent"  # sent, failed
+    status: str = "sent"  # sent, delivered, failed
+    delivery_status: str = "pending"  # pending, delivered, read, failed
+    failure_reason: Optional[str] = None
+    # Logs are immutable - no update operations allowed
 
 class SendBookingConfirmationRequest(BaseModel):
     booking_id: str
