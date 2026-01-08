@@ -289,7 +289,11 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     
     Returns dict of newly detected winners.
     """
+    logger.info(f"=== Winner Detection Started for {game_id} ===")
+    logger.info(f"Called numbers: {len(called_numbers)}, Existing winners: {list(existing_winners.keys())}")
+    
     if not called_numbers or len(called_numbers) < 5:
+        logger.info("Not enough numbers called (< 5)")
         return {}
     
     called_set = set(called_numbers)
@@ -302,7 +306,10 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         {"_id": 0}
     ).to_list(1000)
     
+    logger.info(f"Found {len(tickets)} booked tickets")
+    
     if not tickets:
+        logger.info("No booked tickets found")
         return {}
     
     # Filter to only booked tickets
@@ -315,7 +322,10 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
             t.get("assigned_to"))
     ]
     
+    logger.info(f"Filtered to {len(booked_tickets)} valid booked tickets")
+    
     if not booked_tickets:
+        logger.info("No valid booked tickets after filtering")
         return {}
     
     # Determine which prizes to check
@@ -324,6 +334,8 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         "Top Line", "Middle Line", "Bottom Line",
         "1st Full House", "2nd Full House", "3rd Full House"
     ]
+    
+    logger.info(f"Prizes to check: {prizes_to_check}")
     
     # Normalize prize names for comparison (handle different formats)
     def normalize_prize_name(name):
