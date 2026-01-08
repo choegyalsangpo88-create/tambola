@@ -83,14 +83,22 @@ export default function CreateUserGame() {
           ...formData,
           prizes_description: getEnabledPrizesDescription()
         },
-        { withCredentials: true }
+        { 
+          headers: getAuthHeaders(),
+          withCredentials: true 
+        }
       );
       
       toast.success('Game created successfully!');
       navigate(`/my-games/${response.data.user_game_id}`);
     } catch (error) {
       console.error('Failed to create game:', error);
-      toast.error(error.response?.data?.detail || 'Failed to create game');
+      if (error.response?.status === 401) {
+        toast.error('Please login to create a game');
+        navigate('/login');
+      } else {
+        toast.error(error.response?.data?.detail || 'Failed to create game');
+      }
     } finally {
       setIsLoading(false);
     }
