@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   ArrowLeft, Plus, Play, Check, Edit, TrendingUp, Trash2, X, Volume2, 
   Settings, Users, Ticket, Clock, Ban, LogOut, MessageSquare, CreditCard,
-  FileText, Send, AlertCircle, CheckCircle2, IndianRupee, History
+  FileText, Send, AlertCircle, CheckCircle2, IndianRupee, History, Gamepad2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import GameControlModal from '../components/GameControlModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
