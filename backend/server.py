@@ -2546,6 +2546,171 @@ See you there! 🎉"""
     else:
         raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
 
+@api_router.post("/admin/games/{game_id}/whatsapp/winner-announcement")
+async def send_winner_announcement(game_id: str, data: SendWinnerAnnouncementRequest, request: Request, _: bool = Depends(verify_admin)):
+    """Send winner announcement WhatsApp message to a specific winner (one per prize, no bulk)"""
+    from notifications import send_whatsapp_message
+    
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Check game is live or completed
+    if game.get("status") not in ["live", "completed"]:
+        raise HTTPException(status_code=400, detail="Can only send winner announcements for live or completed games")
+    
+    # Get game session with winners
+    session = await db.game_sessions.find_one({"game_id": game_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="Game session not found")
+    
+    winners = session.get("winners", {})
+    if data.prize_type not in winners:
+        raise HTTPException(status_code=400, detail=f"No winner declared for {data.prize_type}")
+    
+    winner_info = winners[data.prize_type]
+    if winner_info.get("user_id") != data.winner_user_id:
+        raise HTTPException(status_code=400, detail="Winner user_id mismatch")
+    
+    # Check if announcement already sent for this winner/prize
+    existing = await db.whatsapp_logs.find_one({
+        "game_id": game_id,
+        "message_type": "winner_announcement",
+        "recipient_user_id": data.winner_user_id,
+        "booking_id": data.prize_type  # Using booking_id field to store prize_type for uniqueness
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Winner announcement already sent for {data.prize_type}")
+    
+    # Get winner user info
+    user = await db.users.find_one({"user_id": data.winner_user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Winner user not found")
+    
+    if not user.get("phone"):
+        raise HTTPException(status_code=400, detail="Winner has no phone number")
+    
+    # Get prize amount
+    prize_amount = game.get("prizes", {}).get(data.prize_type, 0)
+    
+    # Send WhatsApp winner announcement
+    template_name = "winner_announcement_v1"
+    message = f"""🎉🏆 *CONGRATULATIONS!* 🏆🎉
+
+Hi {user.get('name', 'Player')}!
+
+You have WON in *{game['name']}*!
+
+🏅 *Prize:* {data.prize_type}
+💰 *Amount:* ₹{prize_amount}
+🎫 *Ticket:* {data.ticket_id or winner_info.get('ticket_id', 'N/A')}
+
+To claim your prize, please contact us on WhatsApp with your:
+• Full Name
+• UPI ID / Bank Details
+
+Thank you for playing Six Seven Tambola! 🎲"""
+    
+    result = send_whatsapp_message(user["phone"], message)
+    failure_reason = None if result else "Twilio API error or invalid phone number"
+    
+    # Log the message (immutable)
+    log_id = f"wl_{uuid.uuid4().hex[:8]}"
+    await db.whatsapp_logs.insert_one({
+        "log_id": log_id,
+        "game_id": game_id,
+        "message_type": "winner_announcement",
+        "template_name": template_name,
+        "recipient_user_id": data.winner_user_id,
+        "recipient_phone": user["phone"],
+        "recipient_name": user.get("name", "Player"),
+        "booking_id": data.prize_type,  # Store prize_type for tracking
+        "sent_at": datetime.now(timezone.utc),
+        "sent_by_admin": True,
+        "status": "sent" if result else "failed",
+        "delivery_status": "pending" if result else "failed",
+        "failure_reason": failure_reason
+    })
+    
+    # Update winner info with announcement_sent flag
+    winners[data.prize_type]["announcement_sent"] = True
+    winners[data.prize_type]["announcement_sent_at"] = datetime.now(timezone.utc).isoformat()
+    await db.game_sessions.update_one(
+        {"game_id": game_id},
+        {"$set": {"winners": winners}}
+    )
+    
+    # Log to control logs
+    await db.game_control_logs.insert_one({
+        "log_id": f"gcl_{uuid.uuid4().hex[:8]}",
+        "game_id": game_id,
+        "action": "WINNER_ANNOUNCEMENT_SENT",
+        "details": {
+            "prize_type": data.prize_type,
+            "winner": user.get("name"),
+            "amount": prize_amount,
+            "phone": user["phone"][-4:]
+        },
+        "admin_user": "admin",
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    if result:
+        return {"success": True, "message": f"Winner announcement sent for {data.prize_type}"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
+
+@api_router.get("/admin/games/{game_id}/winners")
+async def get_game_winners(game_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Get detailed winner information for a game including WhatsApp announcement status"""
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    session = await db.game_sessions.find_one({"game_id": game_id}, {"_id": 0})
+    winners = session.get("winners", {}) if session else {}
+    
+    # Enrich winner data with user details and announcement status
+    enriched_winners = {}
+    for prize_type, winner_info in winners.items():
+        user_id = winner_info.get("user_id")
+        user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "name": 1, "email": 1, "phone": 1}) if user_id else None
+        
+        # Check if announcement was sent
+        announcement_log = await db.whatsapp_logs.find_one({
+            "game_id": game_id,
+            "message_type": "winner_announcement",
+            "booking_id": prize_type  # We stored prize_type in booking_id field
+        }, {"_id": 0})
+        
+        # Get ticket info
+        ticket = await db.tickets.find_one(
+            {"ticket_id": winner_info.get("ticket_id")},
+            {"_id": 0, "ticket_number": 1, "holder_name": 1}
+        ) if winner_info.get("ticket_id") else None
+        
+        enriched_winners[prize_type] = {
+            "user_id": user_id,
+            "user_name": winner_info.get("user_name") or winner_info.get("holder_name") or (user.get("name") if user else "Unknown"),
+            "user_phone": user.get("phone") if user else None,
+            "ticket_id": winner_info.get("ticket_id"),
+            "ticket_number": ticket.get("ticket_number") if ticket else None,
+            "holder_name": winner_info.get("holder_name") or (ticket.get("holder_name") if ticket else None),
+            "prize_amount": game.get("prizes", {}).get(prize_type, 0),
+            "announcement_sent": announcement_log is not None or winner_info.get("announcement_sent", False),
+            "announcement_sent_at": announcement_log.get("sent_at") if announcement_log else winner_info.get("announcement_sent_at"),
+            "announcement_status": announcement_log.get("status") if announcement_log else None
+        }
+    
+    return {
+        "game_id": game_id,
+        "game_name": game.get("name"),
+        "game_status": game.get("status"),
+        "prizes": game.get("prizes", {}),
+        "winners": enriched_winners,
+        "total_winners": len(enriched_winners)
+    }
+
 @api_router.put("/admin/bookings/{booking_id}/confirm-payment")
 async def confirm_booking_payment(booking_id: str, request: Request, _: bool = Depends(verify_admin)):
     """Confirm payment for a booking and auto-send WhatsApp confirmation if opted in"""
