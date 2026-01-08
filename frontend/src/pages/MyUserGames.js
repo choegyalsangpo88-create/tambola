@@ -8,6 +8,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 export default function MyUserGames() {
   const navigate = useNavigate();
   const [games, setGames] = useState([]);
@@ -19,11 +25,19 @@ export default function MyUserGames() {
 
   const fetchMyGames = async () => {
     try {
-      const response = await axios.get(`${API}/user-games/my`, { withCredentials: true });
+      const response = await axios.get(`${API}/user-games/my`, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       setGames(response.data);
     } catch (error) {
       console.error('Failed to fetch games:', error);
-      toast.error('Failed to load your games');
+      if (error.response?.status === 401) {
+        toast.error('Please login to view your games');
+        navigate('/login');
+      } else {
+        toast.error('Failed to load your games');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +48,10 @@ export default function MyUserGames() {
     if (!window.confirm('Are you sure you want to delete this game?')) return;
     
     try {
-      await axios.delete(`${API}/user-games/${gameId}`, { withCredentials: true });
+      await axios.delete(`${API}/user-games/${gameId}`, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Game deleted');
       setGames(games.filter(g => g.user_game_id !== gameId));
     } catch (error) {
