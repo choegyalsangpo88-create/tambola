@@ -556,49 +556,75 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     
     # SEQUENTIAL FULL HOUSE with MULTIPLE WINNERS SHARING same prize
     # If multiple users complete Full House on the SAME CALL, they share that prize
-    house_prizes = ["1st Full House", "2nd Full House", "3rd Full House"]
+    house_prize_variations = [
+        ["1st Full House", "First Full House", "full_house", "Full House"],
+        ["2nd Full House", "Second Full House"],
+        ["3rd Full House", "Third Full House"]
+    ]
+    
+    # Find actual prize names from game_dividends
+    def find_full_house_prize(idx):
+        """Find the actual prize name for a full house index"""
+        if idx >= len(house_prize_variations):
+            return None
+        for variation in house_prize_variations[idx]:
+            if variation in prizes_to_check:
+                return variation
+            for p in prizes_to_check:
+                if normalize_prize_name(p) == normalize_prize_name(variation):
+                    return p
+        return None
     
     # Count existing Full House winners
-    existing_house_count = sum(1 for p in existing_winners.keys() if "Full House" in p)
+    existing_house_count = 0
+    for p in existing_winners.keys():
+        if "full" in p.lower() and "house" in p.lower() and "sheet" not in p.lower():
+            existing_house_count += 1
     
     if full_house_candidates and existing_house_count < 3:
         # All candidates completed on this call - they share the NEXT available prize
         next_prize_idx = existing_house_count
+        prize_name = find_full_house_prize(next_prize_idx)
         
-        if next_prize_idx < len(house_prizes):
-            prize_name = house_prizes[next_prize_idx]
-            
-            if prize_name in prizes_to_check and prize_name not in existing_winners and prize_name not in new_winners:
-                if len(full_house_candidates) == 1:
-                    # Single winner
-                    candidate = full_house_candidates[0]
-                    new_winners[prize_name] = {
+        # If no sequential full house prizes exist, try generic "Full House"
+        if not prize_name:
+            for p in prizes_to_check:
+                if "full" in p.lower() and "house" in p.lower() and "sheet" not in p.lower():
+                    if p not in existing_winners and p not in new_winners:
+                        prize_name = p
+                        break
+        
+        if prize_name and prize_name not in existing_winners and prize_name not in new_winners:
+            if len(full_house_candidates) == 1:
+                # Single winner
+                candidate = full_house_candidates[0]
+                new_winners[prize_name] = {
+                    "user_id": candidate["user_id"],
+                    "ticket_id": candidate["ticket_id"],
+                    "ticket_number": candidate["ticket_number"],
+                    "holder_name": candidate["holder_name"],
+                    "pattern": prize_name
+                }
+                logger.info(f"🎉 Winner: {candidate['holder_name'] or candidate['user_id']} - {prize_name}")
+            else:
+                # Multiple winners - they SHARE the same prize
+                # Store as list of winners
+                shared_winners = []
+                for candidate in full_house_candidates:
+                    shared_winners.append({
                         "user_id": candidate["user_id"],
                         "ticket_id": candidate["ticket_id"],
                         "ticket_number": candidate["ticket_number"],
-                        "holder_name": candidate["holder_name"],
-                        "pattern": prize_name
-                    }
-                    logger.info(f"🎉 Winner: {candidate['holder_name'] or candidate['user_id']} - {prize_name}")
-                else:
-                    # Multiple winners - they SHARE the same prize
-                    # Store as list of winners
-                    shared_winners = []
-                    for candidate in full_house_candidates:
-                        shared_winners.append({
-                            "user_id": candidate["user_id"],
-                            "ticket_id": candidate["ticket_id"],
-                            "ticket_number": candidate["ticket_number"],
-                            "holder_name": candidate["holder_name"]
-                        })
-                    
-                    new_winners[prize_name] = {
-                        "shared": True,
-                        "winners": shared_winners,
-                        "holder_name": ", ".join([w["holder_name"] for w in shared_winners]),
-                        "pattern": prize_name
-                    }
-                    logger.info(f"🎉 SHARED Winner: {len(shared_winners)} players share {prize_name}!")
+                        "holder_name": candidate["holder_name"]
+                    })
+                
+                new_winners[prize_name] = {
+                    "shared": True,
+                    "winners": shared_winners,
+                    "holder_name": ", ".join([w["holder_name"] for w in shared_winners]),
+                    "pattern": prize_name
+                }
+                logger.info(f"🎉 SHARED Winner: {len(shared_winners)} players share {prize_name}!")
     
     return new_winners
 
