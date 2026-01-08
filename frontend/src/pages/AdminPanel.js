@@ -496,6 +496,29 @@ export default function AdminPanel() {
     setShowTicketsModal(true);
   };
 
+  const openGameDetailsModal = async (game) => {
+    setSelectedGame(game);
+    const stats = getGameStats(game);
+    
+    // Fetch game session for winners if game is live or completed
+    let winners = {};
+    if (game.status === 'live' || game.status === 'completed') {
+      try {
+        const sessionRes = await axios.get(`${API}/games/${game.game_id}/session`);
+        winners = sessionRes.data.winners || {};
+      } catch (e) {
+        console.log('No session found');
+      }
+    }
+    
+    setGameDetails({
+      ...game,
+      stats,
+      winners
+    });
+    setShowGameDetailsModal(true);
+  };
+
   const resetForm = () => {
     setGameForm({
       name: '',
