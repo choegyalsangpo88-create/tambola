@@ -513,13 +513,34 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 logger.info(f"🎉 Winner: {holder_name or user_id} - {actual_prize}")
         
         # Check Full House - collect all candidates for sequential assignment
+        # IMPORTANT: A ticket that already won ANY Full House cannot win another
         if patterns.get("Full House", False):
-            # Check if this ticket already won a Full House
-            already_won_ticket = (
-                ticket_id in [w.get("ticket_id") for w in existing_winners.values() if "Full House" in str(w.get("pattern", ""))] or
-                ticket_id in [w.get("ticket_id") for w in new_winners.values() if "Full House" in str(w.get("pattern", ""))]
-            )
-            if not already_won_ticket:
+            # Get all ticket_ids that have already won any Full House
+            already_won_fh_tickets = set()
+            for prize_key, winner_data in existing_winners.items():
+                if "full" in prize_key.lower() and "house" in prize_key.lower() and "sheet" not in prize_key.lower():
+                    if winner_data.get("shared"):
+                        # Multiple winners shared this prize
+                        for w in winner_data.get("winners", []):
+                            if w.get("ticket_id"):
+                                already_won_fh_tickets.add(w["ticket_id"])
+                    else:
+                        if winner_data.get("ticket_id"):
+                            already_won_fh_tickets.add(winner_data["ticket_id"])
+            
+            # Also check new_winners from this call
+            for prize_key, winner_data in new_winners.items():
+                if "full" in prize_key.lower() and "house" in prize_key.lower() and "sheet" not in prize_key.lower():
+                    if winner_data.get("shared"):
+                        for w in winner_data.get("winners", []):
+                            if w.get("ticket_id"):
+                                already_won_fh_tickets.add(w["ticket_id"])
+                    else:
+                        if winner_data.get("ticket_id"):
+                            already_won_fh_tickets.add(winner_data["ticket_id"])
+            
+            # Only add this ticket as candidate if it hasn't won a Full House yet
+            if ticket_id not in already_won_fh_tickets:
                 full_house_candidates.append({
                     "user_id": user_id,
                     "ticket_id": ticket_id,
