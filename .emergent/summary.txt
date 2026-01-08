@@ -4,198 +4,175 @@ The user wants to build a full-stack Tambola (Housie) game application. The plat
 PRODUCT REQUIREMENTS:
 - User authentication via Google and Phone Number OTP.
 - A dashboard to display Live and Upcoming games.
-- A game details page with an inline ticket selection system.
 - A live game screen featuring number calling, real-time ticket marking, and winner announcements.
-- A comprehensive admin panel to create games, manage bookings, and view game statistics.
+- A comprehensive admin panel to create games, manage bookings, and view game statistics. This panel should be modern, minimal, and feature action logging and template-based WhatsApp messaging.
 - A notification system (initially Email/SMS/WhatsApp) to inform winners.
-- A user-facing feature to create and share private games for family and friends.
-- Automatic game management: auto-start at a scheduled time, auto-call numbers during the game, and auto-end when all prizes are won.
-- Customizable caller voice (male/female, speed, accents, funny prefix lines).
-- A separate, password-protected admin panel inaccessible to regular users.
+- A user-facing feature to create and share private games.
+- Automatic game management: auto-start, auto-call, and auto-end.
+- Customizable caller voice.
+- A separate, password-protected admin panel.
+- Specific, complex rules for dividends like Full Sheet Bonus and sequential Full House claims.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack Tambola web application (Six Seven Tambola) with a React frontend, a heavily modified FastAPI backend, and a MongoDB database.
-
-- **Frontend:** A responsive UI with pages for Login, Dashboard, Admin Panel, Game Details, Live Game, and Past Results. The live game UI has been repeatedly redesigned based on user feedback to feature a 3D spinning ball, a Top Players list, and specific winner celebration formats. Audio handling has been completely rewritten using **Howler.js** to improve mobile compatibility, requiring a one-time Tap to enable sound interaction from the user.
-- **Backend:** A large monolithic  file manages all APIs. It includes background tasks for game automation. The winner detection logic () has been rewritten multiple times to match highly specific and nuanced user rules for prizes like Four Corners and Full Sheet Bonus. Performance has been partially addressed by adding MongoDB indexes. A directory structure for refactoring  exists but is not yet fully utilized.
-- **Admin Panel:** A comprehensive, password-protected interface at  for game creation and management.
-- **Integrations:**
-    - Emergent-managed Google Auth: Functional.
-    - Twilio: Active for WhatsApp OTP, but limited by sandbox mode (a UI notice has been added).
-    - OpenAI TTS: Used via  for server-side audio generation, which is then played by Howler.js on the frontend.
-    - : Used for winner celebrations.
-    - : Added to the frontend for robust audio playback.
+A full-stack Tambola web application (Six Seven Tambola) with a React frontend, FastAPI backend, and MongoDB. It supports admin and user-created games. The previous session involved fixing numerous critical bugs related to authentication (Google and WhatsApp), dividend detection (Quick Five, Full Sheet Bonus, sequential Full Houses), and UI elements on the live game screen. The agent has just started a complete overhaul of the Admin Panel based on new, detailed user requirements.
 
 **Last working item**:
-- **Last item agent was working:** Investigating a bug where users cannot join their own user-created games using the share code. The user reported that the join game functionality for these private games is broken. The agent started debugging by inspecting the frontend code () and the corresponding backend endpoint () in .
+- **Last item agent was working:** The agent started a complete overhaul of the admin panel as requested by the user. The user is providing requirements section-by-section. The agent's last action was to begin implementing the Create Game section according to the user's specifications, after overwriting the old  with a new shell.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** backend testing agent
-    - **Testing Steps:**
-        1. Use  to create a new *user game* (not an admin game) via the appropriate endpoint.
-        2. Extract the  from the response.
-        3. Use  again to call the  endpoint to reproduce the user's issue. Analyze the response for errors.
+- **Which testing method agent to use?** both
+    - **Frontend:** A new UI is being built for the admin panel, which will require visual and functional testing.
+    - **Backend:** The new Create Game functionality will require a new backend endpoint (e.g., ) that needs to be tested for ticket generation and database storage.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Cannot Join User-Created Games (P0)**
-  - **Description:** Users are unable to join private games they create using the generated share code. This is a critical bug blocking a core feature.
-  - **Next debug checklist:**
-    1.  Examine the backend endpoint  in .
-    2.  Check the Pydantic model  to see what data the frontend should be sending.
-    3.  Inspect the frontend code in  to verify it sends the correct payload to the backend.
-    4.  Add logging to the backend endpoint to trace the request flow and identify where it fails.
-  - **Why fix this issue and what will be achieved with the fix?** This will restore the functionality for users to create and play private games with friends and family, which is a key product requirement.
-  - **Status:** IN PROGRESS
-  - **Is recurring issue?** N
-  - **Should Test frontend/backend/both after fix?** Backend
-  - **Blocked on other issue:** None
-
-- **Issue 2: Application Performance and Scalability (P2)**
-  - **Description:** The user has repeatedly expressed concerns that the website feels slow and must handle 1000 concurrent users. While database indexes were added, a full performance review has not been conducted.
-  - **Next debug checklist:**
-    1.  Analyze frontend bundle size and implement code splitting (e.g., with ).
-    2.  Review real-time polling loops () for efficiency.
-    3.  Consider migrating from HTTP polling to WebSockets for live game updates to reduce server load and improve real-time feel.
-  - **Why fix this issue and what will be achieved with the fix?** Ensures a smooth user experience under load and prepares the app for a larger user base.
-  - **Status:** NOT STARTED
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on other issue:** None
-
-- **Issue 3: Mobile Audio Reliability (P1)**
-  - **Description:** Mobile audio has been a persistent problem. The latest implementation uses Howler.js and a Tap to enable sound button. This is the most robust attempt so far, but it has not been confirmed as a complete fix by the user on their devices.
-  - **Status:** USER VERIFICATION PENDING
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Frontend (Manual testing on mobile devices is required).
-  - **Blocked on other issue:** None
+- **Issue 1: Google Login Fails on Custom Domain (P0)**
+    - **Description:** The user reported that Google Login works on the preview URL but fails on their custom domain (), showing a Network error and redirecting to the login page. This is a CORS issue.
+    - **Attempted fixes:** The agent correctly identified this as a CORS problem. The backend CORS configuration in  and the  file was updated to explicitly allow the custom domain.
+    - **Next debug checklist:** The user needs to **redeploy the application** for the CORS fix to take effect on the custom domain. The agent should confirm this with the user and then re-verify if the issue persists.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker preventing users from accessing the application on its intended domain.
+    - **Status:** USER VERIFICATION PENDING
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Both
+- **Issue 2: WhatsApp Login Not Authenticated on Mobile (P1)**
+    - **Description:** When a user books tickets and logs in via WhatsApp on a mobile device, they are met with a not authenticated error.
+    - **Attempted fixes:** The agent identified that the  endpoint was not returning a  in the response body, unlike the Google login flow. The agent fixed the backend to return the token and updated the frontend  to store this token in , which is crucial for mobile browser authentication persistence.
+    - **Next debug checklist:** This fix also requires the user to **redeploy the application**. Post-deployment, this flow needs to be tested on a mobile device.
+    - **Why fix this issue and what will be achieved with the fix?** This unblocks the primary login method for users who prefer phone number authentication.
+    - **Status:** USER VERIFICATION PENDING
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Both
 
 **In progress Task List**:
-- **Task 1: Refactor  (P1)**
-  - **Where to resume:** The directory structure (, , ) has been created. The next step is to systematically move logic from the 2500+ line  into the new router files (, , , etc.) and include them in the main FastAPI app.
-  - **What will be achieved with this?** Improved code maintainability, separation of concerns, and easier future development. This is a critical piece of technical debt.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Both (requires a full regression test).
-  - **Blocked on something:** None
+- **Task 1: Overhaul Admin Panel (P0)**
+    - **Description:** The user has requested a complete redesign of the admin panel with a modern, minimal UI and specific functionality for game creation, payments, and WhatsApp messaging. The user is providing specs section-by-section.
+    - **Where to resume:** Continue implementing the Create Game section in . The agent has received the detailed requirements (game name, date, sheets, price, prizes) and needs to build the form UI and the corresponding backend endpoint to handle game creation and ticket generation.
+    - **What will be achieved with this?** The first step towards a new, more robust admin panel as per the user's vision.
+    - **Status:** IN PROGRESS
+    - **Should Test frontend/backend/both after fix?** Both
+- **Task 2: Backend Refactoring (P2)**
+    - **Description:** The monolithic  needs to be broken down into modular routes (e.g., , ).
+    - **Where to resume:** The agent created  but has not yet moved the relevant endpoints from  or integrated the new router into the main FastAPI app. This task can be resumed once the high-priority admin panel work is stable.
+    - **What will be achieved with this?** Improved code maintainability and scalability.
+    - **Status:** IN PROGRESS
+    - **Blocked on something:** Blocked by the higher-priority Admin Panel task.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - Implement an in-game chat feature.
+  - Implement the subsequent sections of the new Admin Panel as the user provides the specifications. (P0)
+  - Implement an in-game chat feature. (P2)
 - **Future Tasks:**
   - Add a global leaderboard and player rankings.
   - Develop a game replay feature for past games.
+  - Address overall application performance and scalability.
 
 **Completed work in this session**
-- **Winner Detection Logic (Overhauled):**
-  - **Four Corners:** Correctly implemented the rule to check the first and last *numbers* in the top and bottom rows of a ticket.
-  - **Full Sheet Bonus:** Logic now correctly verifies that a single user owns all 6 tickets of a specific sheet before awarding the prize.
-- **Game Creation Rules:**
-  - Enforced in both backend and frontend that games can only be created with a total ticket count that is a multiple of 6.
-- **Live Game UI/UX (Major Redesign):**
-  - Implemented a new live screen layout with a 3D spinning ball animation for number calls.
-  - Redesigned the Top Players section to show only the player's name and progress dots for prizes active in the current game.
-  - Updated winner celebration to display a toast message with all winner names (Congratulations [Winner Name]! [Prize] Gone!), without a TTS voice announcement.
-- **Audio System (Complete Rewrite):**
-  - Replaced the previous audio implementation with **Howler.js** for more reliable audio playback on mobile devices.
-  - Implemented a Tap to Enable Sound button, as modern mobile browsers require user interaction to initiate audio.
-- **Ticket Display:**
-  - Added the ticket holder's name on the ticket selection page ().
-  - Removed the holder's name from tickets in the  view to reduce clutter, as requested.
-- **Bug Fixes & UX Improvements:**
-  - Fixed a  in the backend ticket generator.
-  - Added MongoDB indexes to major collections to improve database performance.
-  - Added a UI notice on the login screen explaining the limitations of the Twilio WhatsApp sandbox.
-  - Fixed the booking confirmation flow to correctly save the  to the tickets in the database.
+- **Critical Fix: Dividend Detection Logic:**
+  - Fixed multiple bugs preventing dividends from being claimed. This involved:
+    - Normalizing prize names (e.g., Top Line vs. first_line) to ensure matches.
+    - Fixing an issue where the background auto-caller was using a non-existent function (). The correct function was implemented and integrated.
+    - Extensive logging was added to trace winner detection logic.
+- **Critical Fix: Sequential Full House Logic:**
+  - Re-wrote the Full House detection logic in  and  to enforce the user's specific rules:
+    - Full Houses must be claimed sequentially (1st, then 2nd, then 3rd).
+    - A single ticket can only win one level of Full House.
+    - Multiple tickets can share the same Full House level if they complete on the same number call.
+- **Critical Fix: Ticket Generation:**
+  - Rewrote the  function in  to correctly and reliably generate 6 tickets with 90 unique numbers.
+- **UI/UX Fixes:**
+  - **Live Game Screen:** Removed the distracting shadow number from the caller ball and the ×3 multiplier from the Top Players list for a cleaner look.
+- **Configuration & Auth:**
+  - **WhatsApp Number:** Updated the Twilio WhatsApp number to the user's provided number () in the backend  file and updated the frontend notice.
+  - **CORS:** Patched CORS issues to allow requests from  and the user's custom domain (), which is pending deployment.
+  - **WhatsApp Mobile Auth:** Fixed the OTP login flow for mobile by ensuring a  is returned and stored in .
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: Application Performance:** User concerns about app slowness and scalability to 1000 users were only partially addressed by adding DB indexes. A deeper optimization pass is still needed.
+- **Mobile Audio Reliability**: An ongoing issue from a previous fork, unverified on target iOS devices. The focus has been on more critical bugs.
+
+**Known issue recurrence from previous fork**
+- **Google Login Failure**: This remains the most persistent issue, now specifically isolated to the custom domain post-deployment. The root cause has consistently been related to CORS or OAuth callback handling.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, Shadcn/UI, Axios, , **Howler.js**.
-- **Backend:** FastAPI, Pydantic,  for the game automation background task.
+- **Frontend:** React, Tailwind CSS, React Hooks (, ).
+- **Backend:** FastAPI, Pydantic, Motor (for MongoDB). The backend now has two distinct winner detection flows that must be kept in sync: one for manual number calls and one for the background auto-call service.
 - **Database:** MongoDB.
-- **Integrations:** Emergent-managed Google Auth, Twilio (WhatsApp),  for OpenAI TTS.
+- **Authentication:** Dual-flow authentication using Emergent-managed Google Auth and a custom Twilio WhatsApp OTP system. A key pattern is using  for session tokens as a fallback for cookie issues on mobile browsers.
 
 **key DB schema**
-- **tickets**: Now correctly has  populated upon booking confirmation. The  field is crucial for the Full Sheet Bonus win condition.
-- **games**: The  dictionary is used to determine which prizes are active for a game.
+- No new schema changes were made, but the logic now heavily relies on correctly structured  (with , ) and  (with a consistent list of ).
 
 **changes in tech stack**
-- **Added:**  library to the frontend for audio management.
+- None.
 
 **All files of reference**
-- : The main monolithic file. Contains the endpoint under investigation (). Was modified to add indexes, validate ticket counts, and fix booking confirmation.
-- : Heavily modified multiple times to implement correct winner logic for Four Corners and Full Sheet Bonus.
-- : Heavily refactored to use Howler.js and match the latest user-requested UI layout.
-- : Also refactored to use Howler.js and updated winner announcements.
-- : **New file** that encapsulates all Howler.js logic for playing sounds.
-- : Modified to display the ticket holder's name.
-- : The frontend page for the feature that is currently broken.
+- : The most heavily modified file, with fixes for all dividend types.
+- : Modified for CORS, auth token responses, and integration of corrected winner detection logic.
+- : Overwritten; this is the primary file for the next set of tasks.
+- : UI elements were fixed.
+- : WhatsApp login logic was corrected.
+- : The  function was completely rewritten.
+- : Updated with CORS origins and the user's WhatsApp number.
+- : Error handling was improved.
 
 **Areas that need refactoring**:
-- **CRITICAL: **. The refactoring has started but is incomplete. Completing this is the highest priority technical debt task.
-- **CRITICAL:  & **. These files are still extremely large and complex. The UI logic for Top Players, ticket rendering, and game state management could be extracted into smaller components and custom hooks.
+- **CRITICAL:**  is still a monolith. The refactoring into the  directory needs to be completed.
+-  is currently a blank slate and will be built from scratch.
 
 **key api endpoints**
--  (POST): **Currently under investigation for a bug.**
--  (POST): Logic updated to validate  is a multiple of 6.
--  (POST): Logic updated to save the  to booked tickets.
--  (POST): Used by the frontend Howler.js helper to fetch audio data.
+- : Modified to return  in the response body.
+- : Uses the  function.
+- The background task  uses the  helper, which now correctly implements dividend logic.
 
 **Critical Info for New Agent**
-- **Current Blocker:** The immediate priority is to fix the bug preventing users from joining their own created games via a share code.
-- **Winner Logic is Finalized (for now):** The rules for Four Corners and Full Sheet Bonus are extremely specific and have been corrected after many iterations. Refer to the latest code in  and the user's last few messages for the exact definitions. Do not attempt to change them without explicit user instruction.
-- **Audio is Delicate:** The current  implementation with a one-time Tap to enable sound button is the result of multiple failed attempts. This is the most reliable cross-platform approach but must be handled with care.
-- **Refactoring is Incomplete:** The backend refactor was started but paused. The new directory structure exists, but the monolithic  still contains most of the logic.
+- **The user is driving the development of the new Admin Panel.** Wait for the user to provide specifications for each section before implementing. The current task is the Create Game section.
+- **Many recent fixes require a redeployment to take effect on the user's custom domain.** Be prepared to explain to the user that issues like the Google Login on  and WhatsApp auth failures will persist until they deploy the latest changes. Do not try to re-fix them before confirming a deployment has been done.
+- **Winner detection logic is complex and has two paths.** Any changes to dividend rules must be applied to both the manual call flow () and the background auto-call flow ( in ).
 
 **documents and test reports created in this job**
--  was updated multiple times for regression testing.
+- : Updated and used for testing dividend logic.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request:** Fix user-created game join functionality. **Status:** IN PROGRESS.
-2.  **Request:** Final UI tweaks: show holder name on ticket selection page (not live game), adjust Top Players list, change winner message to show names without TTS. **Status:** Completed.
-3.  **Request:** Provided the final, definitive rules for Full Sheet Bonus (user must own all 6 tickets of a sheet) and that game creation requires tickets in multiples of 6. **Status:** Completed.
-4.  **Request:** Clarified the Four Corners rule (first/last number in top/bottom rows) and confirmed Full Sheet Bonus logic was still failing. **Status:** Completed.
-5.  **Request:** Further UI redesign for the live screen: premium 3D ball, Top 5 players with prize and dots, and specific winner message format. **Status:** Completed.
-6.  **Request:** UI feedback: remove close to win, side player list with dots, smaller spinning ball, winner names on claim, reposition elements. **Status:** Completed.
-7.  **Request:** Audio still not working on phones. **Status:** Completed (rewritten with Howler.js).
-8.  **Request:** New features: user name on tickets, auto-archive games to a results section, winner name on celebration, top players list with progress dots. **Status:** Completed.
-9.  **User approved plan:** Agent to work on WhatsApp notice, performance, and  refactor. **Status:** Partially Completed (Notice and indexing done, refactor started).
-10. **Request:** The same winner detection and audio issues were reported again with clearer rules, indicating previous fixes were incorrect. **Status:** Completed (logic rewritten again).
+1.  **User (Last):** Edit my existing admin panel using the below rules... followed by specs for the Create Game section. **Status:** In Progress. This is the current active task.
+2.  **User:** Requests sequential full house claiming with specific rules. **Status:** Completed.
+3.  **User:** Reports WhatsApp login shows not authenticated on phone. **Status:** Completed (pending deployment).
+4.  **User:** Reports no dividends are claiming at all. **Status:** Completed.
+5.  **User:** Reports Quick 5 and Full Sheet Bonus are not detecting. **Status:** Completed.
+6.  **User:** Requests to change the WhatsApp number and verify it. **Status:** Completed.
+7.  **User:** Reports dividends not detecting, requests UI cleanup on caller ball and top players list. **Status:** Completed.
+8.  **User:** Asks if they need to redeploy to test. **Status:** Agent confirmed redeployment is necessary.
+9.  **User:** Shares a video showing Google Login failing on the custom domain. **Status:** In Progress (fix implemented, pending deployment).
+10. **User:** login works on preview but not with my linked domain... fix it. **Status:** In Progress (fix implemented, pending deployment).
 
 **Project Health Check:**
 - **Broken:**
-  - User-created game joining via share code.
+  - The Admin Panel is currently non-functional as it's being rebuilt from scratch.
 - **Mocked:**
-  - SendGrid email notifications.
-- **Degraded:**
-  - Overall application performance under load remains a user concern.
-  - WhatsApp OTP functionality is limited by Twilio's sandbox mode.
+  - None.
+- **Potentially Fixed (Pending User Verification & Deployment):**
+  - Google OAuth Login Flow on custom domain ().
+  - WhatsApp OTP Login flow on mobile devices.
+  - All dividend detection logic (Top Line, Quick Five, Full House, Full Sheet Bonus).
 
 **3rd Party Integrations**
 - **Emergent-managed Google Auth**: Used for user login.
-- **Twilio (SMS/WhatsApp)**: Integrated with user-provided key. (Sandbox Mode).
-- **OpenAI TTS**: Working (via ) to provide audio data for the frontend.
-- ****: Used for winner celebrations.
-- ****: A new dependency used for all frontend audio playback.
+- **Twilio (SMS/WhatsApp)**: Integrated with a user-provided key. The number was updated to a non-sandbox number, but requires user's Twilio account to be properly configured.
+- **OpenAI TTS**: Used for audio announcements.
 
 **Testing status**
-- Testing agent used after significant changes: YES
+- Testing agent used after significant changes: YES, to validate new dividend logic.
 - Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: Several temporary python scripts were used for specific backend logic tests, but no persistent test files in .
-- Known regressions: None.
+- Test files created: The agent created several ad-hoc python scripts to test winner detection and ticket generation logic via .
+- Known regressions: None in this session. Existing regressions (like Google Login) were addressed.
 
 **Credentials to test flow:**
 - **Admin Panel URL:** 
 - **Admin Username:** 
 - **Admin Password:** 
-- **Google Auth:** Use the Continue with Google button.
 
 **What agent forgot to execute**
-- The full refactoring of the monolithic  file was started but deferred and remains the largest piece of technical debt.
-- The user's concern about performance and scalability to 1000 users has been acknowledged but not fully addressed beyond adding database indexes.</analysis>
+- The full refactoring of  into modular routes was started but paused to address higher-priority user requests. This is a known technical debt item to be addressed later.</analysis>
