@@ -97,6 +97,8 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [showGameDetailsModal, setShowGameDetailsModal] = useState(false);
   const [gameDetails, setGameDetails] = useState(null);
+  const [showGameControlModal, setShowGameControlModal] = useState(false);
+  const [controlGameId, setControlGameId] = useState(null);
 
   const [gameForm, setGameForm] = useState({
     name: '',
