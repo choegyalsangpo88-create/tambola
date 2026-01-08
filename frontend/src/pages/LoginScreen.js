@@ -143,14 +143,10 @@ export default function LoginScreen() {
         Continue with WhatsApp
       </Button>
       
-      {/* WhatsApp Sandbox Notice */}
-      <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-        <p className="text-yellow-400 text-xs text-center">
-          ⚠️ <strong>International Users:</strong> WhatsApp OTP is in sandbox mode. 
-          To receive OTPs, send <strong>"join &lt;sandbox-code&gt;"</strong> to the WhatsApp number first.
-          <a href="https://www.twilio.com/docs/whatsapp/sandbox" target="_blank" rel="noopener noreferrer" className="text-yellow-300 underline ml-1">
-            Learn more
-          </a>
+      {/* WhatsApp Notice */}
+      <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+        <p className="text-green-400 text-xs text-center">
+          📱 <strong>WhatsApp OTP:</strong> Enter your phone number with country code (e.g., +91 for India) to receive OTP on WhatsApp.
         </p>
       </div>
     </>
