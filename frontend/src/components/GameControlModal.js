@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, Users, MessageSquare, History, Ticket, IndianRupee,
   Send, Clock, CheckCircle2, AlertCircle, RefreshCw, Lock, 
-  Play, Calendar, User, Phone, Eye, XCircle, Check
+  Play, Calendar, User, Phone, Eye, XCircle, Check, Trophy, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -28,6 +28,7 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
   const [loading, setLoading] = useState(true);
   const [controlData, setControlData] = useState(null);
   const [sendingAction, setSendingAction] = useState(null);
+  const [winnersData, setWinnersData] = useState(null);
   const [viewingTicket, setViewingTicket] = useState(null);
 
   const fetchControlData = useCallback(async () => {
