@@ -254,6 +254,12 @@ class SendJoinLinkRequest(BaseModel):
     game_id: str
     user_id: str
 
+class SendWinnerAnnouncementRequest(BaseModel):
+    game_id: str
+    prize_type: str
+    winner_user_id: str
+    ticket_id: Optional[str] = None
+
 # Game Control Log Models
 class GameControlLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
