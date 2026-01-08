@@ -386,13 +386,9 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         full_sheet_id = ticket.get("full_sheet_id")
         
         # Group by user and full sheet for Full Sheet Bonus
-        is_full_sheet_booking = (
-            ticket.get("booking_type") == "FULL_SHEET" or 
-            ticket.get("full_sheet_booked")
-        )
-        
+        # Check if this ticket is part of a full sheet (regardless of booking_type)
         group_key = user_id or holder_name
-        if full_sheet_id and group_key and is_full_sheet_booking:
+        if full_sheet_id and group_key:
             if group_key not in user_sheets:
                 user_sheets[group_key] = {}
             if full_sheet_id not in user_sheets[group_key]:
