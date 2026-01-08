@@ -311,6 +311,22 @@ export default function AdminPanel() {
   };
 
   const handleStartGame = async (gameId) => {
+    // Check if game can be started (during scheduled time)
+    const game = games.find(g => g.game_id === gameId);
+    if (game) {
+      const gameDateTime = new Date(`${game.date}T${game.time}`);
+      const now = new Date();
+      const timeDiff = Math.abs(now - gameDateTime) / (1000 * 60); // difference in minutes
+      
+      // Allow starting 30 minutes before or after scheduled time
+      if (timeDiff > 30) {
+        const confirmed = window.confirm(
+          `This game is scheduled for ${game.date} at ${game.time}. It's currently ${timeDiff > 60 ? Math.round(timeDiff/60) + ' hours' : Math.round(timeDiff) + ' minutes'} ${now < gameDateTime ? 'early' : 'late'}.\n\nAre you sure you want to start it now?`
+        );
+        if (!confirmed) return;
+      }
+    }
+    
     try {
       await axios.post(`${API}/games/${gameId}/start`);
       await logAction('GAME_STARTED', { game_id: gameId });
@@ -318,6 +334,23 @@ export default function AdminPanel() {
       fetchGames();
     } catch (error) {
       toast.error('Failed to start game');
+    }
+  };
+
+  const handleEndGame = async (gameId) => {
+    const game = games.find(g => g.game_id === gameId);
+    const confirmed = window.confirm(
+      `Are you sure you want to end "${game?.name}"?\n\nThis action cannot be undone. The game will be marked as completed.`
+    );
+    if (!confirmed) return;
+    
+    try {
+      await axios.post(`${API}/games/${gameId}/end`);
+      await logAction('GAME_ENDED', { game_id: gameId, name: game?.name });
+      toast.success('Game ended successfully');
+      fetchGames();
+    } catch (error) {
+      toast.error('Failed to end game');
     }
   };
 
