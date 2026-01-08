@@ -189,12 +189,15 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
           </div>
         ) : controlData ? (
           <Tabs defaultValue="info" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4 bg-zinc-800 p-1 rounded-lg">
+            <TabsList className="grid w-full grid-cols-5 mb-4 bg-zinc-800 p-1 rounded-lg">
               <TabsTrigger value="info" className="text-xs" data-testid="tab-info">
                 <FileText className="w-3 h-3 mr-1" /> Info
               </TabsTrigger>
               <TabsTrigger value="bookings" className="text-xs" data-testid="tab-bookings">
                 <Users className="w-3 h-3 mr-1" /> Bookings
+              </TabsTrigger>
+              <TabsTrigger value="winners" className="text-xs" data-testid="tab-winners">
+                <Trophy className="w-3 h-3 mr-1" /> Winners
               </TabsTrigger>
               <TabsTrigger value="whatsapp" className="text-xs" data-testid="tab-whatsapp">
                 <MessageSquare className="w-3 h-3 mr-1" /> WhatsApp
