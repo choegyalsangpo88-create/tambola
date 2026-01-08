@@ -121,7 +121,10 @@ export default function UserGameDetails() {
 
   const handleHostBookTicket = async () => {
     try {
-      await axios.post(`${API}/user-games/${userGameId}/host-join?ticket_count=1`, {}, { withCredentials: true });
+      await axios.post(`${API}/user-games/${userGameId}/host-join?ticket_count=1`, {}, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Ticket booked for you!');
       fetchGameDetails();
     } catch (error) {
@@ -132,7 +135,10 @@ export default function UserGameDetails() {
   const handleDeleteGame = async () => {
     if (!window.confirm('Are you sure you want to delete this game? This cannot be undone.')) return;
     try {
-      await axios.delete(`${API}/user-games/${userGameId}`, { withCredentials: true });
+      await axios.delete(`${API}/user-games/${userGameId}`, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Game deleted');
       navigate('/my-games');
     } catch (error) {
