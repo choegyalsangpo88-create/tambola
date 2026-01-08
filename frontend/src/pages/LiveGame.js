@@ -539,7 +539,6 @@ export default function LiveGame() {
                     <div key={idx} className="bg-white/5 rounded px-1.5 py-1">
                       <span className="text-[9px] text-white font-medium truncate block">
                         {p.name}
-                        {p.ticketCount > 1 && <span className="text-green-400 ml-0.5">×{p.ticketCount}</span>}
                         <span className="text-amber-400 ml-1">({p.prize})</span>
                       </span>
                       <div className="flex gap-0.5 mt-0.5">
