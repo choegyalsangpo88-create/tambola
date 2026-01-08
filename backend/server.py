@@ -2314,17 +2314,24 @@ async def check_winners_for_session(game_id: str, called_numbers: List[int]):
             for ticket in booked_tickets:
                 winner_info = check_all_winners(ticket, called_numbers, prize_type)
                 if winner_info:
+                    # Get holder name
+                    holder_name = ticket.get("holder_name") or ticket.get("booked_by_name")
+                    if not holder_name and ticket.get("user_id"):
+                        user = await db.users.find_one({"user_id": ticket.get("user_id")}, {"_id": 0})
+                        holder_name = user.get("name") if user else None
+                    
                     current_winners[prize_type] = {
                         "user_id": ticket.get("user_id"),
                         "ticket_id": ticket.get("ticket_id"),
                         "ticket_number": ticket.get("ticket_number"),
+                        "holder_name": holder_name or "Player",
                         "won_at": datetime.now(timezone.utc).isoformat()
                     }
                     await db.game_sessions.update_one(
                         {"session_id": session["session_id"]},
                         {"$set": {"winners": current_winners}}
                     )
-                    logger.info(f"Winner found for {prize_type} in game {game_id}")
+                    logger.info(f"🎉 Winner found for {prize_type} in game {game_id}: {holder_name}")
                     break
         
         # Check if all prizes are won - end game automatically
