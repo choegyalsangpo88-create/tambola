@@ -588,7 +588,8 @@ async def verify_otp(request: VerifyOTPRequest, response: Response):
     return {
         "success": True,
         "new_user": False,
-        "user": User(**user_doc).model_dump()
+        "user": User(**user_doc).model_dump(),
+        "session_token": session_token  # Include for mobile localStorage fallback
     }
 
 # ============ GAME ROUTES ============
