@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, Users, MessageSquare, History, Ticket, IndianRupee,
   Send, Clock, CheckCircle2, AlertCircle, RefreshCw, Lock, 
-  Play, Calendar, User, Phone, Mail
+  Play, Calendar, User, Phone, Eye, XCircle, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -28,6 +28,7 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
   const [loading, setLoading] = useState(true);
   const [controlData, setControlData] = useState(null);
   const [sendingAction, setSendingAction] = useState(null);
+  const [viewingTicket, setViewingTicket] = useState(null);
 
   const fetchControlData = useCallback(async () => {
     if (!gameId) return;
@@ -49,6 +50,24 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
       fetchControlData();
     }
   }, [isOpen, gameId, fetchControlData]);
+
+  const handleConfirmPayment = async (bookingId) => {
+    try {
+      setSendingAction(`payment_${bookingId}`);
+      const response = await adminAxios.put(`${API}/admin/bookings/${bookingId}/confirm-payment`);
+      if (response.data.whatsapp_sent) {
+        toast.success('Payment confirmed & WhatsApp sent!');
+      } else {
+        toast.success('Payment confirmed!');
+      }
+      fetchControlData();
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to confirm payment');
+    } finally {
+      setSendingAction(null);
+    }
+  };
 
   const handleSendBookingConfirmation = async (bookingId) => {
     try {
@@ -97,20 +116,6 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
     }
   };
 
-  const handleConfirmPayment = async (bookingId) => {
-    try {
-      setSendingAction(`payment_${bookingId}`);
-      await adminAxios.put(`${API}/admin/bookings/${bookingId}/confirm-payment`);
-      toast.success('Payment confirmed!');
-      fetchControlData();
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to confirm payment');
-    } finally {
-      setSendingAction(null);
-    }
-  };
-
   if (!isOpen) return null;
 
   const game = controlData?.game;
@@ -120,6 +125,16 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
   const whatsappLogs = controlData?.whatsapp_logs || [];
   const controlLogs = controlData?.control_logs || [];
   const hasSoldTickets = controlData?.has_sold_tickets;
+
+  // Helper to get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'sent': return 'text-emerald-400 bg-emerald-500/20';
+      case 'delivered': return 'text-blue-400 bg-blue-500/20';
+      case 'failed': return 'text-red-400 bg-red-500/20';
+      default: return 'text-zinc-400 bg-zinc-500/20';
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -146,8 +161,8 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
               <TabsTrigger value="info" className="text-xs" data-testid="tab-info">
                 <FileText className="w-3 h-3 mr-1" /> Info
               </TabsTrigger>
-              <TabsTrigger value="tickets" className="text-xs" data-testid="tab-tickets">
-                <Users className="w-3 h-3 mr-1" /> Tickets
+              <TabsTrigger value="bookings" className="text-xs" data-testid="tab-bookings">
+                <Users className="w-3 h-3 mr-1" /> Bookings
               </TabsTrigger>
               <TabsTrigger value="whatsapp" className="text-xs" data-testid="tab-whatsapp">
                 <MessageSquare className="w-3 h-3 mr-1" /> WhatsApp
@@ -193,14 +208,22 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="bg-zinc-900 rounded-lg p-3">
-                    <p className="text-xs text-zinc-500">Price per Ticket</p>
+                    <p className="text-xs text-zinc-500">Total Tickets</p>
+                    <p className="text-lg font-bold text-white">{ticketSummary?.total}</p>
+                  </div>
+                  <div className="bg-zinc-900 rounded-lg p-3">
+                    <p className="text-xs text-zinc-500">Confirmed</p>
+                    <p className="text-lg font-bold text-emerald-400">{ticketSummary?.confirmed}</p>
+                  </div>
+                  <div className="bg-zinc-900 rounded-lg p-3">
+                    <p className="text-xs text-zinc-500">Price/Ticket</p>
                     <p className="text-lg font-bold text-white">₹{game?.price}</p>
                   </div>
                   <div className="bg-zinc-900 rounded-lg p-3">
-                    <p className="text-xs text-zinc-500">Prize Pool</p>
-                    <p className="text-lg font-bold text-emerald-400">₹{game?.prize_pool?.toLocaleString()}</p>
+                    <p className="text-xs text-zinc-500">Revenue</p>
+                    <p className="text-lg font-bold text-emerald-400">₹{ticketSummary?.revenue?.toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -219,21 +242,21 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
               </div>
             </TabsContent>
 
-            {/* B. Ticket Sales Summary */}
-            <TabsContent value="tickets" className="space-y-4">
-              {/* Summary Cards */}
+            {/* B. Bookings Management Section */}
+            <TabsContent value="bookings" className="space-y-4">
+              {/* Summary */}
               <div className="grid grid-cols-4 gap-3">
                 <div className="bg-zinc-800 rounded-lg p-3">
-                  <p className="text-xs text-zinc-500">Total Tickets</p>
-                  <p className="text-xl font-bold text-white">{ticketSummary?.total}</p>
+                  <p className="text-xs text-zinc-500">Total Bookings</p>
+                  <p className="text-xl font-bold text-white">{bookings.length}</p>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-3">
-                  <p className="text-xs text-zinc-500">Booked</p>
-                  <p className="text-xl font-bold text-amber-400">{ticketSummary?.booked}</p>
+                  <p className="text-xs text-zinc-500">Pending Payment</p>
+                  <p className="text-xl font-bold text-amber-400">{bookings.filter(b => b.status === 'pending').length}</p>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-3">
-                  <p className="text-xs text-zinc-500">Confirmed</p>
-                  <p className="text-xl font-bold text-emerald-400">{ticketSummary?.confirmed}</p>
+                  <p className="text-xs text-zinc-500">Paid</p>
+                  <p className="text-xl font-bold text-emerald-400">{bookings.filter(b => b.status === 'confirmed').length}</p>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-3">
                   <p className="text-xs text-zinc-500">Revenue</p>
@@ -241,66 +264,141 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
                 </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="bg-zinc-800 rounded-lg p-3">
-                <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                  <span>Sales Progress</span>
-                  <span>{((ticketSummary?.confirmed / ticketSummary?.total) * 100 || 0).toFixed(1)}%</span>
+              {/* Bookings Table */}
+              <div className="bg-zinc-800 rounded-lg overflow-hidden">
+                <div className="p-3 border-b border-zinc-700">
+                  <h4 className="text-sm font-semibold text-white">Bookings ({bookings.length})</h4>
                 </div>
-                <div className="w-full h-2 bg-zinc-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-amber-500 rounded-full transition-all"
-                    style={{ width: `${(ticketSummary?.confirmed / ticketSummary?.total) * 100 || 0}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Bookings List */}
-              <div className="bg-zinc-800 rounded-lg p-3">
-                <h4 className="text-sm font-semibold text-white mb-3">Bookings ({bookings.length})</h4>
+                
                 {bookings.length === 0 ? (
-                  <p className="text-zinc-500 text-sm text-center py-4">No bookings yet</p>
+                  <div className="text-center py-8">
+                    <Users className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
+                    <p className="text-zinc-500 text-sm">No bookings yet</p>
+                  </div>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {bookings.map((booking) => (
-                      <div key={booking.booking_id} className="flex items-center justify-between p-2 bg-zinc-900 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
-                            <User className="w-4 h-4 text-zinc-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-white">{booking.user?.name || 'Unknown'}</p>
-                            <p className="text-xs text-zinc-500">{booking.ticket_ids?.length || 0} tickets • ₹{booking.total_amount}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 text-[10px] rounded-full ${
-                            booking.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400' :
-                            booking.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
-                            'bg-zinc-700 text-zinc-400'
-                          }`}>
-                            {booking.status?.toUpperCase()}
-                          </span>
-                          {booking.status === 'pending' && (
-                            <Button
-                              onClick={() => handleConfirmPayment(booking.booking_id)}
-                              size="sm"
-                              className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-700"
-                              disabled={sendingAction === `payment_${booking.booking_id}`}
-                            >
-                              {sendingAction === `payment_${booking.booking_id}` ? (
-                                <RefreshCw className="w-3 h-3 animate-spin" />
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-zinc-900">
+                        <tr className="text-xs text-zinc-500 uppercase">
+                          <th className="px-3 py-2 text-left">Player</th>
+                          <th className="px-3 py-2 text-left">Phone</th>
+                          <th className="px-3 py-2 text-left">Tickets</th>
+                          <th className="px-3 py-2 text-left">Payment</th>
+                          <th className="px-3 py-2 text-left">WA Opt-in</th>
+                          <th className="px-3 py-2 text-left">WA Status</th>
+                          <th className="px-3 py-2 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-700">
+                        {bookings.map((booking) => (
+                          <tr key={booking.booking_id} className="hover:bg-zinc-800/50">
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center">
+                                  <User className="w-4 h-4 text-zinc-400" />
+                                </div>
+                                <span className="text-white font-medium">{booking.user?.name || 'Unknown'}</span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3">
+                              <span className="text-zinc-400 flex items-center gap-1">
+                                <Phone className="w-3 h-3" />
+                                {booking.user?.phone ? `****${booking.user.phone.slice(-4)}` : 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-1">
+                                <Ticket className="w-3 h-3 text-zinc-500" />
+                                <span className="text-white">{booking.ticket_numbers?.join(', ') || booking.ticket_ids?.length || 0}</span>
+                                <Button
+                                  onClick={() => setViewingTicket(booking)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 w-5 p-0 ml-1 text-zinc-500 hover:text-white"
+                                  title="View ticket details"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3">
+                              <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
+                                booking.status === 'confirmed' 
+                                  ? 'bg-emerald-500/20 text-emerald-400' 
+                                  : 'bg-amber-500/20 text-amber-400'
+                              }`}>
+                                {booking.status === 'confirmed' ? 'PAID' : 'PENDING'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3">
+                              <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
+                                booking.whatsapp_opt_in 
+                                  ? 'bg-green-500/20 text-green-400' 
+                                  : 'bg-red-500/20 text-red-400'
+                              }`}>
+                                {booking.whatsapp_opt_in ? 'YES' : 'NO'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3">
+                              {booking.confirmation_sent ? (
+                                <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${getStatusColor(booking.whatsapp_message_status || 'sent')}`}>
+                                  {(booking.whatsapp_message_status || 'SENT').toUpperCase()}
+                                </span>
                               ) : (
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                <span className="text-zinc-500 text-xs">—</span>
                               )}
-                              Confirm
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex justify-end gap-1">
+                                {booking.status === 'pending' && (
+                                  <Button
+                                    onClick={() => handleConfirmPayment(booking.booking_id)}
+                                    size="sm"
+                                    className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-700"
+                                    disabled={sendingAction === `payment_${booking.booking_id}`}
+                                    data-testid={`approve-payment-${booking.booking_id}`}
+                                  >
+                                    {sendingAction === `payment_${booking.booking_id}` ? (
+                                      <RefreshCw className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <><Check className="w-3 h-3 mr-1" /> Approve</>
+                                    )}
+                                  </Button>
+                                )}
+                                {booking.status === 'confirmed' && !booking.confirmation_sent && booking.whatsapp_opt_in && (
+                                  <Button
+                                    onClick={() => handleSendBookingConfirmation(booking.booking_id)}
+                                    size="sm"
+                                    className="h-6 text-[10px] bg-green-600 hover:bg-green-700"
+                                    disabled={sendingAction === `confirm_${booking.booking_id}`}
+                                  >
+                                    {sendingAction === `confirm_${booking.booking_id}` ? (
+                                      <RefreshCw className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <><MessageSquare className="w-3 h-3 mr-1" /> Send WA</>
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
+              </div>
+
+              {/* Note about auto-send */}
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-green-400">
+                      <strong>Auto WhatsApp:</strong> When you approve a payment, a booking confirmation is automatically sent via WhatsApp (if user has opted in).
+                    </p>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 
@@ -312,7 +410,7 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
                   <AlertCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-green-400">WhatsApp Business Policy</p>
-                    <p className="text-xs text-green-400/70">Messages use pre-approved Twilio templates only. No custom text.</p>
+                    <p className="text-xs text-green-400/70">Messages use pre-approved Twilio templates only. No custom text. No bulk resend.</p>
                   </div>
                 </div>
               </div>
@@ -324,7 +422,7 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
                   Game Reminder
                 </h4>
                 <p className="text-xs text-zinc-400 mb-3">
-                  Send reminder to all confirmed players. Can only be sent once, within 24 hours of game time.
+                  Send reminder to all confirmed players (with WhatsApp opt-in). Can only be sent once, within 24 hours of game time.
                 </p>
                 <Button
                   onClick={handleSendGameReminder}
@@ -355,82 +453,39 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
                 )}
               </div>
 
-              {/* Per-Booking Actions */}
+              {/* Per-User Join Link */}
               <div className="bg-zinc-800 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-amber-500" />
-                  Player Actions
+                  <Play className="w-4 h-4 text-blue-500" />
+                  Send Join Link (Manual)
                 </h4>
                 <p className="text-xs text-zinc-400 mb-3">
-                  Send individual messages to players.
+                  Send game join link to individual players. Can be resent as needed.
                 </p>
 
-                {bookings.length === 0 ? (
-                  <p className="text-zinc-500 text-sm text-center py-4">No bookings to message</p>
+                {bookings.filter(b => b.status === 'confirmed' && b.whatsapp_opt_in).length === 0 ? (
+                  <p className="text-zinc-500 text-sm text-center py-4">No confirmed bookings with WhatsApp opt-in</p>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {bookings.filter(b => b.user?.phone).map((booking) => (
-                      <div key={booking.booking_id} className="p-3 bg-zinc-900 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
-                              <User className="w-4 h-4 text-zinc-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-white">{booking.user?.name}</p>
-                              <p className="text-[10px] text-zinc-500 flex items-center gap-1">
-                                <Phone className="w-3 h-3" /> {booking.user?.phone?.slice(-4) ? `****${booking.user.phone.slice(-4)}` : 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                          <span className={`px-2 py-0.5 text-[10px] rounded-full ${
-                            booking.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                          }`}>
-                            {booking.status?.toUpperCase()}
-                          </span>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {bookings.filter(b => b.status === 'confirmed' && b.whatsapp_opt_in).map((booking) => (
+                      <div key={booking.booking_id} className="flex items-center justify-between p-2 bg-zinc-900 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-zinc-500" />
+                          <span className="text-sm text-white">{booking.user?.name}</span>
                         </div>
-                        
-                        <div className="flex gap-2">
-                          {/* Send Booking Confirmation - only for confirmed bookings, once */}
-                          <Button
-                            onClick={() => handleSendBookingConfirmation(booking.booking_id)}
-                            disabled={booking.status !== 'confirmed' || booking.confirmation_sent || sendingAction === `confirm_${booking.booking_id}`}
-                            size="sm"
-                            className={`flex-1 h-7 text-[10px] ${
-                              booking.confirmation_sent 
-                                ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed' 
-                                : booking.status !== 'confirmed'
-                                  ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
-                                  : 'bg-emerald-600 hover:bg-emerald-700'
-                            }`}
-                            data-testid={`send-confirmation-${booking.booking_id}`}
-                          >
-                            {sendingAction === `confirm_${booking.booking_id}` ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : booking.confirmation_sent ? (
-                              <><CheckCircle2 className="w-3 h-3 mr-1" /> Sent</>
-                            ) : booking.status !== 'confirmed' ? (
-                              <><Lock className="w-3 h-3 mr-1" /> Pay First</>
-                            ) : (
-                              <><Send className="w-3 h-3 mr-1" /> Confirmation</>
-                            )}
-                          </Button>
-
-                          {/* Send Join Link - can resend */}
-                          <Button
-                            onClick={() => handleSendJoinLink(booking.user_id)}
-                            disabled={sendingAction === `join_${booking.user_id}`}
-                            size="sm"
-                            className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-700"
-                            data-testid={`send-join-link-${booking.user_id}`}
-                          >
-                            {sendingAction === `join_${booking.user_id}` ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <><Play className="w-3 h-3 mr-1" /> Join Link</>
-                            )}
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={() => handleSendJoinLink(booking.user_id)}
+                          disabled={sendingAction === `join_${booking.user_id}`}
+                          size="sm"
+                          className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                          data-testid={`send-join-link-${booking.user_id}`}
+                        >
+                          {sendingAction === `join_${booking.user_id}` ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <><Send className="w-3 h-3 mr-1" /> Send Link</>
+                          )}
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -438,44 +493,68 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
               </div>
             </TabsContent>
 
-            {/* D. Logs */}
+            {/* D. WhatsApp Logs */}
             <TabsContent value="logs" className="space-y-4">
-              {/* WhatsApp Logs */}
-              <div className="bg-zinc-800 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-green-500" />
-                  WhatsApp Messages ({whatsappLogs.length})
-                </h4>
+              {/* WhatsApp Logs Table */}
+              <div className="bg-zinc-800 rounded-lg overflow-hidden">
+                <div className="p-3 border-b border-zinc-700 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-green-500" />
+                    WhatsApp Message Logs (Immutable)
+                  </h4>
+                  <span className="text-xs text-zinc-500">{whatsappLogs.length} messages</span>
+                </div>
+                
                 {whatsappLogs.length === 0 ? (
-                  <p className="text-zinc-500 text-sm text-center py-4">No messages sent yet</p>
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
+                    <p className="text-zinc-500 text-sm">No messages sent yet</p>
+                  </div>
                 ) : (
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {whatsappLogs.map((log, idx) => (
-                      <div key={idx} className="flex items-start gap-2 p-2 bg-zinc-900 rounded-lg">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          log.status === 'sent' ? 'bg-green-500/20' : 'bg-red-500/20'
-                        }`}>
-                          {log.status === 'sent' ? (
-                            <CheckCircle2 className="w-3 h-3 text-green-400" />
-                          ) : (
-                            <AlertCircle className="w-3 h-3 text-red-400" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-white font-medium capitalize">
-                            {log.message_type?.replace(/_/g, ' ')}
-                          </p>
-                          <p className="text-[10px] text-zinc-500">
-                            To: {log.recipient_name} • {new Date(log.sent_at).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-zinc-900">
+                        <tr className="text-xs text-zinc-500 uppercase">
+                          <th className="px-3 py-2 text-left">User</th>
+                          <th className="px-3 py-2 text-left">Game ID</th>
+                          <th className="px-3 py-2 text-left">Template</th>
+                          <th className="px-3 py-2 text-left">Status</th>
+                          <th className="px-3 py-2 text-left">Timestamp</th>
+                          <th className="px-3 py-2 text-left">Failure Reason</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-700">
+                        {whatsappLogs.map((log, idx) => (
+                          <tr key={idx} className="hover:bg-zinc-800/50">
+                            <td className="px-3 py-2 text-white">{log.recipient_name}</td>
+                            <td className="px-3 py-2 text-zinc-400 text-xs font-mono">{log.game_id?.slice(0, 8)}...</td>
+                            <td className="px-3 py-2">
+                              <span className="text-xs text-zinc-300 capitalize">{log.template_name || log.message_type?.replace(/_/g, ' ')}</span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${getStatusColor(log.status)}`}>
+                                {log.status?.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-zinc-400 text-xs">
+                              {new Date(log.sent_at).toLocaleString()}
+                            </td>
+                            <td className="px-3 py-2">
+                              {log.failure_reason ? (
+                                <span className="text-xs text-red-400">{log.failure_reason}</span>
+                              ) : (
+                                <span className="text-zinc-600">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
 
-              {/* Control Logs */}
+              {/* Activity Logs */}
               <div className="bg-zinc-800 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                   <History className="w-4 h-4 text-amber-500" />
@@ -513,6 +592,59 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
             <AlertCircle className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
             <p className="text-zinc-500">Failed to load game data</p>
           </div>
+        )}
+
+        {/* Ticket Details Modal */}
+        {viewingTicket && (
+          <Dialog open={!!viewingTicket} onOpenChange={() => setViewingTicket(null)}>
+            <DialogContent className="max-w-md bg-zinc-900 border-zinc-800">
+              <DialogHeader>
+                <DialogTitle className="text-white flex items-center gap-2">
+                  <Ticket className="w-5 h-5 text-amber-500" />
+                  Ticket Details
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 mb-1">Player</p>
+                  <p className="text-white font-medium">{viewingTicket.user?.name}</p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 mb-1">Ticket Numbers</p>
+                  <p className="text-amber-400 font-mono text-lg">{viewingTicket.ticket_numbers?.join(', ')}</p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 mb-1">Amount</p>
+                  <p className="text-emerald-400 font-medium">₹{viewingTicket.total_amount}</p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 mb-2">Ticket Grid Preview</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {viewingTicket.tickets?.slice(0, 2).map((ticket, idx) => (
+                      <div key={idx} className="bg-zinc-900 p-2 rounded">
+                        <p className="text-[10px] text-zinc-500 mb-1">Ticket {ticket.ticket_number}</p>
+                        <div className="grid grid-cols-9 gap-1 text-[10px]">
+                          {ticket.numbers?.flat().map((num, i) => (
+                            <span 
+                              key={i} 
+                              className={`w-5 h-5 flex items-center justify-center rounded ${
+                                num ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-800 text-zinc-600'
+                              }`}
+                            >
+                              {num || '·'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {viewingTicket.tickets?.length > 2 && (
+                      <p className="text-xs text-zinc-500 text-center">+{viewingTicket.tickets.length - 2} more tickets</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </DialogContent>
     </Dialog>
