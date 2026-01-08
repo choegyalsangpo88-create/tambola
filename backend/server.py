@@ -2638,6 +2638,46 @@ Your booking for *{game['name']}* has been confirmed!
         "whatsapp_sent": whatsapp_sent
     }
 
+@api_router.get("/admin/whatsapp-logs")
+async def get_all_whatsapp_logs(
+    request: Request, 
+    _: bool = Depends(verify_admin),
+    game_id: Optional[str] = None,
+    limit: int = 100
+):
+    """Get all WhatsApp message logs (immutable, read-only). Logs include: user, game_id, template_name, status, timestamp, failure_reason"""
+    query = {}
+    if game_id:
+        query["game_id"] = game_id
+    
+    logs = await db.whatsapp_logs.find(
+        query,
+        {"_id": 0}
+    ).sort("sent_at", -1).to_list(limit)
+    
+    # Enrich with game names
+    for log in logs:
+        game = await db.games.find_one({"game_id": log.get("game_id")}, {"_id": 0, "name": 1})
+        log["game_name"] = game.get("name") if game else "Unknown"
+    
+    return {
+        "logs": logs,
+        "total": len(logs)
+    }
+
+@api_router.put("/admin/bookings/{booking_id}/whatsapp-opt-in")
+async def update_whatsapp_opt_in(booking_id: str, opt_in: bool, request: Request, _: bool = Depends(verify_admin)):
+    """Update WhatsApp opt-in status for a booking"""
+    result = await db.bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": {"whatsapp_opt_in": opt_in}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    return {"success": True, "message": f"WhatsApp opt-in {'enabled' if opt_in else 'disabled'}"}
+
 # ============ HEALTH CHECK ENDPOINT ============
 @app.get("/health")
 async def health_check():
