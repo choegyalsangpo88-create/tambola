@@ -684,6 +684,480 @@ async def verify_admin_session(request: Request):
     except HTTPException:
         return {"valid": False}
 
+# ============ AGENT MANAGEMENT ENDPOINTS (ADMIN ONLY) ============
+
+@api_router.post("/admin/agents")
+async def create_agent(agent_data: CreateAgentRequest, request: Request, _: bool = Depends(verify_admin)):
+    """Create a new agent (Super Admin only)"""
+    # Check if username already exists
+    existing = await db.agents.find_one({"username": agent_data.username})
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    agent_id = f"agent_{uuid.uuid4().hex[:8]}"
+    password_hash = hashlib.sha256(agent_data.password.encode()).hexdigest()
+    
+    agent_doc = {
+        "agent_id": agent_id,
+        "name": agent_data.name,
+        "username": agent_data.username,
+        "password_hash": password_hash,
+        "whatsapp_number": agent_data.whatsapp_number,
+        "region": agent_data.region.lower(),
+        "country_codes": agent_data.country_codes,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+        "total_bookings": 0,
+        "pending_bookings": 0
+    }
+    
+    await db.agents.insert_one(agent_doc)
+    
+    # Return without password_hash
+    del agent_doc["password_hash"]
+    return {"success": True, "agent": agent_doc}
+
+@api_router.get("/admin/agents")
+async def list_agents(request: Request, _: bool = Depends(verify_admin)):
+    """List all agents (Super Admin only)"""
+    agents = await db.agents.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
+    return {"agents": agents, "total": len(agents)}
+
+@api_router.get("/admin/agents/{agent_id}")
+async def get_agent(agent_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Get agent details (Super Admin only)"""
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0, "password_hash": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # Get agent's booking stats
+    bookings = await db.bookings.find({"assigned_agent_id": agent_id}, {"_id": 0}).to_list(1000)
+    agent["booking_stats"] = {
+        "total": len(bookings),
+        "pending": len([b for b in bookings if b["status"] == "pending"]),
+        "paid": len([b for b in bookings if b["status"] == "paid"]),
+        "cancelled": len([b for b in bookings if b["status"] == "cancelled"])
+    }
+    
+    return agent
+
+@api_router.put("/admin/agents/{agent_id}")
+async def update_agent(agent_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Update agent details (Super Admin only)"""
+    body = await request.json()
+    
+    agent = await db.agents.find_one({"agent_id": agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    update_data = {}
+    allowed_fields = ["name", "whatsapp_number", "region", "country_codes", "is_active"]
+    
+    for field in allowed_fields:
+        if field in body:
+            update_data[field] = body[field]
+    
+    # Handle password update separately
+    if "password" in body and body["password"]:
+        update_data["password_hash"] = hashlib.sha256(body["password"].encode()).hexdigest()
+    
+    if update_data:
+        await db.agents.update_one({"agent_id": agent_id}, {"$set": update_data})
+    
+    return {"success": True, "message": "Agent updated"}
+
+@api_router.delete("/admin/agents/{agent_id}")
+async def delete_agent(agent_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Deactivate an agent (Super Admin only) - soft delete"""
+    agent = await db.agents.find_one({"agent_id": agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # Soft delete - just deactivate
+    await db.agents.update_one(
+        {"agent_id": agent_id},
+        {"$set": {"is_active": False}}
+    )
+    
+    # End all active sessions for this agent
+    await db.agent_sessions.delete_many({"agent_id": agent_id})
+    
+    return {"success": True, "message": "Agent deactivated"}
+
+# ============ AGENT AUTH ENDPOINTS ============
+
+@api_router.post("/agent/login")
+async def agent_login(login_data: AgentLoginRequest, response: Response):
+    """Agent login with username and password"""
+    agent = await db.agents.find_one({"username": login_data.username}, {"_id": 0})
+    
+    if not agent:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not agent.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Agent account is deactivated")
+    
+    # Verify password
+    provided_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+    if provided_hash != agent.get("password_hash"):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create agent session
+    session_token = f"agent_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=12)
+    
+    await db.agent_sessions.insert_one({
+        "session_token": session_token,
+        "agent_id": agent["agent_id"],
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": expires_at
+    })
+    
+    response.set_cookie(
+        key="agent_session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=12*60*60
+    )
+    
+    # Return agent info without password
+    del agent["password_hash"]
+    return {"success": True, "agent": agent, "token": session_token}
+
+@api_router.post("/agent/logout")
+async def agent_logout(request: Request, response: Response):
+    """Agent logout"""
+    agent_token = request.cookies.get("agent_session_token")
+    auth_header = request.headers.get("Authorization")
+    if not agent_token and auth_header and auth_header.startswith("Agent "):
+        agent_token = auth_header.split(" ")[1]
+    
+    if agent_token:
+        await db.agent_sessions.delete_one({"session_token": agent_token})
+    response.delete_cookie("agent_session_token", path="/")
+    return {"message": "Agent logged out"}
+
+@api_router.get("/agent/verify")
+async def verify_agent_session(request: Request):
+    """Verify agent session is valid"""
+    try:
+        agent = await verify_agent(request)
+        del agent["password_hash"] if "password_hash" in agent else None
+        return {"valid": True, "agent": agent}
+    except HTTPException:
+        return {"valid": False}
+
+@api_router.get("/agent/me")
+async def get_agent_profile(agent: dict = Depends(verify_agent)):
+    """Get current agent profile"""
+    del agent["password_hash"] if "password_hash" in agent else None
+    return agent
+
+# ============ AGENT BOOKING ENDPOINTS ============
+
+@api_router.get("/agent/dashboard")
+async def get_agent_dashboard(agent: dict = Depends(verify_agent)):
+    """Get agent dashboard stats"""
+    agent_id = agent["agent_id"]
+    
+    # Get agent's bookings
+    bookings = await db.bookings.find({"assigned_agent_id": agent_id}, {"_id": 0}).to_list(1000)
+    
+    pending = [b for b in bookings if b["status"] == "pending"]
+    paid = [b for b in bookings if b["status"] == "paid"]
+    cancelled = [b for b in bookings if b["status"] == "cancelled"]
+    
+    # Get today's stats
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    todays_bookings = [b for b in bookings if b.get("booking_date") and 
+                       (b["booking_date"] if isinstance(b["booking_date"], datetime) else datetime.fromisoformat(str(b["booking_date"]))) >= today]
+    
+    # Calculate revenue
+    total_revenue = sum(b.get("total_amount", 0) for b in paid)
+    
+    return {
+        "agent": {
+            "name": agent["name"],
+            "region": agent["region"],
+            "whatsapp_number": agent["whatsapp_number"]
+        },
+        "stats": {
+            "total_bookings": len(bookings),
+            "pending_bookings": len(pending),
+            "paid_bookings": len(paid),
+            "cancelled_bookings": len(cancelled),
+            "todays_bookings": len(todays_bookings),
+            "total_revenue": total_revenue
+        }
+    }
+
+@api_router.get("/agent/bookings")
+async def get_agent_bookings(
+    agent: dict = Depends(verify_agent),
+    status: Optional[str] = None,
+    game_id: Optional[str] = None
+):
+    """Get agent's assigned bookings only"""
+    agent_id = agent["agent_id"]
+    
+    query = {"assigned_agent_id": agent_id}
+    if status:
+        query["status"] = status
+    if game_id:
+        query["game_id"] = game_id
+    
+    bookings = await db.bookings.find(query, {"_id": 0}).sort("booking_date", -1).to_list(500)
+    
+    # Enrich with game and user info
+    for booking in bookings:
+        game = await db.games.find_one({"game_id": booking["game_id"]}, {"_id": 0, "name": 1, "date": 1, "time": 1, "status": 1, "price": 1})
+        booking["game"] = game
+        
+        user = await db.users.find_one({"user_id": booking["user_id"]}, {"_id": 0, "name": 1, "phone": 1})
+        booking["user"] = user
+        
+        # Get ticket numbers
+        tickets = await db.tickets.find({"ticket_id": {"$in": booking.get("ticket_ids", [])}}, {"_id": 0, "ticket_number": 1}).to_list(20)
+        booking["ticket_numbers"] = [t["ticket_number"] for t in tickets]
+    
+    return {"bookings": bookings, "total": len(bookings)}
+
+@api_router.put("/agent/bookings/{booking_id}/mark-paid")
+async def agent_mark_booking_paid(booking_id: str, agent: dict = Depends(verify_agent)):
+    """Agent marks a pending booking as paid after manual WhatsApp payment verification"""
+    agent_id = agent["agent_id"]
+    
+    # Get booking
+    booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # STRICT VALIDATION: Agent can only access their own bookings
+    if booking.get("assigned_agent_id") != agent_id:
+        raise HTTPException(status_code=403, detail="You can only manage your own assigned bookings")
+    
+    # STRICT VALIDATION: Only pending bookings can be marked as paid
+    if booking["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Cannot mark {booking['status']} booking as paid")
+    
+    # Get game status
+    game = await db.games.find_one({"game_id": booking["game_id"]}, {"_id": 0, "status": 1})
+    
+    # STRICT VALIDATION: Cannot modify bookings for completed games
+    if game and game.get("status") == "completed":
+        raise HTTPException(status_code=400, detail="Cannot modify bookings for completed games")
+    
+    # Update booking status
+    now = datetime.now(timezone.utc)
+    await db.bookings.update_one(
+        {"booking_id": booking_id},
+        {
+            "$set": {
+                "status": "paid",
+                "payment_confirmed_at": now,
+                "expires_at": None  # Clear expiry for paid bookings
+            }
+        }
+    )
+    
+    # Update ticket statuses
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": booking.get("ticket_ids", [])}},
+        {"$set": {"booking_status": "confirmed"}}
+    )
+    
+    # Update agent stats
+    await db.agents.update_one(
+        {"agent_id": agent_id},
+        {
+            "$inc": {"pending_bookings": -1, "total_bookings": 1}
+        }
+    )
+    
+    return {"success": True, "message": "Booking marked as paid"}
+
+@api_router.put("/agent/bookings/{booking_id}/cancel")
+async def agent_cancel_booking(booking_id: str, agent: dict = Depends(verify_agent)):
+    """Agent cancels/unbooks a pending booking - releases tickets back to availability"""
+    agent_id = agent["agent_id"]
+    
+    # Get booking
+    booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # STRICT VALIDATION: Agent can only access their own bookings
+    if booking.get("assigned_agent_id") != agent_id:
+        raise HTTPException(status_code=403, detail="You can only manage your own assigned bookings")
+    
+    # STRICT VALIDATION: Only pending bookings can be cancelled by agents
+    if booking["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Cannot cancel {booking['status']} booking. Only pending bookings can be cancelled.")
+    
+    # Get game status
+    game = await db.games.find_one({"game_id": booking["game_id"]}, {"_id": 0, "status": 1})
+    
+    # STRICT VALIDATION: Cannot cancel bookings for live or completed games
+    if game and game.get("status") in ["live", "completed"]:
+        raise HTTPException(status_code=400, detail=f"Cannot cancel bookings for {game['status']} games")
+    
+    # Cancel booking (soft delete - status change)
+    now = datetime.now(timezone.utc)
+    await db.bookings.update_one(
+        {"booking_id": booking_id},
+        {
+            "$set": {
+                "status": "cancelled",
+                "cancelled_at": now,
+                "cancelled_by": agent_id
+            }
+        }
+    )
+    
+    # Release tickets back to availability
+    await release_booking_tickets(
+        booking_id,
+        booking["game_id"],
+        booking.get("ticket_ids", [])
+    )
+    
+    # Update agent stats
+    await db.agents.update_one(
+        {"agent_id": agent_id},
+        {"$inc": {"pending_bookings": -1}}
+    )
+    
+    return {"success": True, "message": "Booking cancelled and tickets released"}
+
+@api_router.get("/agent/games")
+async def get_agent_games(agent: dict = Depends(verify_agent)):
+    """Get games that agent has bookings for"""
+    agent_id = agent["agent_id"]
+    
+    # Get unique game IDs from agent's bookings
+    bookings = await db.bookings.find({"assigned_agent_id": agent_id}, {"_id": 0, "game_id": 1}).to_list(1000)
+    game_ids = list(set(b["game_id"] for b in bookings))
+    
+    # Get games
+    games = await db.games.find({"game_id": {"$in": game_ids}}, {"_id": 0}).sort("date", -1).to_list(100)
+    
+    # Add booking counts for each game
+    for game in games:
+        game_bookings = [b for b in bookings if b.get("game_id") == game["game_id"]]
+        game["agent_bookings"] = len(game_bookings)
+    
+    return {"games": games, "total": len(games)}
+
+# ============ PUBLIC BOOKING WITH AGENT ASSIGNMENT ============
+
+@api_router.post("/bookings/with-agent")
+async def create_booking_with_agent(
+    game_id: str,
+    ticket_ids: List[str],
+    player_phone: str,
+    player_name: Optional[str] = None,
+    user: User = Depends(get_current_user)
+):
+    """Create a booking and auto-assign an agent based on player's phone region"""
+    # Get game
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game.get("status") != "upcoming":
+        raise HTTPException(status_code=400, detail="Can only book tickets for upcoming games")
+    
+    # Format phone and determine region
+    formatted_phone = format_phone(player_phone)
+    country_code = None
+    for code in ["+91", "+33", "+1"]:
+        if formatted_phone.startswith(code):
+            country_code = code
+            break
+    
+    # Auto-assign agent based on region
+    assigned_agent = await assign_agent_to_booking(formatted_phone)
+    
+    # Create booking with 10-minute expiry
+    booking_id = f"bk_{uuid.uuid4().hex[:8]}"
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(minutes=10)
+    
+    booking_doc = {
+        "booking_id": booking_id,
+        "user_id": user.user_id,
+        "game_id": game_id,
+        "ticket_ids": ticket_ids,
+        "total_amount": len(ticket_ids) * game.get("price", 0),
+        "booking_date": now,
+        "status": "pending",
+        "player_phone": formatted_phone,
+        "player_country_code": country_code,
+        "assigned_agent_id": assigned_agent["agent_id"] if assigned_agent else None,
+        "assigned_agent_name": assigned_agent["name"] if assigned_agent else None,
+        "expires_at": expires_at,
+        "whatsapp_opt_in": True
+    }
+    
+    await db.bookings.insert_one(booking_doc)
+    
+    # Update ticket statuses
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": ticket_ids}},
+        {
+            "$set": {
+                "is_booked": True,
+                "booking_status": "pending",
+                "user_id": user.user_id,
+                "holder_name": player_name or user.name,
+                "booked_at": now
+            }
+        }
+    )
+    
+    # Update agent pending count
+    if assigned_agent:
+        await db.agents.update_one(
+            {"agent_id": assigned_agent["agent_id"]},
+            {"$inc": {"pending_bookings": 1}}
+        )
+    
+    # Return booking with agent WhatsApp for click-to-chat
+    return {
+        "booking_id": booking_id,
+        "status": "pending",
+        "expires_at": expires_at.isoformat(),
+        "assigned_agent": {
+            "name": assigned_agent["name"] if assigned_agent else None,
+            "whatsapp_number": assigned_agent["whatsapp_number"] if assigned_agent else None,
+            "region": assigned_agent["region"] if assigned_agent else None
+        } if assigned_agent else None,
+        "message": "Booking created. Contact the agent on WhatsApp to complete payment."
+    }
+
+@api_router.get("/agents/by-region/{region}")
+async def get_agent_for_region(region: str):
+    """Get the assigned agent's WhatsApp for a region (for click-to-chat redirect)"""
+    agent = await db.agents.find_one(
+        {"region": region.lower(), "is_active": True},
+        {"_id": 0, "name": 1, "whatsapp_number": 1, "region": 1}
+    )
+    
+    if not agent:
+        # Fallback to any active agent
+        agent = await db.agents.find_one(
+            {"is_active": True},
+            {"_id": 0, "name": 1, "whatsapp_number": 1, "region": 1}
+        )
+    
+    if not agent:
+        raise HTTPException(status_code=404, detail="No agents available")
+    
+    return agent
+
 # ============ WHATSAPP OTP AUTH ============
 
 def generate_otp():
