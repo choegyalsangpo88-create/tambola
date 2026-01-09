@@ -287,10 +287,26 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     current_call_count = len(called_numbers)
     new_winners = {}
     
-    # Get all booked tickets
+    # Get all booked tickets - ENSURE all fields are included for FSB detection
     tickets = await db.tickets.find(
         {"game_id": game_id, "is_booked": True},
-        {"_id": 0}
+        {
+            "_id": 0,
+            "ticket_id": 1,
+            "ticket_number": 1,
+            "game_id": 1,
+            "numbers": 1,
+            "user_id": 1,
+            "holder_name": 1,
+            "booked_by_name": 1,
+            "is_booked": 1,
+            "booking_status": 1,
+            "assigned_to": 1,
+            "full_sheet_id": 1,
+            "ticket_position_in_sheet": 1,
+            "booking_type": 1,
+            "full_sheet_booked": 1
+        }
     ).to_list(1000)
     
     logger.info(f"Found {len(tickets)} booked tickets")
