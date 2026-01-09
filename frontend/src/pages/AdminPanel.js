@@ -1790,6 +1790,94 @@ export default function AdminPanel() {
         gameId={controlGameId}
         onUpdate={fetchGames}
       />
+
+      {/* Agent Create/Edit Modal */}
+      <Dialog open={showAgentModal} onOpenChange={setShowAgentModal}>
+        <DialogContent className="max-w-md bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-500" />
+              {editingAgent ? 'Edit Agent' : 'Create Agent'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); editingAgent ? handleUpdateAgent(editingAgent.agent_id) : handleCreateAgent(e); }} className="space-y-4">
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Name</label>
+              <Input
+                value={agentForm.name}
+                onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
+                placeholder="Agent Name"
+                required
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Username</label>
+              <Input
+                value={agentForm.username}
+                onChange={(e) => setAgentForm({ ...agentForm, username: e.target.value })}
+                placeholder="username"
+                required
+                disabled={!!editingAgent}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Password {editingAgent && '(leave blank to keep)'}</label>
+              <Input
+                type="password"
+                value={agentForm.password}
+                onChange={(e) => setAgentForm({ ...agentForm, password: e.target.value })}
+                placeholder={editingAgent ? '••••••••' : 'Password'}
+                required={!editingAgent}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">WhatsApp Number (with country code)</label>
+              <Input
+                value={agentForm.whatsapp_number}
+                onChange={(e) => setAgentForm({ ...agentForm, whatsapp_number: e.target.value })}
+                placeholder="+918837489781"
+                required
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Region</label>
+              <select
+                value={agentForm.region}
+                onChange={(e) => {
+                  const region = e.target.value;
+                  const codes = region === 'india' ? ['+91'] : region === 'france' ? ['+33'] : region === 'canada' ? ['+1'] : [];
+                  setAgentForm({ ...agentForm, region, country_codes: codes });
+                }}
+                className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-md px-3 py-2 text-sm"
+              >
+                <option value="india">India (+91)</option>
+                <option value="france">France (+33)</option>
+                <option value="canada">Canada (+1)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Assigned Country Codes</label>
+              <div className="flex gap-2">
+                {agentForm.country_codes?.map((code) => (
+                  <span key={code} className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-sm">{code}</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setShowAgentModal(false)} className="flex-1 border-zinc-700">
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                {editingAgent ? 'Update' : 'Create'} Agent
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
