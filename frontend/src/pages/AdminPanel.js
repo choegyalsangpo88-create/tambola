@@ -315,32 +315,52 @@ export default function AdminPanel() {
 
   const handleCreateGame = async (e) => {
     e.preventDefault();
-    try {
-      const prizes = {};
-      Object.entries(gameForm.dividends).forEach(([name, data]) => {
-        if (data.enabled) prizes[name] = data.amount;
-      });
+    
+    // Prepare game data
+    const prizes = {};
+    Object.entries(gameForm.dividends).forEach(([name, data]) => {
+      if (data.enabled) prizes[name] = data.amount;
+    });
 
-      const response = await axios.post(`${API}/games`, {
-        name: gameForm.name,
-        date: gameForm.date,
-        time: gameForm.time,
-        price: gameForm.price,
-        total_tickets: gameForm.total_tickets,
-        prizes
-      });
+    const gameData = {
+      name: gameForm.name,
+      date: gameForm.date,
+      time: gameForm.time,
+      price: gameForm.price,
+      total_tickets: gameForm.total_tickets,
+      prizes
+    };
+
+    // Show confirmation modal
+    setPendingGameData(gameData);
+    setShowCreateConfirmModal(true);
+  };
+
+  const confirmCreateGame = async () => {
+    if (!pendingGameData) return;
+    
+    try {
+      const response = await axios.post(`${API}/games`, pendingGameData);
       
       await logAction('GAME_CREATED', { 
         game_id: response.data.game_id, 
-        name: gameForm.name, 
-        tickets: gameForm.total_tickets 
+        name: pendingGameData.name, 
+        tickets: pendingGameData.total_tickets 
       });
       
       toast.success('Game created successfully!');
       fetchGames();
       resetForm();
+      setShowCreateConfirmModal(false);
+      setPendingGameData(null);
     } catch (error) {
-      toast.error('Failed to create game');
+      if (error.response?.data?.detail) {
+        toast.error(error.response.data.detail);
+      } else {
+        toast.error('Failed to create game');
+      }
+      setShowCreateConfirmModal(false);
+      setPendingGameData(null);
     }
   };
 
