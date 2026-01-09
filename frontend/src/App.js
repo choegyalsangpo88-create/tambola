@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import PastResults from './pages/PastResults';
 import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
+import AgentPanel from './pages/AgentPanel';
 import CreateUserGame from './pages/CreateUserGame';
 import MyUserGames from './pages/MyUserGames';
 import UserGameDetails from './pages/UserGameDetails';
