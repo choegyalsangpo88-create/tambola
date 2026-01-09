@@ -1376,6 +1376,19 @@ async def get_game(game_id: str):
 
 @api_router.post("/games", response_model=Game)
 async def create_game(game_data: CreateGameRequest):
+    # Check for duplicate game (same name + date + time)
+    existing_game = await db.games.find_one({
+        "name": game_data.name,
+        "date": game_data.date,
+        "time": game_data.time
+    })
+    
+    if existing_game:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A game with the same name, date, and time already exists. Please change at least one field (e.g., time) to create a new game."
+        )
+    
     game_id = f"game_{uuid.uuid4().hex[:8]}"
     
     # Auto-add Full Sheet Bonus to prizes if not present
