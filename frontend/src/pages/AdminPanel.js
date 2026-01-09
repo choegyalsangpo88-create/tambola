@@ -688,6 +688,7 @@ export default function AdminPanel() {
               )}
             </TabsTrigger>
             <TabsTrigger value="payments" className="text-xs">Payments</TabsTrigger>
+            <TabsTrigger value="agents" className="text-xs">Agents</TabsTrigger>
             <TabsTrigger value="whatsapp" className="text-xs">WhatsApp</TabsTrigger>
             <TabsTrigger value="logs" className="text-xs">Logs</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
