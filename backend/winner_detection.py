@@ -584,10 +584,13 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 
                 # Check Full Sheet Bonus with simplified rules
                 if check_full_sheet_bonus(ticket_list, called_set, min_marks_per_ticket=2, min_total_marks=12):
+                    # Determine user_id - group_key is either user_id or holder_name
+                    winner_user_id = group_key if group_key and isinstance(group_key, str) and (group_key.startswith("user_") or "_" in group_key) else None
+                    
                     new_winners[full_sheet_prize] = {
-                        "user_id": group_key if group_key and isinstance(group_key, str) and group_key.startswith("user_") else None,
+                        "user_id": winner_user_id or group_key,  # Use group_key as fallback
                         "full_sheet_id": sheet_id,
-                        "holder_name": sheet_data["holder_name"],
+                        "holder_name": sheet_data["holder_name"] or group_key,
                         "pattern": "Full Sheet Bonus"
                     }
                     logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Bonus (Sheet: {sheet_id})")
