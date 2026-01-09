@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import GameDetails from './pages/GameDetails';
 import LiveGame from './pages/LiveGame';
 import MyTickets from './pages/MyTickets';
+import GameHistory from './pages/GameHistory';
 import Profile from './pages/Profile';
 import PastResults from './pages/PastResults';
 import AdminLogin from './pages/AdminLogin';
