@@ -84,11 +84,21 @@ class Booking(BaseModel):
     ticket_ids: List[str]
     total_amount: float
     booking_date: datetime
-    status: str  # pending, confirmed, cancelled
+    status: str  # pending, paid, cancelled (no deletion allowed)
     whatsapp_confirmed: bool = False
     whatsapp_opt_in: bool = True  # User opts in for WhatsApp notifications
     has_full_sheet_bonus: bool = False
     full_sheet_id: Optional[str] = None
+    # Agent assignment fields
+    assigned_agent_id: Optional[str] = None
+    assigned_agent_name: Optional[str] = None
+    player_phone: Optional[str] = None  # Player's WhatsApp number
+    player_country_code: Optional[str] = None  # +91, +33, +1, etc.
+    # Expiry mechanism (10 minutes for pending bookings)
+    expires_at: Optional[datetime] = None
+    payment_confirmed_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+    cancelled_by: Optional[str] = None  # agent_id or "system" for auto-expiry
 
 class GameSession(BaseModel):
     model_config = ConfigDict(extra="ignore")
