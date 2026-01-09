@@ -1,178 +1,197 @@
 <analysis>**original_problem_statement:**
-The user wants to build a full-stack Tambola (Housie) game application. The platform is designed for Indian Tambola players and includes user authentication, a game dashboard, live game functionality, a comprehensive admin panel for game management, and booking confirmations handled via WhatsApp (with offline payments).
+The user wants to build a full-stack Tambola (Housie) game application. The platform is designed for Indian Tambola players and includes user authentication, a game dashboard, live game functionality, and a comprehensive admin panel for game management.
+
+Recent major requirements implemented include a complete overhaul of the admin panel and the introduction of a multi-region, role-based agent system for managing bookings and payments manually via WhatsApp.
 
 PRODUCT REQUIREMENTS:
-- User authentication via Google and Phone Number OTP.
-- A dashboard to display Live and Upcoming games.
-- A live game screen featuring number calling, real-time ticket marking, and winner announcements.
-- A comprehensive admin panel to create games, manage bookings, and view game statistics. This panel should be modern, minimal, and feature action logging and template-based WhatsApp messaging.
-- A notification system (initially Email/SMS/WhatsApp) to inform winners.
-- A user-facing feature to create and share private games.
-- Automatic game management: auto-start, auto-call, and auto-end.
-- Customizable caller voice.
-- A separate, password-protected admin panel.
-- Specific, complex rules for dividends like Full Sheet Bonus and sequential Full House claims.
+- **Core Game:** User authentication (Google/Phone), game dashboard, live game screen, winner announcements.
+- **Admin Panel:** A comprehensive super-admin panel to create/manage games, manage agents, view all bookings, and see system-wide statistics.
+- **Agent System:**
+    - Two roles: Super Admin (full access) and Agent (limited access).
+    - Agents are assigned to bookings based on the player's country code (e.g., +91 for India).
+    - Agents manage their assigned bookings via a separate, limited Agent Panel.
+    - The workflow is manual: a user books, gets redirected to an agent's WhatsApp, pays the agent manually, and the agent marks the booking as Paid in their panel.
+    - Bookings expire after 10 minutes if not confirmed.
+    - Agents can only cancel Pending bookings for Upcoming games.
+- **Booking Lifecycle:**  ->  or . Paid bookings are locked.
+- **WhatsApp Integration:** Used for manual booking coordination and automated winner/reminder notifications from the admin panel.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack Tambola web application (Six Seven Tambola) with a React frontend, FastAPI backend, and MongoDB. It supports admin and user-created games. The previous session involved fixing numerous critical bugs related to authentication (Google and WhatsApp), dividend detection (Quick Five, Full Sheet Bonus, sequential Full Houses), and UI elements on the live game screen. The agent has just started a complete overhaul of the Admin Panel based on new, detailed user requirements.
+A full-stack Tambola web application (Six Seven Tambola) with a React frontend, FastAPI backend, and MongoDB. The application features a core game engine, user authentication, and a sophisticated admin/agent system.
+
+The previous session saw the implementation of a comprehensive multi-agent system from scratch, including role-based access control, separate admin/agent panels, and a manual WhatsApp-based booking and payment confirmation workflow. This was built on top of the existing game creation and management features. The system is now mostly feature-complete based on the user's detailed prompts, but a new critical bug regarding ticket generation has just been reported.
 
 **Last working item**:
-- **Last item agent was working:** The agent started a complete overhaul of the admin panel as requested by the user. The user is providing requirements section-by-section. The agent's last action was to begin implementing the Create Game section according to the user's specifications, after overwriting the old  with a new shell.
+- **Last item agent was working:** The user reported that some generated game tickets do not have the required 15 numbers, providing a screenshot as evidence. The agent began investigating by analyzing the screenshot and viewing the  file, but the root cause has not yet been identified.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** both
-    - **Frontend:** A new UI is being built for the admin panel, which will require visual and functional testing.
-    - **Backend:** The new Create Game functionality will require a new backend endpoint (e.g., ) that needs to be tested for ticket generation and database storage.
+- **Which testing method agent to use?** backend testing agent
+    - The agent should write a dedicated test script to generate a large number of tickets using  and programmatically validate that each ticket contains exactly 15 unique numbers and adheres to all other Tambola ticket rules.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Google Login Fails on Custom Domain (P0)**
-    - **Description:** The user reported that Google Login works on the preview URL but fails on their custom domain (), showing a Network error and redirecting to the login page. This is a CORS issue.
-    - **Attempted fixes:** The agent correctly identified this as a CORS problem. The backend CORS configuration in  and the  file was updated to explicitly allow the custom domain.
-    - **Next debug checklist:** The user needs to **redeploy the application** for the CORS fix to take effect on the custom domain. The agent should confirm this with the user and then re-verify if the issue persists.
-    - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker preventing users from accessing the application on its intended domain.
-    - **Status:** USER VERIFICATION PENDING
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Both
-- **Issue 2: WhatsApp Login Not Authenticated on Mobile (P1)**
-    - **Description:** When a user books tickets and logs in via WhatsApp on a mobile device, they are met with a not authenticated error.
-    - **Attempted fixes:** The agent identified that the  endpoint was not returning a  in the response body, unlike the Google login flow. The agent fixed the backend to return the token and updated the frontend  to store this token in , which is crucial for mobile browser authentication persistence.
-    - **Next debug checklist:** This fix also requires the user to **redeploy the application**. Post-deployment, this flow needs to be tested on a mobile device.
-    - **Why fix this issue and what will be achieved with the fix?** This unblocks the primary login method for users who prefer phone number authentication.
-    - **Status:** USER VERIFICATION PENDING
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Both
+- **Issue 1: Ticket Generation Bug (P0)**
+  - **Description:** Some generated tickets have fewer than 15 numbers, which breaks the game logic. The user provided a screenshot showing malformed tickets.
+  - **Attempted fixes:** The agent analyzed the user-provided screenshot and viewed the  file. The initial analysis was inconclusive.
+  - **Next debug checklist:**
+    - Thoroughly review the logic in , specifically the loops and conditions that place numbers into the ticket grid.
+    - Create a test script that calls the  or  function repeatedly and asserts that every generated ticket has exactly 15 numbers.
+    - Log the state of the ticket grid during generation to identify where the logic fails.
+  - **Why fix this issue and what will be achieved with the fix?** This is a critical bug that makes the core game unplayable. Fixing it is essential for the application's basic functionality.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Backend
+- **Issue 2: Google Login Fails on Custom Domain (P1)**
+  - **Description:** Google Login works on the preview URL but fails with a Network error on the user's custom domain (). This is a known CORS issue.
+  - **Attempted fixes:** Backend CORS configuration in  and  was updated to allow the custom domain.
+  - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker preventing users from accessing the application on its intended domain.
+  - **Status:** USER VERIFICATION PENDING
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Both
+  - **Blocked on other issue:** This fix is pending user redeployment of the application. The agent should not attempt to re-fix it until the user confirms deployment.
+- **Issue 3: WhatsApp Login Not Authenticated on Mobile (P1)**
+  - **Description:** Users logging in via WhatsApp on a mobile device receive a not authenticated error.
+  - **Attempted fixes:** The  endpoint was fixed to return a , and the frontend was updated to store it in .
+  - **Why fix this issue and what will be achieved with the fix?** This unblocks the primary login method for users on mobile devices.
+  - **Status:** USER VERIFICATION PENDING
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Both
+  - **Blocked on other issue:** This fix is also pending user redeployment.
 
 **In progress Task List**:
-- **Task 1: Overhaul Admin Panel (P0)**
-    - **Description:** The user has requested a complete redesign of the admin panel with a modern, minimal UI and specific functionality for game creation, payments, and WhatsApp messaging. The user is providing specs section-by-section.
-    - **Where to resume:** Continue implementing the Create Game section in . The agent has received the detailed requirements (game name, date, sheets, price, prizes) and needs to build the form UI and the corresponding backend endpoint to handle game creation and ticket generation.
-    - **What will be achieved with this?** The first step towards a new, more robust admin panel as per the user's vision.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Both
-- **Task 2: Backend Refactoring (P2)**
-    - **Description:** The monolithic  needs to be broken down into modular routes (e.g., , ).
-    - **Where to resume:** The agent created  but has not yet moved the relevant endpoints from  or integrated the new router into the main FastAPI app. This task can be resumed once the high-priority admin panel work is stable.
-    - **What will be achieved with this?** Improved code maintainability and scalability.
-    - **Status:** IN PROGRESS
-    - **Blocked on something:** Blocked by the higher-priority Admin Panel task.
+- No other tasks are in progress. The current focus is on the ticket generation bug.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - Implement the subsequent sections of the new Admin Panel as the user provides the specifications. (P0)
   - Implement an in-game chat feature. (P2)
 - **Future Tasks:**
+  - **Backend Refactoring (P2):** The monolithic  file needs to be broken down into a modular structure using FastAPI routers (e.g., , , ).
   - Add a global leaderboard and player rankings.
   - Develop a game replay feature for past games.
-  - Address overall application performance and scalability.
+  - Implement a dashboard for admins with analytics on booking trends, revenue, and WhatsApp delivery rates.
 
 **Completed work in this session**
-- **Critical Fix: Dividend Detection Logic:**
-  - Fixed multiple bugs preventing dividends from being claimed. This involved:
-    - Normalizing prize names (e.g., Top Line vs. first_line) to ensure matches.
-    - Fixing an issue where the background auto-caller was using a non-existent function (). The correct function was implemented and integrated.
-    - Extensive logging was added to trace winner detection logic.
-- **Critical Fix: Sequential Full House Logic:**
-  - Re-wrote the Full House detection logic in  and  to enforce the user's specific rules:
-    - Full Houses must be claimed sequentially (1st, then 2nd, then 3rd).
-    - A single ticket can only win one level of Full House.
-    - Multiple tickets can share the same Full House level if they complete on the same number call.
-- **Critical Fix: Ticket Generation:**
-  - Rewrote the  function in  to correctly and reliably generate 6 tickets with 90 unique numbers.
-- **UI/UX Fixes:**
-  - **Live Game Screen:** Removed the distracting shadow number from the caller ball and the ×3 multiplier from the Top Players list for a cleaner look.
-- **Configuration & Auth:**
-  - **WhatsApp Number:** Updated the Twilio WhatsApp number to the user's provided number () in the backend  file and updated the frontend notice.
-  - **CORS:** Patched CORS issues to allow requests from  and the user's custom domain (), which is pending deployment.
-  - **WhatsApp Mobile Auth:** Fixed the OTP login flow for mobile by ensuring a  is returned and stored in .
+- **Multi-Region Agent System (DONE):**
+  - Implemented a full role-based access system for Super Admins and Agents.
+  - Created a new  panel for agents to manage their assigned bookings.
+  - Created an Agents tab in the main admin panel for super admins to perform CRUD operations on agents.
+  - Implemented backend logic for location-based agent assignment for new bookings.
+- **Admin Panel Overhaul (DONE):**
+  - **Game Control Page:** Created a new  component with tabs for Info, Tickets, WhatsApp Controls, Winner Declaration, and Logs.
+  - **Bookings Management:** Added a section to approve payments, view booking details (player name, ticket numbers), and see payment status. Payment approval now automatically triggers a WhatsApp confirmation if the user opted in.
+  - **WhatsApp Logs:** Created an immutable log view for all templated WhatsApp messages sent from the system, showing status, recipient, and content.
+  - **Winner Declaration:** Added a Winners tab in the Game Control modal for admins to view declared winners and send individual winner announcement messages via WhatsApp.
+- **User Authentication Fix (DONE):**
+  - Resolved a Not Authenticated error for users creating their own games by adding the  header to API calls in , , and .
+- **Twilio Configuration (DONE):**
+  - Verified and confirmed that the user's updated Twilio Account SID, Auth Token, and WhatsApp number are correctly configured in .
 
 **Earlier issues found/mentioned but not fixed**
 - **Mobile Audio Reliability**: An ongoing issue from a previous fork, unverified on target iOS devices. The focus has been on more critical bugs.
 
 **Known issue recurrence from previous fork**
-- **Google Login Failure**: This remains the most persistent issue, now specifically isolated to the custom domain post-deployment. The root cause has consistently been related to CORS or OAuth callback handling.
+- **Google Login Failure**: This remains the most persistent issue, now specifically isolated to the custom domain. The root cause is confirmed to be CORS, and a fix has been implemented but awaits user deployment.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, React Hooks (, ).
-- **Backend:** FastAPI, Pydantic, Motor (for MongoDB). The backend now has two distinct winner detection flows that must be kept in sync: one for manual number calls and one for the background auto-call service.
+- **Frontend:** React, Tailwind CSS, Shadcn UI, , , .
+- **Backend:** FastAPI, Pydantic, Motor (for MongoDB).
 - **Database:** MongoDB.
-- **Authentication:** Dual-flow authentication using Emergent-managed Google Auth and a custom Twilio WhatsApp OTP system. A key pattern is using  for session tokens as a fallback for cookie issues on mobile browsers.
+- **Authentication:**
+    - Dual system: Emergent-managed Google Auth and custom Twilio WhatsApp OTP.
+    - JWT-based session management using  and Authorization headers.
+    - Role-Based Access Control (RBAC) with  and  roles, enforced by FastAPI dependencies.
+- **Agent System:** Manual booking workflow centered around WhatsApp click-to-chat links and agent-driven payment confirmation.
 
 **key DB schema**
-- No new schema changes were made, but the logic now heavily relies on correctly structured  (with , ) and  (with a consistent list of ).
+- **agents**: 
+- **bookings**: 
+- **whatsapp_logs**: 
+- **games**: 
 
 **changes in tech stack**
 - None.
 
 **All files of reference**
-- : The most heavily modified file, with fixes for all dividend types.
-- : Modified for CORS, auth token responses, and integration of corrected winner detection logic.
-- : Overwritten; this is the primary file for the next set of tasks.
-- : UI elements were fixed.
-- : WhatsApp login logic was corrected.
-- : The  function was completely rewritten.
-- : Updated with CORS origins and the user's WhatsApp number.
-- : Error handling was improved.
+- : **CURRENTLY BEING DEBUGGED.**
+- : Heavily modified to add all agent system models, authentication, and endpoints.
+- : Updated with a new Agents tab and agent management UI.
+- : Newly created file for the agent-facing portal.
+- : Newly created and heavily modified to serve as the main game management interface.
+- : Modified to add the  route.
+- , , : Patched to include correct authentication headers.
 
 **Areas that need refactoring**:
-- **CRITICAL:**  is still a monolith. The refactoring into the  directory needs to be completed.
--  is currently a blank slate and will be built from scratch.
+- **CRITICAL:**  is a large monolith. It should be broken down into smaller, manageable files under a  directory (e.g., , , ).
 
 **key api endpoints**
-- : Modified to return  in the response body.
-- : Uses the  function.
-- The background task  uses the  helper, which now correctly implements dividend logic.
+- **Agent Management (Admin only):**
+  - : Create agent.
+  - : List agents.
+  - : Update agent.
+  - : Delete agent.
+- **Agent Panel:**
+  - : Agent login.
+  - : Get bookings assigned to the authenticated agent.
+  - : Mark a booking as paid.
+  - : Cancel a pending booking.
+- **User Game Creation:**
+  - : (Now requires user authentication).
 
 **Critical Info for New Agent**
-- **The user is driving the development of the new Admin Panel.** Wait for the user to provide specifications for each section before implementing. The current task is the Create Game section.
-- **Many recent fixes require a redeployment to take effect on the user's custom domain.** Be prepared to explain to the user that issues like the Google Login on  and WhatsApp auth failures will persist until they deploy the latest changes. Do not try to re-fix them before confirming a deployment has been done.
-- **Winner detection logic is complex and has two paths.** Any changes to dividend rules must be applied to both the manual call flow () and the background auto-call flow ( in ).
+- **PRIORITY 1: Fix the Ticket Generation Bug.** The application's core functionality is broken until  produces valid tickets every time.
+- **Do not re-investigate CORS/Login issues.** The Google Login (custom domain) and WhatsApp Login (mobile) issues are fixed in the code but require the user to redeploy their application. Confirm deployment with the user before touching these again.
+- The new agent system relies on a **manual workflow**. There is no automated WhatsApp messaging for booking confirmation; agents perform this manually after getting paid. The system facilitates this by assigning agents and allowing them to update the booking status.
+- The  file is extremely large and contains logic for all parts of the application. Be careful when modifying it. A future refactor is highly recommended.
 
 **documents and test reports created in this job**
-- : Updated and used for testing dividend logic.
+-  (Created and updated)
+- 
+- 
+- 
+- 
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Last):** Edit my existing admin panel using the below rules... followed by specs for the Create Game section. **Status:** In Progress. This is the current active task.
-2.  **User:** Requests sequential full house claiming with specific rules. **Status:** Completed.
-3.  **User:** Reports WhatsApp login shows not authenticated on phone. **Status:** Completed (pending deployment).
-4.  **User:** Reports no dividends are claiming at all. **Status:** Completed.
-5.  **User:** Reports Quick 5 and Full Sheet Bonus are not detecting. **Status:** Completed.
-6.  **User:** Requests to change the WhatsApp number and verify it. **Status:** Completed.
-7.  **User:** Reports dividends not detecting, requests UI cleanup on caller ball and top players list. **Status:** Completed.
-8.  **User:** Asks if they need to redeploy to test. **Status:** Agent confirmed redeployment is necessary.
-9.  **User:** Shares a video showing Google Login failing on the custom domain. **Status:** In Progress (fix implemented, pending deployment).
-10. **User:** login works on preview but not with my linked domain... fix it. **Status:** In Progress (fix implemented, pending deployment).
+1.  **User:** tickets are not generated properly, some tickets doesn’t have 15 numbers. **Status:** IN PROGRESS. This is the current high-priority bug.
+2.  **User:** Provided a large 12-step prompt to build a multi-region agent system. **Status:** Completed.
+3.  **User:** Asked to connect their Twilio account and remove the old number. **Status:** Completed. The agent confirmed the new credentials were already in place and restarted the backend.
+4.  **User:** user can not create a game for their party saying not authenticated fix it **Status:** Completed. The agent fixed the missing auth headers on user-facing pages.
+5.  **User:** Provided a prompt to implement a winner declaration section in the admin panel. **Status:** Completed.
+6.  **User:** Provided prompts to implement booking management and WhatsApp message logs. **Status:** Completed.
+7.  **User:** Provided prompts to implement a detailed Game Control Page and WhatsApp button logic. **Status:** Completed.
+8.  **User:** Provided prompts for the new Manage Games section of the admin panel. **Status:** Completed.
 
 **Project Health Check:**
 - **Broken:**
-  - The Admin Panel is currently non-functional as it's being rebuilt from scratch.
+  - **Ticket Generation:** The function in  is producing invalid tickets.
 - **Mocked:**
   - None.
 - **Potentially Fixed (Pending User Verification & Deployment):**
-  - Google OAuth Login Flow on custom domain ().
+  - Google OAuth Login Flow on .
   - WhatsApp OTP Login flow on mobile devices.
-  - All dividend detection logic (Top Line, Quick Five, Full House, Full Sheet Bonus).
 
 **3rd Party Integrations**
-- **Emergent-managed Google Auth**: Used for user login.
-- **Twilio (SMS/WhatsApp)**: Integrated with a user-provided key. The number was updated to a non-sandbox number, but requires user's Twilio account to be properly configured.
-- **OpenAI TTS**: Used for audio announcements.
+- **Emergent-managed Google Auth**: For user login.
+- **Twilio (SMS/WhatsApp)**: For OTP and admin-initiated notifications. Uses a user-provided API key.
+- **OpenAI TTS**: For audio announcements during the game.
 
 **Testing status**
-- Testing agent used after significant changes: YES, to validate new dividend logic.
-- Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: The agent created several ad-hoc python scripts to test winner detection and ticket generation logic via .
-- Known regressions: None in this session. Existing regressions (like Google Login) were addressed.
+- **Testing agent used after significant changes:** YES. The agent ran the testing agent after each major feature of the admin/agent panel was completed.
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None. Testing was done via the .
+- **Known regressions:** The new ticket generation bug is a critical regression.
 
 **Credentials to test flow:**
-- **Admin Panel URL:** 
+- **Super Admin Panel URL:** 
 - **Admin Username:** 
 - **Admin Password:** 
+- **Agent Panel URL:** 
+- **Test Agent Credentials:** username=, password=
 
 **What agent forgot to execute**
-- The full refactoring of  into modular routes was started but paused to address higher-priority user requests. This is a known technical debt item to be addressed later.</analysis>
+- The backend refactoring of the monolithic  file remains a significant piece of technical debt that has not been addressed.</analysis>

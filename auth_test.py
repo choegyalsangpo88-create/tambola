@@ -3,7 +3,7 @@ import json
 
 def test_auth_endpoints():
     """Test specific auth endpoints mentioned in review request"""
-    base_url = "https://tambola-game-4.preview.emergentagent.com"
+    base_url = "https://indian-housie.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🔐 Testing Auth Endpoints")
