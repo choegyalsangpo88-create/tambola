@@ -8,6 +8,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls (mobile fallback)
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 export default function MyTickets() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
@@ -20,7 +26,10 @@ export default function MyTickets() {
 
   const fetchMyBookings = async () => {
     try {
-      const response = await axios.get(`${API}/bookings/my`, { withCredentials: true });
+      const response = await axios.get(`${API}/bookings/my`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       const bookingsData = response.data;
       setBookings(bookingsData);
 
