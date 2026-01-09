@@ -1601,6 +1601,78 @@ export default function AdminPanel() {
         </DialogContent>
       </Dialog>
 
+      {/* Create Game Confirmation Modal */}
+      <Dialog open={showCreateConfirmModal} onOpenChange={setShowCreateConfirmModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              Confirm Game Creation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-zinc-400 text-sm">Please review the game details before creating:</p>
+            
+            {pendingGameData && (
+              <div className="bg-zinc-800 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Name:</span>
+                  <span className="text-white font-medium">{pendingGameData.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Date:</span>
+                  <span className="text-white">{pendingGameData.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Time:</span>
+                  <span className="text-white">{pendingGameData.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Tickets:</span>
+                  <span className="text-white">{pendingGameData.total_tickets}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Price:</span>
+                  <span className="text-amber-500 font-bold">₹{pendingGameData.price}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Prize Pool:</span>
+                  <span className="text-green-500 font-bold">
+                    ₹{Object.values(pendingGameData.prizes || {}).reduce((a, b) => a + b, 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-amber-400 text-xs">
+                ⚠️ A game with the same name, date, and time cannot be created twice.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowCreateConfirmModal(false);
+                  setPendingGameData(null);
+                }} 
+                className="flex-1 border-zinc-700"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={confirmCreateGame} 
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-black font-bold"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-1" />
+                Confirm & Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Tickets Modal */}
       <Dialog open={showTicketsModal} onOpenChange={setShowTicketsModal}>
         <DialogContent className="max-w-3xl bg-zinc-900 border-zinc-800">
