@@ -677,7 +677,7 @@ export default function AdminPanel() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs defaultValue="games" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6 bg-zinc-900 p-1 rounded-lg">
+          <TabsList className="grid w-full grid-cols-7 mb-6 bg-zinc-900 p-1 rounded-lg">
             <TabsTrigger value="games" className="text-xs">Games</TabsTrigger>
             <TabsTrigger value="requests" className="text-xs relative">
               Requests
