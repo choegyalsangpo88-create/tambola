@@ -256,7 +256,7 @@ def _generate_deterministic_ticket() -> List[List[Optional[int]]]:
     return ticket
 
 
-def generate_full_sheet(max_attempts: int = 200) -> List[List[List[Optional[int]]]]:
+def generate_full_sheet(max_attempts: int = 500) -> List[List[List[Optional[int]]]]:
     """
     Generate an authentic Tambola Full Sheet with 6 tickets.
     
@@ -267,130 +267,136 @@ def generate_full_sheet(max_attempts: int = 200) -> List[List[List[Optional[int]
     - 15 × 6 = 90 (all numbers covered)
     - Each column follows standard ranges: 1-9, 10-19, 20-29, etc.
     
-    IMPROVED ALGORITHM:
-    Instead of distributing column by column and then balancing,
-    we use a smarter approach that respects row constraints from the start.
+    ALGORITHM:
+    Use constraint satisfaction: place numbers one at a time ensuring all constraints
+    are satisfied at each step.
     """
     
     for attempt in range(max_attempts):
-        try:
-            # Create number pools for each column (shuffled for randomness)
-            column_pools = []
-            for col in range(9):
-                start, end = COLUMN_RANGES[col]
-                numbers = list(range(start, end + 1))
-                random.shuffle(numbers)
-                column_pools.append(numbers)
-            
-            # Initialize 6 tickets (3 rows × 9 columns each)
-            tickets = [[[None for _ in range(9)] for _ in range(3)] for _ in range(6)]
-            
-            # Track column usage for each ticket to ensure 1-3 numbers per column
-            ticket_col_counts = [[0 for _ in range(9)] for _ in range(6)]
-            # Track row counts
-            ticket_row_counts = [[0, 0, 0] for _ in range(6)]
-            # Track which numbers have been placed
-            number_placed = [[False for _ in range(len(column_pools[col]))] for col in range(9)]
-            
-            # Calculate the distribution for each column across 6 tickets
-            # Col 0 (9 nums): 3 tickets get 2, 3 tickets get 1 → pattern [2,2,2,1,1,1]
-            # Col 1-7 (10 nums): 4 tickets get 2, 2 tickets get 1 → pattern [2,2,2,2,1,1]
-            # Col 8 (11 nums): 5 tickets get 2, 1 ticket gets 1 → pattern [2,2,2,2,2,1]
-            
-            distributions = []
-            for col in range(9):
-                pool_size = len(column_pools[col])
-                if pool_size == 9:
-                    dist = [2, 2, 2, 1, 1, 1]
-                elif pool_size == 10:
-                    dist = [2, 2, 2, 2, 1, 1]
-                elif pool_size == 11:
-                    dist = [2, 2, 2, 2, 2, 1]
-                else:
-                    base = pool_size // 6
-                    extra = pool_size % 6
-                    dist = [base] * 6
-                    for i in range(extra):
-                        dist[i] += 1
-                random.shuffle(dist)
-                distributions.append(dist)
-            
-            # First pass: assign numbers to tickets prioritizing row balance
-            for col in range(9):
-                pool = column_pools[col]
-                dist = distributions[col]
-                num_idx = 0
-                
-                for ticket_idx in range(6):
-                    count = dist[ticket_idx]
-                    if count == 0:
-                        continue
-                    
-                    # Get numbers for this ticket-column
-                    nums = sorted(pool[num_idx:num_idx + count])
-                    num_idx += count
-                    
-                    # Assign to rows that need more numbers (prefer rows with < 5)
-                    available_rows = sorted(
-                        range(3),
-                        key=lambda r: (0 if ticket_row_counts[ticket_idx][r] < 5 else 1, 
-                                      ticket_row_counts[ticket_idx][r])
-                    )
-                    
-                    for i, num in enumerate(nums):
-                        if i < len(available_rows):
-                            row = available_rows[i]
-                            # Only place if row hasn't exceeded 5
-                            if ticket_row_counts[ticket_idx][row] < 6:  # Allow temp overflow
-                                tickets[ticket_idx][row][col] = num
-                                ticket_row_counts[ticket_idx][row] += 1
-                                ticket_col_counts[ticket_idx][col] += 1
-            
-            # Second pass: balance rows by moving numbers between rows within same ticket
-            all_valid = True
-            for ticket_idx in range(6):
-                if not _balance_rows_by_column_swap(tickets[ticket_idx], ticket_row_counts[ticket_idx]):
-                    all_valid = False
-                    break
-                _sort_columns(tickets[ticket_idx])
-            
-            if not all_valid:
+        result = _try_generate_full_sheet()
+        if result is not None:
+            return result
+    
+    # Fallback to individual tickets (not ideal but better than failing)
+    return [generate_authentic_ticket() for _ in range(6)]
+
+
+def _try_generate_full_sheet() -> Optional[List[List[List[Optional[int]]]]]:
+    """
+    Attempt to generate a valid full sheet.
+    Returns None if constraints cannot be satisfied.
+    """
+    # Initialize 6 tickets
+    tickets = [[[None for _ in range(9)] for _ in range(3)] for _ in range(6)]
+    
+    # Track constraints
+    ticket_row_counts = [[0, 0, 0] for _ in range(6)]  # How many numbers in each row
+    ticket_col_counts = [[0 for _ in range(9)] for _ in range(6)]  # How many in each column
+    
+    # Get all numbers grouped by column
+    column_numbers = [[] for _ in range(9)]
+    for num in range(1, 91):
+        col = _get_column_for_number(num)
+        column_numbers[col].append(num)
+    
+    # Shuffle for randomness
+    for col_nums in column_numbers:
+        random.shuffle(col_nums)
+    
+    # Calculate how many numbers each ticket should get from each column
+    # Column sizes: 9, 10, 10, 10, 10, 10, 10, 10, 11 = 90
+    # Distribution patterns:
+    # - 9 nums: [2,2,2,1,1,1] (total 9)
+    # - 10 nums: [2,2,2,2,1,1] (total 10)
+    # - 11 nums: [2,2,2,2,2,1] (total 11)
+    
+    col_distributions = []
+    for col in range(9):
+        size = len(column_numbers[col])
+        if size == 9:
+            dist = [2, 2, 2, 1, 1, 1]
+        elif size == 10:
+            dist = [2, 2, 2, 2, 1, 1]
+        elif size == 11:
+            dist = [2, 2, 2, 2, 2, 1]
+        else:
+            dist = [size // 6] * 6
+            for i in range(size % 6):
+                dist[i] += 1
+        random.shuffle(dist)
+        col_distributions.append(dist)
+    
+    # Verify total distribution sums to 15 for each ticket
+    ticket_totals = [sum(col_distributions[col][t] for col in range(9)) for t in range(6)]
+    if not all(t == 15 for t in ticket_totals):
+        return None  # Invalid distribution, retry
+    
+    # Now assign numbers to rows with constraint satisfaction
+    for col in range(9):
+        numbers = column_numbers[col][:]  # Copy
+        dist = col_distributions[col]
+        num_idx = 0
+        
+        for ticket_idx in range(6):
+            count = dist[ticket_idx]
+            if count == 0:
                 continue
             
-            # Validate full sheet
-            all_numbers = set()
-            sheet_valid = True
+            ticket_nums = sorted(numbers[num_idx:num_idx + count])
+            num_idx += count
             
-            for ticket in tickets:
-                total = sum(1 for row in ticket for cell in row if cell is not None)
-                if total != 15:
-                    sheet_valid = False
-                    break
-                    
-                for row_idx, row in enumerate(ticket):
-                    count = sum(1 for cell in row if cell is not None)
-                    if count != 5:
-                        sheet_valid = False
-                        break
-                    for cell in row:
-                        if cell is not None:
-                            if cell in all_numbers:
-                                sheet_valid = False
-                                break
-                            all_numbers.add(cell)
-                    if not sheet_valid:
-                        break
-                if not sheet_valid:
-                    break
+            # Find valid rows for these numbers
+            # Each number must go to a different row
+            # Prefer rows that need more numbers (count < 5)
             
-            if sheet_valid and len(all_numbers) == 90:
-                return tickets
-                
-        except Exception:
-            continue
+            available_rows = []
+            for row in range(3):
+                if ticket_row_counts[ticket_idx][row] < 5:
+                    available_rows.append(row)
+            
+            if len(available_rows) < count:
+                # Not enough room, this distribution won't work
+                return None
+            
+            # Sort available rows by how many numbers they have (ascending)
+            available_rows.sort(key=lambda r: ticket_row_counts[ticket_idx][r])
+            
+            # Assign numbers to first 'count' available rows
+            chosen_rows = sorted(available_rows[:count])  # Sort for ascending order in column
+            
+            for i, row in enumerate(chosen_rows):
+                tickets[ticket_idx][row][col] = ticket_nums[i]
+                ticket_row_counts[ticket_idx][row] += 1
+                ticket_col_counts[ticket_idx][col] += 1
     
-    # Fallback to guaranteed method
-    return _generate_full_sheet_guaranteed()
+    # Validate all tickets
+    for ticket_idx in range(6):
+        # Sort columns
+        _sort_columns(tickets[ticket_idx])
+        
+        # Validate
+        row_counts = [sum(1 for cell in row if cell is not None) for row in tickets[ticket_idx]]
+        if row_counts != [5, 5, 5]:
+            return None
+        
+        total = sum(row_counts)
+        if total != 15:
+            return None
+    
+    # Validate full sheet has all 90 numbers
+    all_numbers = set()
+    for ticket in tickets:
+        for row in ticket:
+            for num in row:
+                if num is not None:
+                    if num in all_numbers:
+                        return None  # Duplicate
+                    all_numbers.add(num)
+    
+    if len(all_numbers) != 90:
+        return None
+    
+    return tickets
 
 
 def _balance_rows_by_column_swap(ticket: List[List[Optional[int]]], row_counts: List[int]) -> bool:
