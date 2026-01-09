@@ -1180,6 +1180,147 @@ export default function AdminPanel() {
             </div>
           </TabsContent>
 
+          {/* Agents Tab */}
+          <TabsContent value="agents" className="space-y-6">
+            {/* Header with Add Agent button */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Regional Agents</h2>
+              <Button 
+                onClick={() => { setEditingAgent(null); setAgentForm({ name: '', username: '', password: '', whatsapp_number: '', region: 'india', country_codes: ['+91'] }); setShowAgentModal(true); }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Agent
+              </Button>
+            </div>
+
+            {/* Info Banner */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Users className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-semibold text-blue-400">Multi-Region Agent System</h4>
+                  <p className="text-xs text-blue-400/80 mt-1">
+                    Agents are assigned to players based on their phone number country code. Players are redirected to the agent's WhatsApp for manual payment verification.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Agents Table */}
+            <div className="bg-zinc-900 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-800">
+                    <tr className="text-xs text-zinc-500 uppercase">
+                      <th className="px-4 py-3 text-left">Agent</th>
+                      <th className="px-4 py-3 text-left">Region</th>
+                      <th className="px-4 py-3 text-left">Country Codes</th>
+                      <th className="px-4 py-3 text-left">WhatsApp</th>
+                      <th className="px-4 py-3 text-left">Bookings</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800">
+                    {agents.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="px-4 py-8 text-center text-zinc-500">
+                          <Users className="w-10 h-10 mx-auto mb-2 text-zinc-600" />
+                          No agents configured yet
+                        </td>
+                      </tr>
+                    ) : (
+                      agents.map((agent) => (
+                        <tr key={agent.agent_id} className="hover:bg-zinc-800/50">
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="text-white font-medium">{agent.name}</p>
+                              <p className="text-xs text-zinc-500">@{agent.username}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs capitalize">
+                              {agent.region}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-1">
+                              {agent.country_codes?.map((code) => (
+                                <span key={code} className="px-2 py-0.5 bg-zinc-800 text-zinc-300 rounded text-xs">
+                                  {code}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-zinc-300">{agent.whatsapp_number}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-amber-400">{agent.pending_bookings || 0}</span>
+                              <span className="text-zinc-600">/</span>
+                              <span className="text-zinc-400">{agent.total_bookings || 0}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
+                              agent.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                            }`}>
+                              {agent.is_active ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                onClick={() => openEditAgentModal(agent)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-zinc-400 hover:text-white"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                onClick={() => handleToggleAgentStatus(agent.agent_id, agent.is_active)}
+                                variant="ghost"
+                                size="sm"
+                                className={`h-7 text-xs ${agent.is_active ? 'text-red-400 hover:text-red-300' : 'text-emerald-400 hover:text-emerald-300'}`}
+                              >
+                                {agent.is_active ? <Ban className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Region Assignment Info */}
+            <div className="bg-zinc-900 rounded-xl p-6">
+              <h3 className="text-sm font-semibold text-white mb-4">Region Assignment Rules</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <p className="text-xs text-zinc-500 mb-1">India (+91)</p>
+                  <p className="text-lg font-bold text-white">
+                    {agents.filter(a => a.region === 'india' && a.is_active).length} agents
+                  </p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <p className="text-xs text-zinc-500 mb-1">France (+33)</p>
+                  <p className="text-lg font-bold text-white">
+                    {agents.filter(a => a.region === 'france' && a.is_active).length} agents
+                  </p>
+                </div>
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <p className="text-xs text-zinc-500 mb-1">Canada (+1)</p>
+                  <p className="text-lg font-bold text-white">
+                    {agents.filter(a => a.region === 'canada' && a.is_active).length} agents
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
           {/* WhatsApp Tab */}
           <TabsContent value="whatsapp" className="space-y-4">
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
