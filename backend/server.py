@@ -713,8 +713,10 @@ async def create_agent(agent_data: CreateAgentRequest, request: Request, _: bool
     
     await db.agents.insert_one(agent_doc)
     
-    # Return without password_hash
+    # Return without password_hash and _id (MongoDB adds _id after insert)
     del agent_doc["password_hash"]
+    if "_id" in agent_doc:
+        del agent_doc["_id"]
     return {"success": True, "agent": agent_doc}
 
 @api_router.get("/admin/agents")
