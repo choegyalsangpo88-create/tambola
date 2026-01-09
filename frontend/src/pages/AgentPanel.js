@@ -93,7 +93,10 @@ export default function AgentPanel() {
   const handleLogout = async () => {
     try {
       await agentAxios.post(`${API}/agent/logout`);
-    } catch (e) {}
+    } catch (e) {
+      // Ignore logout errors
+      console.log('Logout error:', e);
+    }
     localStorage.removeItem('agent_token');
     setIsAuthenticated(false);
     setAgent(null);
