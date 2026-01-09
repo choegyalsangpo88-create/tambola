@@ -289,7 +289,9 @@ Rules enforced:
 ## Pending / Backlog
 
 ### P0 - High Priority
-- [ ] Additional Admin Panel sections (awaiting user specs)
+- [x] ~~Ticket Generator Bug~~ - FIXED (2026-01-09)
+- [x] ~~WhatsApp Number Update~~ - FIXED (2026-01-09)
+- [x] ~~Mobile Authentication Fix~~ - FIXED (2026-01-09)
 
 ### P1 - Medium Priority
 - [ ] In-game chat feature
@@ -300,9 +302,11 @@ Rules enforced:
 - [ ] Game replay feature
 - [ ] Performance optimization
 - [ ] Mobile audio reliability improvement
+- [ ] Admin analytics dashboard
 
 ---
 
 ## Known Issues (Pending Verification)
-1. **Google Login on Custom Domain** - CORS fix applied, requires redeployment
-2. **WhatsApp Login on Mobile** - Session token fix applied, requires redeployment
+1. **Google Login on Custom Domain** - CORS fix applied, requires redeployment to `sixseventambola.com`
+2. **WhatsApp Login on Mobile** - Session token fix applied with auth headers, requires redeployment
+3. **Old Tickets in Database** - Tickets created before the fix may have invalid numbers (< 15). Only newly created games have valid tickets.
