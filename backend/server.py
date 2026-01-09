@@ -391,6 +391,141 @@ async def verify_admin(request: Request):
     
     return True
 
+# ============ AGENT AUTH HELPER ============
+
+async def verify_agent(request: Request):
+    """Verify agent session token and return agent data"""
+    # Check cookie first
+    agent_token = request.cookies.get("agent_session_token")
+    
+    # Fallback to Authorization header
+    if not agent_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Agent "):
+            agent_token = auth_header.split(" ")[1]
+    
+    if not agent_token:
+        raise HTTPException(status_code=401, detail="Agent authentication required")
+    
+    # Verify agent session
+    session_doc = await db.agent_sessions.find_one({"session_token": agent_token}, {"_id": 0})
+    if not session_doc:
+        raise HTTPException(status_code=401, detail="Invalid agent session")
+    
+    # Check expiry
+    expires_at = session_doc["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        await db.agent_sessions.delete_one({"session_token": agent_token})
+        raise HTTPException(status_code=401, detail="Agent session expired")
+    
+    # Get agent data
+    agent_doc = await db.agents.find_one({"agent_id": session_doc["agent_id"]}, {"_id": 0})
+    if not agent_doc:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    if not agent_doc.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Agent account is deactivated")
+    
+    return agent_doc
+
+def get_region_from_phone(phone: str) -> str:
+    """Determine region from phone number country code"""
+    if not phone:
+        return "india"  # Default region
+    
+    # Clean phone number
+    phone = phone.strip().replace(" ", "")
+    
+    # Check country codes (longest first for accuracy)
+    if phone.startswith("+91"):
+        return "india"
+    elif phone.startswith("+33"):
+        return "france"
+    elif phone.startswith("+1"):
+        return "canada"
+    else:
+        return "india"  # Default fallback
+
+async def assign_agent_to_booking(player_phone: str) -> Optional[dict]:
+    """Auto-assign an agent based on player's phone region"""
+    region = get_region_from_phone(player_phone)
+    
+    # Find active agents in that region, sorted by least pending bookings
+    agent = await db.agents.find_one(
+        {"region": region, "is_active": True},
+        {"_id": 0},
+        sort=[("pending_bookings", 1)]
+    )
+    
+    # Fallback to any active agent if no regional match
+    if not agent:
+        agent = await db.agents.find_one(
+            {"is_active": True},
+            {"_id": 0},
+            sort=[("pending_bookings", 1)]
+        )
+    
+    return agent
+
+async def release_booking_tickets(booking_id: str, game_id: str, ticket_ids: List[str]):
+    """Release tickets back to availability when booking is cancelled"""
+    # Update tickets to be available again
+    await db.tickets.update_many(
+        {"ticket_id": {"$in": ticket_ids}, "game_id": game_id},
+        {
+            "$set": {
+                "is_booked": False,
+                "booking_status": "available",
+                "user_id": None,
+                "holder_name": None,
+                "booked_at": None
+            }
+        }
+    )
+
+async def check_and_expire_pending_bookings():
+    """Background task to expire pending bookings after 10 minutes"""
+    now = datetime.now(timezone.utc)
+    
+    # Find expired pending bookings
+    expired_bookings = await db.bookings.find({
+        "status": "pending",
+        "expires_at": {"$lte": now}
+    }, {"_id": 0}).to_list(100)
+    
+    for booking in expired_bookings:
+        # Cancel the booking
+        await db.bookings.update_one(
+            {"booking_id": booking["booking_id"]},
+            {
+                "$set": {
+                    "status": "cancelled",
+                    "cancelled_at": now,
+                    "cancelled_by": "system"
+                }
+            }
+        )
+        
+        # Release tickets
+        await release_booking_tickets(
+            booking["booking_id"],
+            booking["game_id"],
+            booking.get("ticket_ids", [])
+        )
+        
+        # Update agent pending count
+        if booking.get("assigned_agent_id"):
+            await db.agents.update_one(
+                {"agent_id": booking["assigned_agent_id"]},
+                {"$inc": {"pending_bookings": -1}}
+            )
+        
+        logger.info(f"Auto-expired booking {booking['booking_id']}")
+
 # ============ AUTH ROUTES ============
 
 @api_router.post("/auth/session")
