@@ -524,7 +524,8 @@ def _generate_full_sheet_guaranteed() -> List[List[List[Optional[int]]]]:
     
     # Balance rows and sort columns
     for ticket_idx in range(6):
-        _balance_full_sheet_ticket(tickets[ticket_idx])
+        row_counts = [sum(1 for cell in row if cell is not None) for row in tickets[ticket_idx]]
+        _balance_rows_by_column_swap(tickets[ticket_idx], row_counts)
         _sort_columns(tickets[ticket_idx])
     
     return tickets
