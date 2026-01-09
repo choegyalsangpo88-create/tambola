@@ -845,7 +845,8 @@ async def verify_agent_session(request: Request):
     """Verify agent session is valid"""
     try:
         agent = await verify_agent(request)
-        del agent["password_hash"] if "password_hash" in agent else None
+        if "password_hash" in agent:
+            del agent["password_hash"]
         return {"valid": True, "agent": agent}
     except HTTPException:
         return {"valid": False}
@@ -853,7 +854,8 @@ async def verify_agent_session(request: Request):
 @api_router.get("/agent/me")
 async def get_agent_profile(agent: dict = Depends(verify_agent)):
     """Get current agent profile"""
-    del agent["password_hash"] if "password_hash" in agent else None
+    if "password_hash" in agent:
+        del agent["password_hash"]
     return agent
 
 # ============ AGENT BOOKING ENDPOINTS ============
