@@ -204,6 +204,18 @@ Rules enforced:
 
 ## Changelog
 
+### 2025-01-09 (Session 3)
+- **Multi-Region WhatsApp Agent System**
+  - Added Agent model and AgentSession for authentication
+  - Created Agent Panel (`/agent`) with Dashboard, My Bookings, Profile tabs
+  - Added Agents tab to Admin Panel with CRUD functionality
+  - Implemented country code based agent assignment (+91 India, +33 France, +1 Canada)
+  - Booking lifecycle: Pending (10-min expiry) → Paid (locked) → Cancelled (history)
+  - Agent actions: Mark Paid, Cancel (release tickets)
+  - Strict validation: agents only access own bookings, cannot modify live/completed games
+  - Fixed MongoDB ObjectId serialization in create_agent endpoint
+  - All 30 backend tests passing
+
 ### 2025-01-08 (Session 2 - Part 3)
 - **Winner Declaration Section**
   - Added Winners tab in Game Control Modal
