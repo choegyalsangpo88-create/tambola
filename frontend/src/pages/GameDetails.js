@@ -8,6 +8,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls (mobile fallback)
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 // Wide compact ticket component
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
@@ -250,7 +256,7 @@ export default function GameDetails() {
 Please approve my booking request. 🙏`;
 
       // WhatsApp Business Number
-      const whatsappNumber = '916909166157';
+      const whatsappNumber = '918837489781';
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       
       toast.success('Booking request sent! Opening WhatsApp...');
