@@ -181,6 +181,48 @@ class AdminSession(BaseModel):
     session_token: str
     created_at: datetime
     expires_at: datetime
+    role: str = "super_admin"  # super_admin or agent
+
+# Agent Models for Multi-Region WhatsApp System
+class Agent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    agent_id: str
+    name: str
+    username: str
+    password_hash: str
+    whatsapp_number: str  # Agent's WhatsApp number for click-to-chat
+    region: str  # india, france, canada, etc.
+    country_codes: List[str] = Field(default_factory=list)  # ["+91"] for India
+    is_active: bool = True
+    created_at: datetime
+    total_bookings: int = 0
+    pending_bookings: int = 0
+
+class CreateAgentRequest(BaseModel):
+    name: str
+    username: str
+    password: str
+    whatsapp_number: str
+    region: str
+    country_codes: List[str]
+
+class AgentLoginRequest(BaseModel):
+    username: str
+    password: str
+
+class AgentSession(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    session_token: str
+    agent_id: str
+    created_at: datetime
+    expires_at: datetime
+
+# Country code to region mapping
+COUNTRY_CODE_REGIONS = {
+    "+91": "india",
+    "+33": "france",
+    "+1": "canada",  # Also covers USA
+}
 
 # User Game Models (for Create Your Own Game feature)
 class UserGame(BaseModel):
