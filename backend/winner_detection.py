@@ -162,17 +162,14 @@ def check_quick_five(ticket_numbers, called_numbers):
 
 def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=2, min_total_marks=12):
     """
-    FULL SHEET BONUS - NEW RULE:
+    FULL SHEET BONUS - FINAL RULE:
     
     A player wins the Full Sheet Bonus when ALL of the following are true:
-    1️⃣ The player booked exactly one full sheet consisting of 6 tickets
-    2️⃣ All numbers across the 6 tickets are unique (1–90, no overlap)
-    3️⃣ Each of the 6 tickets has at least 2 marked numbers
-    4️⃣ The total marked numbers across the full sheet is ≥ 12
-    
-    ✔ There is NO call limit
-    ✔ Timing does NOT matter
-    ✔ Only completion matters
+    1️⃣ Player booked exactly 6 tickets belonging to the same sheet_id
+    2️⃣ Each of the 6 tickets has at least 2 marked numbers
+    3️⃣ Total marked numbers across the sheet is ≥ 12
+    4️⃣ All marked numbers are from called numbers
+    5️⃣ No call-limit rule (no "within X calls")
     
     Args:
         tickets: List of 6 tickets from the same full sheet
@@ -187,31 +184,15 @@ def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=2, min_
     
     # Rule 1: Must have exactly 6 tickets
     if len(tickets) != 6:
+        logger.debug(f"Full Sheet Bonus FAIL: {len(tickets)} tickets (need exactly 6)")
         return False
     
-    # Rule 2: All numbers across 6 tickets must be unique (1-90, no overlap)
-    all_numbers = set()
-    for ticket in tickets:
-        if isinstance(ticket, dict):
-            ticket_numbers = ticket.get("numbers", [])
-        else:
-            ticket_numbers = ticket
-        
-        for row in ticket_numbers:
-            for num in row:
-                if num is not None and num != 0:
-                    if num in all_numbers:
-                        # Duplicate found - not a valid full sheet
-                        return False
-                    all_numbers.add(num)
-    
-    # Full sheet should have exactly 90 unique numbers (6 tickets × 15 numbers)
-    if len(all_numbers) != 90:
-        return False
-    
-    # Rule 3 & 4: Check each ticket has >= 2 marks and total >= 12
+    # Rule 2, 3, 4: Check each ticket has >= 2 marks and total >= 12
+    # All marked numbers must be from called numbers (automatically satisfied by checking against called_set)
     total_marks = 0
-    for ticket in tickets:
+    per_ticket_marks = []
+    
+    for i, ticket in enumerate(tickets):
         if isinstance(ticket, dict):
             ticket_numbers = ticket.get("numbers", [])
         else:
@@ -223,16 +204,21 @@ def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=2, min_
                 if num is not None and num != 0 and num in called_set:
                     ticket_marks += 1
         
-        # Rule 3: Each ticket must have at least min_marks_per_ticket
+        per_ticket_marks.append(ticket_marks)
+        
+        # Rule 2: Each ticket must have at least min_marks_per_ticket (2)
         if ticket_marks < min_marks_per_ticket:
+            logger.debug(f"Full Sheet Bonus FAIL: Ticket {i+1} has only {ticket_marks} marks (need >= {min_marks_per_ticket})")
             return False
         
         total_marks += ticket_marks
     
-    # Rule 4: Total marks must be >= min_total_marks
+    # Rule 3: Total marks must be >= min_total_marks (12)
     if total_marks < min_total_marks:
+        logger.debug(f"Full Sheet Bonus FAIL: Total marks {total_marks} (need >= {min_total_marks})")
         return False
     
+    logger.info(f"Full Sheet Bonus PASS: Per-ticket marks = {per_ticket_marks}, Total = {total_marks}")
     return True
 
 
