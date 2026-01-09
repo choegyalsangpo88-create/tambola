@@ -204,6 +204,24 @@ Rules enforced:
 
 ## Changelog
 
+### 2026-01-09 (Session 4 - Current)
+- **Ticket Generator Bug Fix (CRITICAL)**
+  - Fixed ticket generation algorithm that was producing invalid tickets (fewer than 15 numbers)
+  - Complete rewrite of `generate_full_sheet()` function with constraint-aware distribution
+  - Added `_find_valid_distribution()` to ensure each ticket gets exactly 15 numbers
+  - Added `_validate_full_sheet()` for robust validation
+  - Multiple fallback methods ensure 100% success rate (tested with 2000+ sheets)
+  - Old tickets in database still have the bug - only newly generated tickets are fixed
+  - Test file created: `/app/tests/test_ticket_generator.py` with 24 test cases
+
+- **WhatsApp Number Update**
+  - Updated WhatsApp number from `916909166157` to `918837489781` in `GameDetails.js`
+  
+- **Mobile Authentication Fix**
+  - Added `getAuthHeaders()` function to `GameDetails.js`
+  - Added Authorization Bearer header to API calls for mobile fallback
+  - Fixes "Not authenticated" error when booking via WhatsApp on mobile
+
 ### 2025-01-09 (Session 3)
 - **Multi-Region WhatsApp Agent System**
   - Added Agent model and AgentSession for authentication
