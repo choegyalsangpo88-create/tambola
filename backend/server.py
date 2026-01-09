@@ -1378,7 +1378,14 @@ async def get_game(game_id: str):
 async def create_game(game_data: CreateGameRequest):
     game_id = f"game_{uuid.uuid4().hex[:8]}"
     
-    prize_pool = sum(game_data.prizes.values())
+    # Auto-add Full Sheet Bonus to prizes if not present
+    prizes = dict(game_data.prizes)
+    if "Full Sheet Bonus" not in prizes and "full_sheet_bonus" not in prizes:
+        # Add default Full Sheet Bonus (can be 0 if admin doesn't want to award it)
+        prizes["Full Sheet Bonus"] = prizes.get("Full Sheet Bonus", 0)
+        logger.info(f"Auto-added Full Sheet Bonus to game prizes")
+    
+    prize_pool = sum(prizes.values())
     
     total_tickets = game_data.dict().get('total_tickets', 600)
     
@@ -1399,7 +1406,7 @@ async def create_game(game_data: CreateGameRequest):
         "time": game_data.time,
         "price": game_data.price,
         "prize_pool": prize_pool,
-        "prizes": game_data.prizes,
+        "prizes": prizes,
         "status": "upcoming",
         "ticket_count": total_tickets,
         "available_tickets": total_tickets,
