@@ -565,11 +565,17 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     logger.info(f"Full Sheet Bonus prize name: {full_sheet_prize}")
     logger.info(f"User sheets found: {len(user_sheets)} users with grouped tickets")
     
+    # Log all user sheets for debugging
+    for group_key, sheets in user_sheets.items():
+        for sheet_id, sheet_data in sheets.items():
+            logger.info(f"  User '{group_key}', Sheet '{sheet_id}': {len(sheet_data['tickets'])} tickets")
+    
     if full_sheet_prize and full_sheet_prize not in existing_winners and full_sheet_prize not in new_winners:
         for group_key, sheets in user_sheets.items():
-            logger.debug(f"Checking user {group_key} with {len(sheets)} sheets")
+            logger.info(f"Checking user {group_key} with {len(sheets)} sheets")
             for sheet_id, sheet_data in sheets.items():
                 if not sheet_id:
+                    logger.debug(f"  → SKIP: No sheet_id")
                     continue
                 
                 ticket_count = len(sheet_data["tickets"])
@@ -577,11 +583,19 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 
                 # RULE 1: Must have exactly 6 tickets from the same sheet_id
                 if ticket_count != 6:
-                    logger.debug(f"  → SKIP: Only {ticket_count} tickets (need exactly 6)")
+                    logger.info(f"  → SKIP: Only {ticket_count} tickets (need exactly 6)")
                     continue
                 
                 # Extract ticket numbers for the check
                 ticket_list = [t.get("numbers", []) for t in sheet_data["tickets"]]
+                
+                # Log marks per ticket
+                marks_info = []
+                for i, t in enumerate(sheet_data["tickets"]):
+                    nums = t.get("numbers", [])
+                    marks = sum(1 for row in nums for num in row if num and num in called_set)
+                    marks_info.append(f"T{i+1}:{marks}")
+                logger.info(f"  Marks per ticket: {', '.join(marks_info)}")
                 
                 # Check Full Sheet Bonus with simplified rules
                 if check_full_sheet_bonus(ticket_list, called_set, min_marks_per_ticket=1, min_total_marks=6):
@@ -597,7 +611,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                     logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Bonus (Sheet: {sheet_id})")
                     break
                 else:
-                    logger.debug(f"  → Full Sheet Bonus check returned False for sheet {sheet_id}")
+                    logger.info(f"  → Full Sheet Bonus check returned False for sheet {sheet_id}")
             if full_sheet_prize in new_winners:
                 break
     else:
