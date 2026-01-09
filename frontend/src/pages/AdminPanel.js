@@ -1200,7 +1200,7 @@ export default function AdminPanel() {
                 <div>
                   <h4 className="text-sm font-semibold text-blue-400">Multi-Region Agent System</h4>
                   <p className="text-xs text-blue-400/80 mt-1">
-                    Agents are assigned to players based on their phone number country code. Players are redirected to the agent's WhatsApp for manual payment verification.
+                    Agents are assigned to players based on their phone number country code. Players are redirected to the agent&apos;s WhatsApp for manual payment verification.
                   </p>
                 </div>
               </div>
