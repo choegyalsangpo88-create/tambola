@@ -11,6 +11,12 @@ import { unlockMobileAudio, playBase64Audio, speakText } from '@/utils/audioHelp
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls (mobile fallback)
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 export default function LiveGame() {
   const { gameId } = useParams();
   const navigate = useNavigate();
