@@ -456,60 +456,6 @@ def _balance_rows_by_column_swap(ticket: List[List[Optional[int]]], row_counts: 
     
     final_row_counts = [sum(1 for cell in row if cell is not None) for row in ticket]
     return final_row_counts == [5, 5, 5]
-                _sort_columns(tickets[ticket_idx])
-            
-            if not success:
-                continue
-            
-            # Validate: check all 90 numbers are present exactly once
-            all_numbers = set()
-            has_duplicate = False
-            
-            for ticket in tickets:
-                for row in ticket:
-                    for num in row:
-                        if num is not None:
-                            if num in all_numbers:
-                                has_duplicate = True
-                                break
-                            all_numbers.add(num)
-                    if has_duplicate:
-                        break
-                if has_duplicate:
-                    break
-            
-            if has_duplicate:
-                continue
-            
-            if len(all_numbers) != 90 or all_numbers != set(range(1, 91)):
-                continue
-            
-            # Validate each ticket has exactly 15 numbers with 5 per row
-            tickets_valid = True
-            for ticket in tickets:
-                total_nums = sum(1 for row in ticket for num in row if num is not None)
-                if total_nums != 15:
-                    tickets_valid = False
-                    break
-                for row in ticket:
-                    row_count = sum(1 for num in row if num is not None)
-                    if row_count != 5:
-                        tickets_valid = False
-                        break
-                if not tickets_valid:
-                    break
-            
-            if not tickets_valid:
-                continue
-            
-            return tickets
-        
-        except Exception as e:
-            continue
-    
-    # CRITICAL: We MUST NOT fall back to individual tickets
-    # Keep trying with a different approach
-    return _generate_full_sheet_guaranteed()
 
 
 def _generate_full_sheet_guaranteed() -> List[List[List[Optional[int]]]]:
