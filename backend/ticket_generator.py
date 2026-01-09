@@ -502,10 +502,15 @@ def _balance_full_sheet_ticket(ticket: List[List[Optional[int]]]) -> bool:
     """
     Balance a ticket to ensure each row has exactly 5 numbers.
     Returns True if successful, False otherwise.
-    """
-    max_iterations = 100
     
-    for _ in range(max_iterations):
+    IMPROVED ALGORITHM:
+    1. Move numbers directly when possible (same column)
+    2. Swap numbers between different columns when direct move not possible
+    3. As last resort, find any valid column to place the number
+    """
+    max_iterations = 200
+    
+    for iteration in range(max_iterations):
         row_counts = [sum(1 for cell in row if cell is not None) for row in ticket]
         
         if row_counts == [5, 5, 5]:
@@ -514,44 +519,118 @@ def _balance_full_sheet_ticket(ticket: List[List[Optional[int]]]) -> bool:
         over_rows = [i for i, c in enumerate(row_counts) if c > 5]
         under_rows = [i for i, c in enumerate(row_counts) if c < 5]
         
+        if not over_rows and not under_rows:
+            return row_counts == [5, 5, 5]
+        
         if not over_rows or not under_rows:
+            # Edge case: all rows equal but not 5
+            # This shouldn't happen in full sheet context
             break
         
         moved = False
+        
+        # STRATEGY 1: Direct move within same column
         for over_row in over_rows:
             for under_row in under_rows:
                 for col in range(9):
-                    # Can we move a number from over_row to under_row in this column?
                     if ticket[over_row][col] is not None and ticket[under_row][col] is None:
-                        # Check column constraints
-                        col_count = sum(1 for r in range(3) if ticket[r][col] is not None)
-                        if col_count <= 3:
-                            ticket[under_row][col] = ticket[over_row][col]
+                        # Move number from over_row to under_row in same column
+                        ticket[under_row][col] = ticket[over_row][col]
+                        ticket[over_row][col] = None
+                        moved = True
+                        break
+                if moved:
+                    break
+            if moved:
+                break
+        
+        if moved:
+            continue
+        
+        # STRATEGY 2: Swap between columns
+        # Find a column where over_row has a number, 
+        # and another column where under_row is missing a number
+        for over_row in over_rows:
+            for under_row in under_rows:
+                for col1 in range(9):
+                    if ticket[over_row][col1] is None:
+                        continue
+                    
+                    # Check if we can put a new number in col1 for under_row
+                    # by first checking col1 column count
+                    col1_count = sum(1 for r in range(3) if ticket[r][col1] is not None)
+                    
+                    for col2 in range(9):
+                        if col1 == col2:
+                            continue
+                        if ticket[under_row][col2] is not None:
+                            continue
+                        if ticket[over_row][col2] is not None:
+                            continue
+                        
+                        # Can we add a number to col2 for under_row?
+                        col2_count = sum(1 for r in range(3) if ticket[r][col2] is not None)
+                        if col2_count >= 3:
+                            continue
+                        
+                        # Move from over_row col1 to under_row col1 
+                        # (if col1 allows having number in under_row)
+                        if col1_count <= 3:
+                            ticket[under_row][col1] = ticket[over_row][col1]
+                            ticket[over_row][col1] = None
+                            moved = True
+                            break
+                    if moved:
+                        break
+                if moved:
+                    break
+            if moved:
+                break
+        
+        if moved:
+            continue
+        
+        # STRATEGY 3: Find any empty slot in under_row and move number there
+        for over_row in over_rows:
+            for under_row in under_rows:
+                # Find any column with a number in over_row
+                for col in range(9):
+                    if ticket[over_row][col] is None:
+                        continue
+                    
+                    num = ticket[over_row][col]
+                    
+                    # Find an empty slot in under_row
+                    for target_col in range(9):
+                        if ticket[under_row][target_col] is not None:
+                            continue
+                        
+                        # Check if this column can accept more numbers
+                        target_col_count = sum(1 for r in range(3) if ticket[r][target_col] is not None)
+                        if target_col_count >= 3:
+                            continue
+                        
+                        # Check if the number belongs to target_col range
+                        start, end = COLUMN_RANGES[target_col]
+                        if start <= num <= end:
+                            # Valid move
+                            ticket[under_row][target_col] = num
                             ticket[over_row][col] = None
                             moved = True
                             break
+                    if moved:
+                        break
                 if moved:
                     break
             if moved:
                 break
         
         if not moved:
-            # Try swapping numbers between columns
-            for over_row in over_rows:
-                for under_row in under_rows:
-                    for col1 in range(9):
-                        if ticket[over_row][col1] is None:
-                            continue
-                        for col2 in range(9):
-                            if col1 == col2:
-                                continue
-                            if ticket[under_row][col2] is not None:
-                                continue
-                            # Check if we can move from col1 to col2 for under_row
-                            # by finding a number in the same column range
-                            continue  # Skip complex swaps
+            # Could not balance - this ticket needs regeneration
+            break
     
-    return row_counts == [5, 5, 5]
+    final_row_counts = [sum(1 for cell in row if cell is not None) for row in ticket]
+    return final_row_counts == [5, 5, 5]
 
 
 def generate_user_game_tickets(count: int) -> List[List[List[Optional[int]]]]:
