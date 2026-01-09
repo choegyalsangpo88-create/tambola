@@ -196,6 +196,64 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const fetchAgents = useCallback(async () => {
+    try {
+      const response = await adminAxios.get(`${API}/admin/agents`);
+      setAgents(response.data.agents || []);
+    } catch (error) {
+      console.error('Failed to fetch agents:', error);
+    }
+  }, []);
+
+  const handleCreateAgent = async (e) => {
+    e.preventDefault();
+    try {
+      await adminAxios.post(`${API}/admin/agents`, agentForm);
+      toast.success('Agent created successfully!');
+      setShowAgentModal(false);
+      setAgentForm({ name: '', username: '', password: '', whatsapp_number: '', region: 'india', country_codes: ['+91'] });
+      fetchAgents();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create agent');
+    }
+  };
+
+  const handleUpdateAgent = async (agentId) => {
+    try {
+      await adminAxios.put(`${API}/admin/agents/${agentId}`, agentForm);
+      toast.success('Agent updated!');
+      setShowAgentModal(false);
+      setEditingAgent(null);
+      setAgentForm({ name: '', username: '', password: '', whatsapp_number: '', region: 'india', country_codes: ['+91'] });
+      fetchAgents();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update agent');
+    }
+  };
+
+  const handleToggleAgentStatus = async (agentId, currentStatus) => {
+    try {
+      await adminAxios.put(`${API}/admin/agents/${agentId}`, { is_active: !currentStatus });
+      toast.success(currentStatus ? 'Agent deactivated' : 'Agent activated');
+      fetchAgents();
+    } catch (error) {
+      toast.error('Failed to update agent status');
+    }
+  };
+
+  const openEditAgentModal = (agent) => {
+    setEditingAgent(agent);
+    setAgentForm({
+      name: agent.name,
+      username: agent.username,
+      password: '',
+      whatsapp_number: agent.whatsapp_number,
+      region: agent.region,
+      country_codes: agent.country_codes || []
+    });
+    setShowAgentModal(true);
+  };
+
   const fetchActionLogs = useCallback(async () => {
     try {
       const response = await adminAxios.get(`${API}/admin/action-logs`);
