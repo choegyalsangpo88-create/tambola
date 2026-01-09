@@ -256,7 +256,7 @@ def _generate_deterministic_ticket() -> List[List[Optional[int]]]:
     return ticket
 
 
-def generate_full_sheet(max_attempts: int = 1000) -> List[List[List[Optional[int]]]]:
+def generate_full_sheet(max_attempts: int = 2000) -> List[List[List[Optional[int]]]]:
     """
     Generate an authentic Tambola Full Sheet with 6 tickets.
     
@@ -271,27 +271,49 @@ def generate_full_sheet(max_attempts: int = 1000) -> List[List[List[Optional[int
     """
     
     for attempt in range(max_attempts):
+        # Try the primary method
         result = _try_generate_full_sheet_v2()
-        if result is not None:
-            # Validate before returning
-            all_nums = set()
-            valid = True
-            for ticket in result:
-                for row in ticket:
-                    row_count = sum(1 for c in row if c is not None)
-                    if row_count != 5:
-                        valid = False
-                        break
-                    for c in row:
-                        if c is not None:
-                            all_nums.add(c)
-                if not valid:
-                    break
-            if valid and len(all_nums) == 90:
+        if result is not None and _validate_full_sheet(result):
+            return result
+        
+        # Try smart method every 100 attempts
+        if attempt % 100 == 50:
+            result = _generate_full_sheet_smart()
+            if _validate_full_sheet(result):
                 return result
     
-    # If we still fail, generate with the guaranteed method
-    return _generate_full_sheet_smart()
+    # Final fallback with validation loop
+    for _ in range(1000):
+        result = _generate_full_sheet_smart()
+        if _validate_full_sheet(result):
+            return result
+    
+    # Ultimate fallback - last resort
+    return _generate_full_sheet_last_resort()
+
+
+def _validate_full_sheet(tickets: List[List[List[Optional[int]]]]) -> bool:
+    """Validate that a full sheet is correct."""
+    if tickets is None or len(tickets) != 6:
+        return False
+    
+    all_nums = set()
+    for ticket in tickets:
+        if len(ticket) != 3:
+            return False
+        for row in ticket:
+            if len(row) != 9:
+                return False
+            row_count = sum(1 for c in row if c is not None)
+            if row_count != 5:
+                return False
+            for c in row:
+                if c is not None:
+                    if c < 1 or c > 90:
+                        return False
+                    all_nums.add(c)
+    
+    return len(all_nums) == 90 and all_nums == set(range(1, 91))
 
 
 def _try_generate_full_sheet_v2() -> Optional[List[List[List[Optional[int]]]]]:
