@@ -40,6 +40,7 @@ function AppRouter() {
         <Route path="/game/:gameId" element={<ProtectedRoute><GameDetails /></ProtectedRoute>} />
         <Route path="/live/:gameId" element={<ProtectedRoute><LiveGame /></ProtectedRoute>} />
         <Route path="/my-tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
+        <Route path="/game-history/:gameId" element={<ProtectedRoute><GameHistory /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/past-results" element={<ProtectedRoute><PastResults /></ProtectedRoute>} />
         {/* Admin Routes - Secret URL */}
