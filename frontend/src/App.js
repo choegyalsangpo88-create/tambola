@@ -44,6 +44,8 @@ function AppRouter() {
         {/* Admin Routes - Secret URL */}
         <Route path="/control-ceo" element={<AdminLogin />} />
         <Route path="/admin-panel" element={<AdminPanel />} />
+        {/* Agent Panel Route */}
+        <Route path="/agent" element={<AgentPanel />} />
         {/* User Game Routes */}
         <Route path="/create-game" element={<ProtectedRoute><CreateUserGame /></ProtectedRoute>} />
         <Route path="/my-games" element={<ProtectedRoute><MyUserGames /></ProtectedRoute>} />
