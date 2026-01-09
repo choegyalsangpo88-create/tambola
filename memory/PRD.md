@@ -10,7 +10,46 @@ A full-stack Tambola (Housie) game application designed for Indian players with 
 - **WhatsApp OTP** for phone number authentication (Twilio integration)
 - Session management with 7-day expiry
 
-### 2. Game Dashboard
+### 2. Multi-Region Agent System ✅ (NEW)
+**Roles:**
+- **Super Admin**: Full access to all data and actions
+- **Agent**: Limited access only to own assigned bookings
+
+**Features:**
+- Auto-assign agents based on player phone country code
+  - +91 → India agent
+  - +33 → France agent
+  - +1 → Canada agent
+- Click-to-chat WhatsApp redirect (no API automation)
+- 10-minute booking expiry for pending payments
+
+**Agent Panel (`/agent`):**
+- Dashboard: Stats (pending/paid/total bookings, revenue)
+- My Bookings: View and manage assigned bookings
+- Profile: View agent details and assigned region
+
+**Admin Panel - Agents Tab:**
+- Create/Edit/Deactivate agents
+- Region assignment rules view
+- Booking stats per agent
+
+**Booking Lifecycle:**
+- **Pending**: Can be marked as Paid or Cancelled, 10-min expiry
+- **Paid**: Locked, no modifications allowed
+- **Cancelled**: Stored for history, tickets released
+
+**Agent Actions:**
+- Mark Pending booking as Paid (after WhatsApp payment verification)
+- Cancel Pending booking (releases tickets back to pool)
+- Cannot modify Live/Completed game bookings
+
+**Validation Rules:**
+- Agents only see own assigned bookings
+- Cannot cancel Paid bookings
+- Cannot modify Live/Completed game bookings
+- All actions validated server-side
+
+### 3. Game Dashboard
 - Display "Live" and "Upcoming" games
 - Recently completed games (within 5 minutes)
 - Game cards with status, price, tickets available
