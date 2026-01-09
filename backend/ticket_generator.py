@@ -319,6 +319,7 @@ def _validate_full_sheet(tickets: List[List[List[Optional[int]]]]) -> bool:
 def _try_generate_full_sheet_v2() -> Optional[List[List[List[Optional[int]]]]]:
     """
     Smart full sheet generation that maintains constraints throughout.
+    Uses a constraint-aware distribution assignment.
     """
     # Initialize 6 tickets
     tickets = [[[None for _ in range(9)] for _ in range(3)] for _ in range(6)]
@@ -335,30 +336,26 @@ def _try_generate_full_sheet_v2() -> Optional[List[List[List[Optional[int]]]]]:
     # Track constraints
     ticket_row_counts = [[0, 0, 0] for _ in range(6)]
     
-    # Calculate distribution - how many numbers each ticket gets from each column
-    col_distributions = []
-    for col in range(9):
-        size = len(column_numbers[col])
-        if size == 9:
-            dist = [2, 2, 2, 1, 1, 1]
-        elif size == 10:
-            dist = [2, 2, 2, 2, 1, 1]
-        elif size == 11:
-            dist = [2, 2, 2, 2, 2, 1]
-        else:
-            dist = [size // 6] * 6
-            for i in range(size % 6):
-                dist[i] += 1
-        random.shuffle(dist)
-        col_distributions.append(dist)
+    # Calculate distribution - but we need to ensure totals are exactly 15 for each ticket
+    # Column sizes: 9, 10, 10, 10, 10, 10, 10, 10, 11
+    # Each ticket needs exactly 15 numbers total
     
-    # Verify each ticket gets exactly 15 numbers total
-    for ticket_idx in range(6):
-        total = sum(col_distributions[col][ticket_idx] for col in range(9))
-        if total != 15:
-            return None
+    # Start with base distribution patterns
+    patterns = {
+        9: [2, 2, 2, 1, 1, 1],   # Sums to 9
+        10: [2, 2, 2, 2, 1, 1],  # Sums to 10
+        11: [2, 2, 2, 2, 2, 1],  # Sums to 11
+    }
     
-    # Process column by column
+    # We need to find a valid assignment of patterns to tickets
+    # such that each ticket gets exactly 15 numbers
+    
+    # Try to find a valid distribution using backtracking
+    col_distributions = _find_valid_distribution(patterns)
+    if col_distributions is None:
+        return None
+    
+    # Now assign numbers to rows with constraint satisfaction
     for col in range(9):
         numbers = column_numbers[col][:]
         dist = col_distributions[col]
@@ -396,6 +393,66 @@ def _try_generate_full_sheet_v2() -> Optional[List[List[List[Optional[int]]]]]:
                 return None
     
     return tickets
+
+
+def _find_valid_distribution(patterns: dict) -> Optional[List[List[int]]]:
+    """
+    Find a valid distribution of column numbers to tickets such that
+    each ticket gets exactly 15 numbers.
+    
+    Column sizes: 9, 10, 10, 10, 10, 10, 10, 10, 11 = 90
+    We have: 1 col of size 9, 7 cols of size 10, 1 col of size 11
+    
+    Each ticket needs 15 numbers total.
+    """
+    # Column sizes
+    col_sizes = [9, 10, 10, 10, 10, 10, 10, 10, 11]
+    
+    # Initialize distributions
+    col_distributions = [None for _ in range(9)]
+    ticket_totals = [0 for _ in range(6)]
+    
+    # Process columns in order, tracking ticket totals
+    for col in range(9):
+        size = col_sizes[col]
+        base_pattern = patterns[size][:]
+        
+        # Try different shuffles of the pattern
+        for _ in range(100):
+            random.shuffle(base_pattern)
+            
+            # Check if this assignment keeps all tickets feasible
+            # (can still reach exactly 15 with remaining columns)
+            temp_totals = [ticket_totals[t] + base_pattern[t] for t in range(6)]
+            
+            # Calculate remaining capacity
+            remaining_cols = 9 - col - 1
+            max_per_ticket_remaining = remaining_cols * 2  # Max 2 per column
+            min_per_ticket_remaining = remaining_cols * 1  # Min 1 per column (approximately)
+            
+            feasible = True
+            for t in range(6):
+                needed = 15 - temp_totals[t]
+                if needed < 0:
+                    feasible = False
+                    break
+                if needed > max_per_ticket_remaining:
+                    feasible = False
+                    break
+            
+            if feasible:
+                col_distributions[col] = base_pattern[:]
+                ticket_totals = temp_totals
+                break
+        
+        if col_distributions[col] is None:
+            return None
+    
+    # Verify totals
+    if ticket_totals != [15, 15, 15, 15, 15, 15]:
+        return None
+    
+    return col_distributions
 
 
 def _generate_full_sheet_smart() -> List[List[List[Optional[int]]]]:
