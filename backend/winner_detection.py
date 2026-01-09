@@ -376,14 +376,18 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     # Track Full House winners by call count for proper sequential assignment
     full_house_candidates = []  # List of {user_id, ticket_id, holder_name, ticket_number}
     
+    logger.info(f"Processing {len(booked_tickets)} booked tickets for winner detection")
+    
     for ticket in booked_tickets:
         user_id = ticket.get("user_id")
         holder_name = ticket.get("holder_name") or ticket.get("booked_by_name") or user_names.get(user_id, "Player")
         if not user_id and not holder_name:
+            logger.debug(f"Skipping ticket {ticket.get('ticket_id')} - no user_id or holder_name")
             continue
         
         ticket_numbers = ticket.get("numbers", [])
         if not ticket_numbers or len(ticket_numbers) < 3:
+            logger.debug(f"Skipping ticket {ticket.get('ticket_id')} - no numbers")
             continue
         
         ticket_id = ticket.get("ticket_id")
@@ -403,6 +407,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 "ticket_number": ticket.get("ticket_number"),
                 "ticket_position_in_sheet": ticket.get("ticket_position_in_sheet")
             })
+            logger.debug(f"Added ticket {ticket_id} to user_sheets[{group_key}][{full_sheet_id}] - now has {len(user_sheets[group_key][full_sheet_id]['tickets'])} tickets")
         
         # Check single-ticket patterns
         patterns = detect_all_patterns(ticket_numbers, called_set)
