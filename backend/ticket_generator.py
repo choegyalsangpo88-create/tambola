@@ -477,7 +477,7 @@ def _generate_full_sheet_last_resort() -> List[List[List[Optional[int]]]]:
     """
     Last resort generation using a slot-based approach.
     """
-    for _ in range(1000):
+    for attempt in range(5000):
         # Create the matrix template
         # Each ticket has 3 rows × 9 columns
         # We need to place exactly 5 numbers per row, 15 per ticket
@@ -486,25 +486,53 @@ def _generate_full_sheet_last_resort() -> List[List[List[Optional[int]]]]:
         
         # For each ticket, pre-determine which columns will have numbers in which rows
         # Each row needs exactly 5 columns with numbers
+        
+        # Strategy: Build slot masks that satisfy column constraints
+        # Col 0: 9 slots, Col 1-7: 10 slots each, Col 8: 11 slots
+        # Total slots needed per column across all 6 tickets (18 rows)
+        
+        target_slots = [9, 10, 10, 10, 10, 10, 10, 10, 11]  # 90 total
+        
+        # Generate slot assignments
         slot_masks = []
-        for _ in range(6):
+        col_counts = [0 for _ in range(9)]  # Track slots per column
+        
+        for ticket_idx in range(6):
             ticket_mask = []
             for row in range(3):
-                # Choose 5 columns for this row
-                cols = random.sample(range(9), 5)
-                ticket_mask.append(set(cols))
+                # For each row, we need to pick exactly 5 columns
+                # Prefer columns that still need more slots
+                needs = [(col, target_slots[col] - col_counts[col]) for col in range(9)]
+                needs.sort(key=lambda x: -x[1])  # Most needed first
+                
+                # Pick 5 columns, with preference for those that need more
+                available = [col for col, need in needs if need > 0]
+                if len(available) >= 5:
+                    chosen = available[:5]
+                    # Add some randomness
+                    if len(available) > 5 and random.random() < 0.3:
+                        extra = random.choice(available[5:])
+                        replace_idx = random.randint(0, 4)
+                        chosen[replace_idx] = extra
+                else:
+                    # Fill remaining with any column
+                    chosen = available + random.sample([c for c in range(9) if c not in available], 5 - len(available))
+                
+                chosen = list(set(chosen))  # Remove duplicates
+                while len(chosen) < 5:
+                    for c in range(9):
+                        if c not in chosen:
+                            chosen.append(c)
+                            break
+                chosen = chosen[:5]
+                
+                for col in chosen:
+                    col_counts[col] += 1
+                ticket_mask.append(set(chosen))
             slot_masks.append(ticket_mask)
         
-        # Now verify each column across all tickets has valid count (9-11 slots total)
-        col_slots = [0 for _ in range(9)]  # How many slots in each column across all tickets
-        for ticket_mask in slot_masks:
-            for row_mask in ticket_mask:
-                for col in row_mask:
-                    col_slots[col] += 1
-        
-        # Col 0: needs 9 slots, Col 1-7: need 10 slots, Col 8: needs 11 slots
-        expected = [9, 10, 10, 10, 10, 10, 10, 10, 11]
-        if col_slots != expected:
+        # Check if column counts match
+        if col_counts != target_slots:
             continue
         
         # Now fill the slots with actual numbers
@@ -516,6 +544,7 @@ def _generate_full_sheet_last_resort() -> List[List[List[Optional[int]]]]:
             column_numbers.append(iter(nums))
         
         # Fill slots
+        success = True
         for ticket_idx in range(6):
             for row in range(3):
                 cols_in_row = sorted(slot_masks[ticket_idx][row])
@@ -523,7 +552,15 @@ def _generate_full_sheet_last_resort() -> List[List[List[Optional[int]]]]:
                     try:
                         tickets[ticket_idx][row][col] = next(column_numbers[col])
                     except StopIteration:
+                        success = False
                         break
+                if not success:
+                    break
+            if not success:
+                break
+        
+        if not success:
+            continue
         
         # Sort columns and validate
         valid = True
@@ -544,8 +581,14 @@ def _generate_full_sheet_last_resort() -> List[List[List[Optional[int]]]]:
         if valid and len(all_nums) == 90:
             return tickets
     
-    # Ultimate fallback - generate 6 independent tickets
-    # This should NEVER happen, but just in case
+    # Ultimate fallback - should NEVER happen
+    # Try _generate_full_sheet_smart one more time with more attempts
+    for _ in range(1000):
+        result = _try_generate_full_sheet_v2()
+        if result is not None:
+            return result
+    
+    # Generate 6 independent tickets as absolute last resort
     return [generate_authentic_ticket() for _ in range(6)]
 
 
