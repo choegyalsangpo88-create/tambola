@@ -99,6 +99,19 @@ export default function AdminPanel() {
   const [gameDetails, setGameDetails] = useState(null);
   const [showGameControlModal, setShowGameControlModal] = useState(false);
   const [controlGameId, setControlGameId] = useState(null);
+  
+  // Agent management state
+  const [agents, setAgents] = useState([]);
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [editingAgent, setEditingAgent] = useState(null);
+  const [agentForm, setAgentForm] = useState({
+    name: '',
+    username: '',
+    password: '',
+    whatsapp_number: '',
+    region: 'india',
+    country_codes: ['+91']
+  });
 
   const [gameForm, setGameForm] = useState({
     name: '',
