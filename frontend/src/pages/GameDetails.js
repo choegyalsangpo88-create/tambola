@@ -213,8 +213,11 @@ export default function GameDetails() {
 
     setIsBooking(true);
     try {
-      // Get user info
-      const userResponse = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      // Get user info with auth headers for mobile fallback
+      const userResponse = await axios.get(`${API}/auth/me`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       const user = userResponse.data;
 
       // Create booking REQUEST (not direct booking) - goes to admin for approval
@@ -224,7 +227,10 @@ export default function GameDetails() {
           game_id: gameId,
           ticket_ids: selectedTickets
         },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: getAuthHeaders()
+        }
       );
 
       const bookingRequest = response.data;
