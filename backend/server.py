@@ -3534,6 +3534,81 @@ async def update_whatsapp_opt_in(booking_id: str, opt_in: bool, request: Request
     
     return {"success": True, "message": f"WhatsApp opt-in {'enabled' if opt_in else 'disabled'}"}
 
+# ============ FSB DIAGNOSTIC ENDPOINT ============
+@api_router.get("/admin/games/{game_id}/fsb-diagnostic")
+async def get_fsb_diagnostic(game_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Diagnostic endpoint to check Full Sheet Bonus eligibility for a game"""
+    
+    # Get game
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Get session
+    session = await db.game_sessions.find_one({"game_id": game_id}, {"_id": 0})
+    called_numbers = session.get("called_numbers", []) if session else []
+    called_set = set(called_numbers)
+    
+    # Get booked tickets
+    tickets = await db.tickets.find(
+        {"game_id": game_id, "is_booked": True},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Group by user and full_sheet_id
+    user_sheets = {}
+    for t in tickets:
+        user_id = t.get("user_id") or t.get("holder_name") or "unknown"
+        sheet_id = t.get("full_sheet_id", "none")
+        key = (user_id, sheet_id)
+        if key not in user_sheets:
+            user_sheets[key] = []
+        
+        # Count marks for this ticket
+        marks = 0
+        for row in t.get("numbers", []):
+            for num in row:
+                if num and num in called_set:
+                    marks += 1
+        
+        user_sheets[key].append({
+            "ticket_number": t.get("ticket_number"),
+            "marks": marks,
+            "has_full_sheet_id": bool(t.get("full_sheet_id"))
+        })
+    
+    # Analyze FSB eligibility
+    fsb_candidates = []
+    for (user_id, sheet_id), sheet_tickets in user_sheets.items():
+        if len(sheet_tickets) == 6 and sheet_id != "none":
+            marks_per_ticket = [t["marks"] for t in sheet_tickets]
+            total_marks = sum(marks_per_ticket)
+            all_have_1_plus = all(m >= 1 for m in marks_per_ticket)
+            
+            fsb_candidates.append({
+                "user_id": user_id,
+                "sheet_id": sheet_id,
+                "tickets": [t["ticket_number"] for t in sheet_tickets],
+                "marks_per_ticket": marks_per_ticket,
+                "total_marks": total_marks,
+                "all_have_1_plus_mark": all_have_1_plus,
+                "fsb_eligible": all_have_1_plus and total_marks >= 6
+            })
+    
+    # Check existing winners
+    existing_fsb = session.get("winners", {}).get("Full Sheet Bonus") if session else None
+    
+    return {
+        "game_id": game_id,
+        "game_name": game.get("name"),
+        "called_numbers_count": len(called_numbers),
+        "total_booked_tickets": len(tickets),
+        "fsb_in_prizes": "Full Sheet Bonus" in game.get("prizes", {}),
+        "fsb_already_won": existing_fsb is not None,
+        "fsb_winner": existing_fsb,
+        "fsb_candidates": fsb_candidates
+    }
+
 # ============ HEALTH CHECK ENDPOINT ============
 @app.get("/health")
 async def health_check():
