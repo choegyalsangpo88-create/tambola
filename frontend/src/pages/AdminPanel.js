@@ -99,6 +99,8 @@ export default function AdminPanel() {
   const [gameDetails, setGameDetails] = useState(null);
   const [showGameControlModal, setShowGameControlModal] = useState(false);
   const [controlGameId, setControlGameId] = useState(null);
+  const [showCreateConfirmModal, setShowCreateConfirmModal] = useState(false);
+  const [pendingGameData, setPendingGameData] = useState(null);
   
   // Agent management state
   const [agents, setAgents] = useState([]);
