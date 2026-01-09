@@ -212,7 +212,10 @@ export default function LiveGame() {
 
   const fetchMyTickets = async () => {
     try {
-      const bookingsResponse = await axios.get(`${API}/bookings/my`, { withCredentials: true });
+      const bookingsResponse = await axios.get(`${API}/bookings/my`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       const myGameBookings = bookingsResponse.data.filter(b => b.game_id === gameId && b.status === 'confirmed');
       if (myGameBookings.length > 0) {
         const ticketIds = myGameBookings.flatMap(b => b.ticket_ids);
