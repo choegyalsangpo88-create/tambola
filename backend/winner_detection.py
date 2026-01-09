@@ -584,7 +584,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 ticket_list = [t.get("numbers", []) for t in sheet_data["tickets"]]
                 
                 # Check Full Sheet Bonus with simplified rules
-                if check_full_sheet_bonus(ticket_list, called_set, min_marks_per_ticket=2, min_total_marks=12):
+                if check_full_sheet_bonus(ticket_list, called_set, min_marks_per_ticket=1, min_total_marks=6):
                     # Determine user_id - group_key is either user_id or holder_name
                     winner_user_id = group_key if group_key and isinstance(group_key, str) and (group_key.startswith("user_") or "_" in group_key) else None
                     
