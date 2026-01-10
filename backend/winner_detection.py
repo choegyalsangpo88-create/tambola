@@ -409,6 +409,21 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         
         ticket_id = ticket.get("ticket_id")
         full_sheet_id = ticket.get("full_sheet_id")
+        ticket_number = ticket.get("ticket_number", "")
+        
+        # FALLBACK: Infer full_sheet_id from ticket_number if not set
+        # T001-T006 = FS001, T007-T012 = FS002, etc.
+        if not full_sheet_id and ticket_number:
+            try:
+                # Extract number from ticket_number (e.g., "T001" -> 1, "T023" -> 23)
+                num_str = ''.join(filter(str.isdigit, ticket_number))
+                if num_str:
+                    ticket_num = int(num_str)
+                    sheet_num = ((ticket_num - 1) // 6) + 1
+                    full_sheet_id = f"FS{sheet_num:03d}"
+                    logger.debug(f"Inferred full_sheet_id={full_sheet_id} from ticket_number={ticket_number}")
+            except Exception as e:
+                logger.debug(f"Could not infer full_sheet_id from {ticket_number}: {e}")
         
         # Group by user and full sheet for Full Sheet Bonus
         # Check if this ticket is part of a full sheet (regardless of booking_type)
@@ -421,7 +436,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
             user_sheets[group_key][full_sheet_id]["tickets"].append({
                 "numbers": ticket_numbers,
                 "ticket_id": ticket_id,
-                "ticket_number": ticket.get("ticket_number"),
+                "ticket_number": ticket_number,
                 "ticket_position_in_sheet": ticket.get("ticket_position_in_sheet")
             })
             logger.debug(f"Added ticket {ticket_id} to user_sheets[{group_key}][{full_sheet_id}] - now has {len(user_sheets[group_key][full_sheet_id]['tickets'])} tickets")
