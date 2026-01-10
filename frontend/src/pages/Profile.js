@@ -77,9 +77,20 @@ export default function Profile() {
           name,
           avatar: selectedAvatar
         },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: getAuthHeaders()
+        }
       );
       toast.success('Profile updated successfully');
+      // Update localStorage
+      const storedUser = localStorage.getItem('tambola_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        userData.name = name;
+        userData.picture = selectedAvatar;
+        localStorage.setItem('tambola_user', JSON.stringify(userData));
+      }
       fetchUser();
     } catch (error) {
       console.error('Failed to update profile:', error);
