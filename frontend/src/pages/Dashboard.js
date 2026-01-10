@@ -36,10 +36,22 @@ export default function Dashboard() {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      const response = await axios.get(`${API}/auth/me`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       setUser(response.data);
+      // Update localStorage
+      localStorage.setItem('tambola_user', JSON.stringify(response.data));
     } catch (error) {
       console.error('Failed to fetch user:', error);
+      // Try to get from localStorage
+      const storedUser = localStorage.getItem('tambola_user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {}
+      }
     }
   };
 
