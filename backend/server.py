@@ -3555,14 +3555,32 @@ async def get_fsb_diagnostic(game_id: str, request: Request, _: bool = Depends(v
         {"_id": 0}
     ).to_list(1000)
     
-    # Group by user and full_sheet_id
+    # Group by user and full_sheet_id (with inference)
     user_sheets = {}
     for t in tickets:
         user_id = t.get("user_id") or t.get("holder_name") or "unknown"
-        sheet_id = t.get("full_sheet_id", "none")
+        sheet_id = t.get("full_sheet_id")
+        ticket_number = t.get("ticket_number", "")
+        
+        # Infer sheet_id from ticket_number if not set
+        inferred = False
+        if not sheet_id and ticket_number:
+            try:
+                num_str = ''.join(filter(str.isdigit, ticket_number))
+                if num_str:
+                    ticket_num = int(num_str)
+                    sheet_num = ((ticket_num - 1) // 6) + 1
+                    sheet_id = f"FS{sheet_num:03d}"
+                    inferred = True
+            except:
+                sheet_id = "none"
+        
+        if not sheet_id:
+            sheet_id = "none"
+            
         key = (user_id, sheet_id)
         if key not in user_sheets:
-            user_sheets[key] = []
+            user_sheets[key] = {"inferred": inferred, "tickets": []}
         
         # Count marks for this ticket
         marks = 0
@@ -3571,28 +3589,36 @@ async def get_fsb_diagnostic(game_id: str, request: Request, _: bool = Depends(v
                 if num and num in called_set:
                     marks += 1
         
-        user_sheets[key].append({
-            "ticket_number": t.get("ticket_number"),
+        user_sheets[key]["tickets"].append({
+            "ticket_number": ticket_number,
             "marks": marks,
-            "has_full_sheet_id": bool(t.get("full_sheet_id"))
+            "has_full_sheet_id": bool(t.get("full_sheet_id")),
+            "original_sheet_id": t.get("full_sheet_id")
         })
     
     # Analyze FSB eligibility
     fsb_candidates = []
-    for (user_id, sheet_id), sheet_tickets in user_sheets.items():
+    for (user_id, sheet_id), data in user_sheets.items():
+        sheet_tickets = data["tickets"]
         if len(sheet_tickets) == 6 and sheet_id != "none":
             marks_per_ticket = [t["marks"] for t in sheet_tickets]
             total_marks = sum(marks_per_ticket)
             all_have_1_plus = all(m >= 1 for m in marks_per_ticket)
+            tickets_without_marks = [t["ticket_number"] for t in sheet_tickets if t["marks"] == 0]
             
             fsb_candidates.append({
                 "user_id": user_id,
                 "sheet_id": sheet_id,
+                "sheet_id_was_inferred": data["inferred"],
                 "tickets": [t["ticket_number"] for t in sheet_tickets],
                 "marks_per_ticket": marks_per_ticket,
                 "total_marks": total_marks,
                 "all_have_1_plus_mark": all_have_1_plus,
-                "fsb_eligible": all_have_1_plus and total_marks >= 6
+                "tickets_without_marks": tickets_without_marks,
+                "fsb_eligible": all_have_1_plus and total_marks >= 6,
+                "reason_if_not_eligible": None if (all_have_1_plus and total_marks >= 6) else (
+                    f"Tickets {tickets_without_marks} have 0 marks" if not all_have_1_plus else f"Total marks {total_marks} < 6"
+                )
             })
     
     # Check existing winners
@@ -3602,11 +3628,16 @@ async def get_fsb_diagnostic(game_id: str, request: Request, _: bool = Depends(v
         "game_id": game_id,
         "game_name": game.get("name"),
         "called_numbers_count": len(called_numbers),
+        "called_numbers": sorted(called_numbers),
         "total_booked_tickets": len(tickets),
         "fsb_in_prizes": "Full Sheet Bonus" in game.get("prizes", {}),
         "fsb_already_won": existing_fsb is not None,
         "fsb_winner": existing_fsb,
-        "fsb_candidates": fsb_candidates
+        "fsb_candidates": fsb_candidates,
+        "debug_info": {
+            "total_sheets_found": len([c for c in fsb_candidates if len(c["tickets"]) == 6]),
+            "eligible_sheets": len([c for c in fsb_candidates if c["fsb_eligible"]])
+        }
     }
 
 # ============ HEALTH CHECK ENDPOINT ============
