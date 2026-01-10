@@ -8,9 +8,22 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls (mobile fallback)
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 // Wide compact ticket component
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
+  const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
+  // Format name: "A. Sharma" style
+  const shortName = holderName ? (
+    holderName.split(' ').length > 1 
+      ? holderName.split(' ')[0][0] + '. ' + holderName.split(' ')[1].slice(0, 6)
+      : holderName.slice(0, 8)
+  ) : null;
   
   return (
     <div
@@ -25,12 +38,14 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
     >
       {/* Ticket number and booked by - positioned just above ticket */}
       <div className="flex items-center justify-between px-1 mb-0.5">
-        <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
-          {ticket.ticket_number}
-        </span>
-        {bookedBy && (
-          <span className="text-[9px] text-gray-500 truncate max-w-[60px]">{bookedBy}</span>
-        )}
+        <div className="flex items-center gap-1">
+          <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
+            {ticket.ticket_number}
+          </span>
+          {shortName && (
+            <span className="text-[8px] text-purple-400 truncate max-w-[50px]">• {shortName}</span>
+          )}
+        </div>
         {isSelected && (
           <span className="text-[10px] text-amber-400">✓</span>
         )}
@@ -73,8 +88,8 @@ export default function GameDetails() {
     fetchGame();
     fetchAllTickets();
     
-    // Refresh tickets every 30 seconds to avoid booking stale data
-    const interval = setInterval(fetchAllTickets, 30000);
+    // Refresh tickets every 10 seconds to see real-time bookings
+    const interval = setInterval(fetchAllTickets, 10000);
     return () => clearInterval(interval);
   }, [gameId]);
 
@@ -198,8 +213,11 @@ export default function GameDetails() {
 
     setIsBooking(true);
     try {
-      // Get user info
-      const userResponse = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      // Get user info with auth headers for mobile fallback
+      const userResponse = await axios.get(`${API}/auth/me`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       const user = userResponse.data;
 
       // Create booking REQUEST (not direct booking) - goes to admin for approval
@@ -209,7 +227,10 @@ export default function GameDetails() {
           game_id: gameId,
           ticket_ids: selectedTickets
         },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: getAuthHeaders()
+        }
       );
 
       const bookingRequest = response.data;
@@ -241,7 +262,7 @@ export default function GameDetails() {
 Please approve my booking request. 🙏`;
 
       // WhatsApp Business Number
-      const whatsappNumber = '916909166157';
+      const whatsappNumber = '918837489781';
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       
       toast.success('Booking request sent! Opening WhatsApp...');

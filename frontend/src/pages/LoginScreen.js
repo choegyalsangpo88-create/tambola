@@ -89,6 +89,14 @@ export default function LoginScreen() {
         return;
       }
 
+      // Store session in localStorage for mobile compatibility
+      if (response.data.session_token) {
+        localStorage.setItem('tambola_session', response.data.session_token);
+      }
+      if (response.data.user) {
+        localStorage.setItem('tambola_user', JSON.stringify(response.data.user));
+      }
+
       toast.success('Login successful!');
       navigate('/', { state: { user: response.data.user }, replace: true });
     } catch (error) {
@@ -142,6 +150,13 @@ export default function LoginScreen() {
         <MessageSquare className="w-5 h-5 mr-2" />
         Continue with WhatsApp
       </Button>
+      
+      {/* WhatsApp Notice */}
+      <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+        <p className="text-green-400 text-xs text-center">
+          📱 <strong>WhatsApp OTP:</strong> Enter your phone number with country code (e.g., +91 for India) to receive OTP on WhatsApp.
+        </p>
+      </div>
     </>
   );
 
@@ -367,30 +382,19 @@ export default function LoginScreen() {
                   </div>
                 </div>
                 
-                {/* SIX SEVEN Text - Shiny Modern Style */}
-                <p className="text-2xl md:text-3xl font-black tracking-[0.3em] mb-2" style={{
-                  fontFamily: 'Outfit, sans-serif',
-                  background: 'linear-gradient(135deg, #fff 0%, #a8d8ff 25%, #fff 50%, #60b8ff 75%, #fff 100%)',
+                {/* 67tambola - Premium Brand Name */}
+                <h1 className="text-5xl md:text-6xl font-black mb-3" style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 30%, #FFD700 50%, #F59E0B 70%, #FCD34D 100%)',
                   backgroundSize: '200% 200%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em',
                   animation: 'shimmer 3s ease-in-out infinite',
-                  textShadow: '0 0 30px rgba(96, 184, 255, 0.5)',
-                  filter: 'drop-shadow(0 0 10px rgba(96, 184, 255, 0.3))'
+                  textShadow: '0 0 40px rgba(251, 191, 36, 0.4)',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
                 }}>
-                  SIX SEVEN
-                </p>
-                
-                {/* TAMBOLA Text - Modern Premium Font */}
-                <h1 className="text-5xl md:text-6xl font-black mb-3" style={{
-                  fontFamily: 'Outfit, sans-serif',
-                  background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 50%, #D97706 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '0.05em',
-                  textShadow: '0 0 30px rgba(251, 191, 36, 0.3)'
-                }}>
-                  TAMBOLA
+                  67tambola
                 </h1>
                 
                 {/* New Tagline */}

@@ -9,6 +9,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 // Default dividends for user games (family/party style)
 const DEFAULT_DIVIDENDS = {
   'Quick Five': { enabled: false, amount: 100, description: 'First to mark 5 numbers' },
@@ -77,14 +83,22 @@ export default function CreateUserGame() {
           ...formData,
           prizes_description: getEnabledPrizesDescription()
         },
-        { withCredentials: true }
+        { 
+          headers: getAuthHeaders(),
+          withCredentials: true 
+        }
       );
       
       toast.success('Game created successfully!');
       navigate(`/my-games/${response.data.user_game_id}`);
     } catch (error) {
       console.error('Failed to create game:', error);
-      toast.error(error.response?.data?.detail || 'Failed to create game');
+      if (error.response?.status === 401) {
+        toast.error('Please login to create a game');
+        navigate('/login');
+      } else {
+        toast.error(error.response?.data?.detail || 'Failed to create game');
+      }
     } finally {
       setIsLoading(false);
     }

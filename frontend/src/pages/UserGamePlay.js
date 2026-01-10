@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { ArrowLeft, Play, Square, Volume2, VolumeX, Users, Trophy } from 'lucide
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { getCallName } from '../utils/tambolaCallNames';
+import { unlockMobileAudio, playBase64Audio, speakText, isAudioUnlocked } from '../utils/audioHelper';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,30 +18,54 @@ export default function UserGamePlay() {
   const [game, setGame] = useState(null);
   const [session, setSession] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [myTickets, setMyTickets] = useState([]); // Current user's tickets
+  const [playerName, setPlayerName] = useState(''); // Current player name
   const [isHost, setIsHost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalling, setIsCalling] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [currentBall, setCurrentBall] = useState(null);
+  const [previousBall, setPreviousBall] = useState(null); // For exit animation
   const [showBallAnimation, setShowBallAnimation] = useState(false);
+  const [showBallTransition, setShowBallTransition] = useState(false);
+  const [dividends, setDividends] = useState({});
+  const [allWinners, setAllWinners] = useState({});
+  const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null); // For viewing winning ticket
   
-  const audioRef = useRef(null);
   const pollIntervalRef = useRef(null);
+  const lastAnnouncedRef = useRef(null);
+  const isAnnouncingRef = useRef(false);
+  const previousWinnersRef = useRef({});
+
+  // Unlock audio on iOS/mobile using Howler.js - MUST be triggered by user gesture
+  const unlockAudio = useCallback(async () => {
+    try {
+      await unlockMobileAudio();
+      setAudioUnlocked(true);
+      toast.success('🔊 Sound enabled!');
+    } catch (e) {
+      console.log('Audio unlock failed:', e);
+      // Still mark as unlocked to try playing
+      setAudioUnlocked(true);
+    }
+  }, []);
 
   useEffect(() => {
     fetchInitialData();
+    
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, [userGameId]);
 
   useEffect(() => {
-    if (game && !isHost) {
-      // Poll for updates if not host
+    // Poll every 2 seconds for live game
+    if (game && game.status === 'live') {
       pollIntervalRef.current = setInterval(fetchSession, 2000);
       return () => clearInterval(pollIntervalRef.current);
     }
-  }, [game, isHost]);
+  }, [game]);
 
   const fetchInitialData = async () => {
     try {
@@ -50,16 +75,60 @@ export default function UserGamePlay() {
         axios.get(`${API}/auth/me`, { withCredentials: true }).catch(() => null)
       ]);
       
-      setGame(gameRes.data);
-      setPlayers(playersRes.data.players || []);
+      const gameData = gameRes.data;
+      setGame(gameData);
+      const allPlayers = playersRes.data.players || [];
+      setPlayers(allPlayers);
+      setDividends(gameData.dividends || {});
+      setAllWinners(gameData.winners || {});
+      previousWinnersRef.current = gameData.winners || {};
+      
       setSession({
-        called_numbers: gameRes.data.called_numbers || [],
-        current_number: gameRes.data.current_number,
-        winners: gameRes.data.winners || {}
+        called_numbers: gameData.called_numbers || [],
+        current_number: gameData.current_number,
+        winners: gameData.winners || {},
+        status: gameData.status
       });
       
-      if (userRes?.data && gameRes.data.host_user_id === userRes.data.user_id) {
+      // Check if current user is host
+      const currentUserId = userRes?.data?.user_id;
+      const currentUserName = userRes?.data?.name;
+      
+      if (currentUserId && gameData.host_user_id === currentUserId) {
         setIsHost(true);
+        setPlayerName(currentUserName || 'Host');
+        // Find host's tickets
+        const hostPlayer = allPlayers.find(p => p.name === currentUserName || p.name === gameData.host_name);
+        if (hostPlayer) {
+          setMyTickets(hostPlayer.tickets || []);
+        }
+      }
+      
+      // Check localStorage for player info (for non-logged in players who joined via share code)
+      const storedPlayer = localStorage.getItem(`tambola_player_${userGameId}`);
+      if (storedPlayer) {
+        try {
+          const playerData = JSON.parse(storedPlayer);
+          setPlayerName(playerData.name);
+          // Find this player's current tickets from the players list
+          const myPlayer = allPlayers.find(p => p.name === playerData.name);
+          if (myPlayer) {
+            setMyTickets(myPlayer.tickets || []);
+          }
+        } catch (e) {
+          console.log('Error parsing stored player:', e);
+        }
+      }
+      
+      // Also check URL query param for player name
+      const urlParams = new URLSearchParams(window.location.search);
+      const playerParam = urlParams.get('player');
+      if (playerParam) {
+        setPlayerName(playerParam);
+        const myPlayer = allPlayers.find(p => p.name === playerParam);
+        if (myPlayer) {
+          setMyTickets(myPlayer.tickets || []);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch game:', error);
@@ -74,9 +143,51 @@ export default function UserGamePlay() {
       const response = await axios.get(`${API}/user-games/${userGameId}/session`);
       const newSession = response.data;
       
-      // Check for new number
-      if (newSession.current_number !== session?.current_number) {
-        showNewNumber(newSession.current_number);
+      // Check for new winners and celebrate
+      if (newSession.winners) {
+        Object.keys(newSession.winners).forEach(prize => {
+          if (!previousWinnersRef.current[prize]) {
+            const winner = newSession.winners[prize];
+            const winnerName = winner.holder_name || winner.name || 'Player';
+            const ticketNum = winner.ticket_number || '';
+            celebrateWinner(prize, winnerName, ticketNum);
+          }
+        });
+        previousWinnersRef.current = newSession.winners;
+        setAllWinners(newSession.winners);
+      }
+      
+      // Check for new number - show animation and play TTS
+      if (newSession.current_number && newSession.current_number !== session?.current_number) {
+        if (newSession.status === 'live') {
+          // Store previous number for exit animation
+          if (currentBall) {
+            setPreviousBall(currentBall);
+          }
+          setShowBallTransition(true);
+          setTimeout(() => {
+            setShowBallTransition(false);
+            setPreviousBall(null);
+          }, 1200);
+          
+          showNewNumber(newSession.current_number);
+        }
+      }
+      
+      // Update game status if changed
+      if (newSession.status && game?.status !== newSession.status) {
+        setGame(prev => ({ ...prev, status: newSession.status }));
+        
+        // Stop polling and sounds when game ends
+        if (newSession.status === 'completed') {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+          toast.success('🎉 Game Completed! All prizes have been claimed.');
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
       }
       
       setSession(newSession);
@@ -85,24 +196,121 @@ export default function UserGamePlay() {
     }
   };
 
-  const showNewNumber = (number) => {
-    if (!number) return;
+  // Celebrate winner with confetti and toast - Enhanced announcement
+  const celebrateWinner = async (prize, winnerName, ticketNumber) => {
+    // Big confetti burst
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: ['#FFD700', '#FFA500', '#FF6347', '#00FF00', '#FF69B4']
+    });
+    
+    // Second burst from sides
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.7, x: 0.3 },
+        colors: ['#FFD700', '#FFA500', '#00FF00']
+      });
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.7, x: 0.7 },
+        colors: ['#FFD700', '#FFA500', '#00FF00']
+      });
+    }, 300);
+    
+    // Voice announcement: "Congratulations! Prize gone!"
+    if (soundEnabled && audioUnlocked) {
+      try {
+        const announcementText = `Congratulations! ${prize} gone!`;
+        const played = await playTTSWithHowler(announcementText);
+        if (!played) {
+          await speakText(announcementText);
+        }
+      } catch (e) {
+        console.log('Winner announcement TTS error:', e);
+      }
+    }
+    
+    // Show toast with "Congratulations! Prize Gone!" and winner info
+    toast.success(
+      <div className="text-center">
+        <p className="text-2xl font-black text-amber-400 mb-1">🎉 Congratulations!</p>
+        <p className="text-xl font-bold text-white">{prize} Gone!</p>
+        <p className="text-base text-green-300 mt-1">
+          Winner: <span className="font-bold">{winnerName}</span>
+          {ticketNumber && <span className="text-amber-300 ml-1">({ticketNumber})</span>}
+        </p>
+      </div>,
+      { duration: 8000 }
+    );
+  };
+
+  const showNewNumber = async (number) => {
+    if (!number || game?.status === 'completed') return;
+    
+    // Prevent duplicate announcements
+    if (lastAnnouncedRef.current === number) return;
+    lastAnnouncedRef.current = number;
+    
     setCurrentBall(number);
     setShowBallAnimation(true);
     
-    if (soundEnabled) {
-      playSound();
+    // Play announcement if sound is on and audio is unlocked
+    if (soundEnabled && audioUnlocked && game?.status === 'live') {
+      await announceNumber(number);
     }
     
     setTimeout(() => setShowBallAnimation(false), 3000);
   };
 
-  const playSound = () => {
+  // Main announcement function - uses Howler.js for mobile compatibility
+  const announceNumber = async (number) => {
+    if (isAnnouncingRef.current || game?.status === 'completed' || !audioUnlocked) return;
+    isAnnouncingRef.current = true;
+    
+    const callName = getCallName(number);
+    
     try {
-      const audio = new Audio('/sounds/ball-drop.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    } catch (e) {}
+      // Try server-side TTS with Howler.js (most reliable for mobile)
+      const played = await playTTSWithHowler(callName);
+      
+      // Fallback to browser TTS if server TTS fails
+      if (!played) {
+        await speakText(callName);
+      }
+    } catch (error) {
+      console.log('Announcement error:', error);
+    } finally {
+      isAnnouncingRef.current = false;
+    }
+  };
+
+  // Server-side TTS with Howler.js - works on iOS/Android
+  const playTTSWithHowler = async (text) => {
+    try {
+      const response = await axios.post(`${API}/tts/generate?text=${encodeURIComponent(text)}&include_prefix=false`);
+      const data = response.data;
+      
+      if (data.audio) {
+        // Use Howler.js via our utility
+        return await playBase64Audio(data.audio);
+      }
+      
+      // If server returns use_browser_tts, use browser TTS
+      if (data.use_browser_tts) {
+        await speakText(data.text || text);
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      console.log('Server TTS error:', e);
+      return false;
+    }
   };
 
   const handleCallNumber = async () => {
@@ -164,6 +372,19 @@ export default function UserGamePlay() {
     return 'from-gray-400 to-gray-600';
   };
 
+  // Get gradient colors for 3D ball based on number range
+  const getBallGradient = (num) => {
+    if (num <= 9) return '#60a5fa, #2563eb 50%, #1d4ed8 80%, #1e3a8a';
+    if (num <= 19) return '#f87171, #dc2626 50%, #b91c1c 80%, #7f1d1d';
+    if (num <= 29) return '#4ade80, #16a34a 50%, #15803d 80%, #14532d';
+    if (num <= 39) return '#facc15, #ca8a04 50%, #a16207 80%, #713f12';
+    if (num <= 49) return '#c084fc, #9333ea 50%, #7e22ce 80%, #581c87';
+    if (num <= 59) return '#f472b6, #db2777 50%, #be185d 80%, #831843';
+    if (num <= 69) return '#22d3ee, #0891b2 50%, #0e7490 80%, #164e63';
+    if (num <= 79) return '#fb923c, #ea580c 50%, #c2410c 80%, #7c2d12';
+    return '#9ca3af, #6b7280 50%, #4b5563 80%, #374151';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c]">
@@ -182,8 +403,8 @@ export default function UserGamePlay() {
 
   // Check if game is completed
   const isGameCompleted = game.status === 'completed';
-  const allWinners = game.winners || session?.winners || {};
-  const dividends = game.dividends || {};
+  const displayWinners = allWinners || game.winners || session?.winners || {};
+  const displayDividends = dividends || game.dividends || {};
 
   // Game Ended Screen
   if (isGameCompleted) {
@@ -195,18 +416,79 @@ export default function UserGamePlay() {
           <p className="text-gray-400 mb-6">Congratulations to all winners!</p>
           
           <div className="space-y-3 mb-6">
-            {Object.entries(allWinners).map(([prize, winner]) => (
-              <div key={prize} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-amber-400 font-bold">{prize}</span>
-                  <Trophy className="w-5 h-5 text-amber-500" />
+            {Object.entries(displayWinners).map(([prize, winner]) => {
+              // Find the winning ticket
+              const winningTicket = game.tickets?.find(t => 
+                t.ticket_id === winner.ticket_id || t.ticket_number === winner.ticket_number
+              );
+              
+              return (
+                <div 
+                  key={prize} 
+                  className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 cursor-pointer hover:border-amber-400 transition-all"
+                  onClick={() => {
+                    if (winningTicket) {
+                      setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-amber-400 font-bold">{prize}</span>
+                    <Trophy className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <p className="text-white text-sm mt-1">
+                    🏆 {winner.holder_name || winner.name || 'Winner'}
+                    {winner.ticket_number && <span className="text-amber-300 ml-2">({winner.ticket_number})</span>}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">Click to view winning ticket</p>
                 </div>
-                <p className="text-white text-sm mt-1">
-                  Winner: {winner.name || winner.ticket_number || 'Winner'}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
+          
+          {/* Modal for viewing winning ticket */}
+          {selectedWinnerTicket && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedWinnerTicket(null)}>
+              <div className="bg-white rounded-xl p-4 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-bold text-gray-800">
+                    🏆 {selectedWinnerTicket.prize}
+                  </h3>
+                  <button onClick={() => setSelectedWinnerTicket(null)} className="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Winner: <span className="font-bold">{selectedWinnerTicket.winner?.holder_name || selectedWinnerTicket.winner?.name}</span>
+                </p>
+                <p className="text-sm text-gray-600 mb-3">
+                  Ticket: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
+                </p>
+                <div className="bg-amber-50 rounded-lg p-3">
+                  <div className="grid grid-cols-9 gap-1">
+                    {selectedWinnerTicket.numbers?.map((row, rowIdx) => (
+                      row.map((num, colIdx) => {
+                        const isCalled = (game.called_numbers || session?.called_numbers || []).includes(num);
+                        return (
+                          <div
+                            key={`${rowIdx}-${colIdx}`}
+                            className={`aspect-square flex items-center justify-center text-xs font-bold rounded ${
+                              num 
+                                ? isCalled 
+                                  ? 'bg-green-500 text-white ring-2 ring-green-600' 
+                                  : 'bg-amber-100 text-amber-900'
+                                : 'bg-gray-100'
+                            }`}
+                          >
+                            {num || ''}
+                          </div>
+                        );
+                      })
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">Green = Called numbers</p>
+              </div>
+            </div>
+          )}
           
           <p className="text-gray-500 text-sm mb-4">
             Total numbers called: {game.called_numbers?.length || session?.called_numbers?.length || 0}/90
@@ -245,51 +527,363 @@ export default function UserGamePlay() {
               </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="text-gray-400 hover:text-white"
-          >
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Sound Enable Button for Mobile */}
+            {!audioUnlocked && (
+              <Button
+                onClick={unlockAudio}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 h-8 animate-pulse"
+              >
+                🔊 Tap for Sound
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (!audioUnlocked) {
+                  unlockAudio();
+                }
+                setSoundEnabled(!soundEnabled);
+              }}
+              className={`${soundEnabled && audioUnlocked ? 'text-green-400' : 'text-gray-400'} hover:text-white`}
+            >
+              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Current Ball Display */}
-        <div className="flex justify-center mb-8">
-          <div className={`relative transition-all duration-500 ${showBallAnimation ? 'scale-110' : 'scale-100'}`}>
-            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br ${getBallColor(currentBall || session?.current_number || 0)} flex items-center justify-center shadow-2xl`}
-              style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 -10px 30px rgba(0,0,0,0.3), inset 0 10px 30px rgba(255,255,255,0.3)' }}
-            >
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white flex items-center justify-center shadow-inner">
-                <span className="text-4xl md:text-5xl font-black text-gray-900">
-                  {currentBall || session?.current_number || '?'}
-                </span>
+      {/* Sound Enable Banner for Mobile */}
+      {!audioUnlocked && game?.status === 'live' && (
+        <div 
+          onClick={unlockAudio}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-center cursor-pointer"
+        >
+          <p className="text-white text-sm font-medium">
+            📱 Tap here to enable caller voice on your phone
+          </p>
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto px-3 py-4">
+        {/* Main Row: Caller Ball | Dividends - Equal Space */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* Left: Real 3D Tambola Ball with Entry/Exit Animation */}
+          <div className="bg-black/30 rounded-xl p-3 flex flex-col items-center justify-center overflow-hidden">
+            <div className="relative ball-container" style={{ perspective: '1000px', height: '140px', width: '140px' }}>
+              
+              {/* OLD BALL - Exits to the left when new number comes */}
+              {showBallTransition && previousBall && (
+                <div 
+                  className="ball-exiting absolute inset-0 flex items-center justify-center"
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  <div 
+                    className="w-28 h-28 rounded-full relative"
+                    style={{
+                      background: `
+                        radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.5) 0%, transparent 35%),
+                        radial-gradient(ellipse 100% 100% at 50% 50%, ${getBallGradient(previousBall)})
+                      `,
+                      boxShadow: `
+                        0 20px 40px rgba(0,0,0,0.5),
+                        inset -15px -15px 35px rgba(0,0,0,0.4),
+                        inset 12px 12px 25px rgba(255,255,255,0.1)
+                      `
+                    }}
+                  >
+                    <div 
+                      className="absolute rounded-full flex items-center justify-center"
+                      style={{
+                        width: '60px', height: '60px',
+                        top: '50%', left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        background: 'radial-gradient(ellipse 90% 90% at 40% 35%, #ffffff 0%, #f0f0f0 60%, #e5e5e5 100%)',
+                        boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.25)'
+                      }}
+                    >
+                      <span className="text-4xl font-black text-gray-900">{previousBall}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* NEW BALL - Enters from right/top with 3D spin */}
+              <div 
+                className={`absolute inset-0 flex items-center justify-center ${showBallTransition ? 'ball-entering' : 'ball-idle'}`}
+                style={{ transformStyle: 'preserve-3d' }}
+              >
+                {/* Main 3D Ball Body */}
+                <div 
+                  className="w-28 h-28 md:w-32 md:h-32 rounded-full relative tambola-ball-3d ball-glow-pulse"
+                  style={{
+                    background: `
+                      radial-gradient(ellipse 120% 80% at 25% 20%, rgba(255,255,255,0.6) 0%, transparent 35%),
+                      radial-gradient(ellipse 100% 100% at 50% 50%, ${getBallGradient(currentBall || session?.current_number || 0)})
+                    `,
+                    boxShadow: `
+                      0 20px 45px rgba(0,0,0,0.5),
+                      0 8px 18px rgba(0,0,0,0.3),
+                      inset -18px -18px 35px rgba(0,0,0,0.4),
+                      inset 12px 12px 25px rgba(255,255,255,0.12)
+                    `,
+                    transformStyle: 'preserve-3d'
+                  }}
+                >
+                  {/* Main glossy highlight */}
+                  <div 
+                    className="absolute top-3 left-4 w-12 h-7 rounded-full"
+                    style={{ 
+                      background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 40%, transparent 70%)',
+                      filter: 'blur(3px)',
+                      transform: 'rotate(-20deg)'
+                    }}
+                  />
+                  
+                  {/* Sharp highlight spot */}
+                  <div 
+                    className="absolute top-5 left-7 w-4 h-2.5 rounded-full"
+                    style={{ background: 'rgba(255,255,255,0.98)' }}
+                  />
+                  
+                  {/* FRONT White number circle (center) */}
+                  <div 
+                    className="ball-face-front absolute rounded-full"
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: `
+                        radial-gradient(ellipse 90% 90% at 40% 35%, 
+                          #ffffff 0%, 
+                          #fafafa 25%,
+                          #f5f5f5 50%, 
+                          #eeeeee 75%,
+                          #e0e0e0 100%
+                        )
+                      `,
+                      boxShadow: `
+                        inset 0 4px 15px rgba(0,0,0,0.15),
+                        inset 0 -3px 10px rgba(255,255,255,0.95),
+                        0 2px 6px rgba(0,0,0,0.3)
+                      `,
+                      border: '2px solid rgba(200,200,200,0.4)'
+                    }}
+                  >
+                    <span 
+                      className="text-4xl font-black absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" 
+                      style={{ 
+                        color: '#111111',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        letterSpacing: '-2px'
+                      }}
+                    >
+                      {currentBall || session?.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* RIGHT SIDE White number circle - Creates 3D depth */}
+                  <div 
+                    className="absolute rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: '45px',
+                      height: '55px',
+                      top: '38%',
+                      right: '-8px',
+                      background: `
+                        linear-gradient(90deg, 
+                          #d8d8d8 0%,
+                          #e8e8e8 20%,
+                          #f2f2f2 50%,
+                          #fafafa 70%,
+                          #f0f0f0 100%
+                        )
+                      `,
+                      boxShadow: `
+                        inset -4px 0 10px rgba(0,0,0,0.2),
+                        inset 2px 0 8px rgba(255,255,255,0.5)
+                      `,
+                      borderRadius: '50%',
+                      transform: 'rotateY(65deg) scaleX(0.45)',
+                      border: '2px solid rgba(180,180,180,0.4)'
+                    }}
+                  >
+                    <span 
+                      className="text-2xl font-black" 
+                      style={{ 
+                        color: '#222222',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        transform: 'scaleX(2.2)',
+                        letterSpacing: '-1px'
+                      }}
+                    >
+                      {currentBall || session?.current_number || '?'}
+                    </span>
+                  </div>
+                  
+                  {/* LEFT SIDE hint of number (back of ball) */}
+                  <div 
+                    className="absolute rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: '38px',
+                      height: '48px',
+                      top: '40%',
+                      left: '-6px',
+                      background: `
+                        linear-gradient(270deg, 
+                          #c8c8c8 0%,
+                          #d8d8d8 30%,
+                          #e0e0e0 60%,
+                          #e8e8e8 100%
+                        )
+                      `,
+                      boxShadow: `
+                        inset 3px 0 8px rgba(0,0,0,0.25),
+                        inset -2px 0 6px rgba(255,255,255,0.4)
+                      `,
+                      borderRadius: '50%',
+                      transform: 'rotateY(-65deg) scaleX(0.4)',
+                      border: '2px solid rgba(160,160,160,0.4)',
+                      opacity: 0.8
+                    }}
+                  >
+                    <span 
+                      className="text-xl font-black" 
+                      style={{ 
+                        color: '#444444',
+                        fontFamily: 'Arial Black, Impact, sans-serif',
+                        transform: 'scaleX(2.5)',
+                        letterSpacing: '-1px'
+                      }}
+                    >
+                      {currentBall || session?.current_number || '?'}
+                    </span>
+                  </div>
+                </div>
               </div>
+              
+              {/* Ball shadow */}
+              <div 
+                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-24 h-5 rounded-full ball-shadow-animated"
+                style={{ 
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%)',
+                  filter: 'blur(4px)'
+                }}
+              />
             </div>
-            {showBallAnimation && (
-              <div className="absolute inset-0 rounded-full bg-white/30 animate-ping" />
+            <p className="text-amber-400 text-xs mt-3">{session?.called_numbers?.length || 0}/90 Numbers</p>
+          </div>
+
+          {/* Right: Dividends with Winner Names */}
+          <div className="bg-black/30 rounded-xl p-3">
+            <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
+              <Trophy className="w-3 h-3" /> DIVIDENDS
+            </h3>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {Object.entries(dividends).map(([prize, amount]) => {
+                const winner = allWinners[prize];
+                return (
+                  <div key={prize} className={`py-1.5 px-2 rounded ${winner ? 'bg-green-900/40 border border-green-500/30' : 'bg-white/5'}`}>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className={`${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
+                      <span className="text-amber-400 font-bold">₹{amount?.toLocaleString()}</span>
+                    </div>
+                    {winner && (
+                      <p className="text-green-300 text-[10px] mt-0.5">
+                        🎉 {winner.holder_name || winner.name || 'Winner'}
+                        {winner.ticket_number && <span className="text-green-400 ml-1">({winner.ticket_number})</span>}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Players - Show names and dots only, up to 6 */}
+        <div className="bg-black/30 rounded-xl p-3 mb-4">
+          <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-1">
+            <Users className="w-3 h-3" /> TOP PLAYERS
+          </h3>
+          <div className="grid grid-cols-3 gap-2">
+            {players.length > 0 ? (
+              (() => {
+                const calledSet = new Set(session?.called_numbers || []);
+                const playerStats = [];
+                
+                players.forEach(player => {
+                  if (!player.tickets || player.tickets.length === 0) return;
+                  
+                  let bestRemaining = 999;
+                  
+                  player.tickets.forEach(ticket => {
+                    if (!ticket.numbers) return;
+                    const allNums = ticket.numbers.flat().filter(n => n !== null);
+                    const marked = allNums.filter(n => calledSet.has(n)).length;
+                    const remaining = 15 - marked;
+                    
+                    if (remaining < bestRemaining) {
+                      bestRemaining = remaining;
+                    }
+                  });
+                  
+                  if (bestRemaining < 999) {
+                    playerStats.push({
+                      ...player,
+                      bestRemaining
+                    });
+                  }
+                });
+                
+                // Sort by remaining (ascending), show up to 6 players
+                const topPlayers = playerStats
+                  .sort((a, b) => a.bestRemaining - b.bestRemaining)
+                  .slice(0, 6);
+                
+                if (topPlayers.length === 0) {
+                  return <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>;
+                }
+                
+                return topPlayers.map((player, idx) => (
+                  <div key={player.user_id || idx} className="bg-white/5 rounded-lg p-2 text-center">
+                    <p className="text-white text-xs font-medium truncate">
+                      {player.name?.split(' ')[0] || 'Player'}
+                    </p>
+                    <div className="flex justify-center gap-0.5 mt-1">
+                      {Array.from({ length: Math.min(player.bestRemaining, 5) }).map((_, i) => (
+                        <span key={i} className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()
+            ) : (
+              <div className="col-span-3 text-center text-gray-500 text-xs py-2">No players yet</div>
             )}
           </div>
         </div>
 
-        {/* Call Name */}
-        {(currentBall || session?.current_number) && (
-          <p className="text-center text-amber-400 font-semibold mb-6 text-lg">
-            {getCallName(currentBall || session?.current_number)}
-          </p>
+        {/* Auto-Calling Status */}
+        {game.status === 'live' && (
+          <p className="text-center text-emerald-400 text-xs mb-4">🔄 Auto-calling every 10 seconds</p>
         )}
-
-        {/* Auto-Calling Status - No manual controls needed */}
-        <div className="text-center mb-6">
-          <p className="text-emerald-400 text-sm">🔄 Numbers are being called automatically every 8 seconds</p>
-        </div>
+        
+        {/* Game Completed Message */}
+        {game.status === 'completed' && (
+          <div className="text-center mb-4 p-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
+            <p className="text-amber-400 font-bold">🎉 Game Completed!</p>
+          </div>
+        )}
 
         {/* Host Controls - Only End Game button */}
         {isHost && game.status === 'live' && (
-          <div className="flex gap-3 justify-center mb-8">
+          <div className="flex gap-3 justify-center mb-4">
             <Button
               onClick={handleEndGame}
               variant="outline"
@@ -316,27 +910,111 @@ export default function UserGamePlay() {
           </div>
         </div>
 
-        {/* Called Numbers Board */}
-        <div className="glass-card p-4 mb-6">
-          <h3 className="text-sm font-semibold text-gray-400 mb-3">Called Numbers</h3>
-          <div className="grid grid-cols-10 gap-1">
-            {Array.from({ length: 90 }, (_, i) => i + 1).map((num) => {
-              const isCalled = session?.called_numbers?.includes(num);
-              return (
+        {/* Called Numbers - Fill lines, max 4 rows */}
+        <div className="glass-card p-3 mb-4">
+          <h3 className="text-xs font-semibold text-gray-400 mb-2">Called Numbers ({session?.called_numbers?.length || 0})</h3>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(22px,1fr))] gap-1" style={{ maxHeight: '104px', overflow: 'hidden' }}>
+            {(() => {
+              const called = session?.called_numbers || [];
+              if (called.length === 0) {
+                return <p className="text-[10px] text-gray-400 col-span-full">No numbers called yet</p>;
+              }
+              // Show all called numbers in reverse order (latest first)
+              return [...called].reverse().map((num, idx) => (
                 <div
-                  key={num}
-                  className={`aspect-square flex items-center justify-center text-xs font-bold rounded transition-all ${
-                    isCalled
-                      ? `bg-gradient-to-br ${getBallColor(num)} text-white shadow-md`
-                      : 'bg-white/5 text-gray-500'
-                  } ${num === session?.current_number ? 'ring-2 ring-amber-400 scale-110' : ''}`}
+                  key={idx}
+                  className={`w-[22px] h-[22px] rounded-full bg-gradient-to-br ${getBallColor(num)} flex items-center justify-center text-[9px] font-bold text-white shadow-sm ${idx === 0 ? 'ring-1 ring-amber-400 scale-110' : ''}`}
                 >
                   {num}
                 </div>
-              );
-            })}
+              ));
+            })()}
           </div>
         </div>
+
+        {/* My Tickets Section - Show player's booked tickets */}
+        {myTickets.length > 0 && (
+          <div className="glass-card p-4 mb-6">
+            <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+              🎫 My Tickets ({myTickets.length}) {playerName && <span className="text-amber-400">- {playerName}</span>}
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {myTickets.map((ticket, idx) => {
+                const calledSet = new Set(session?.called_numbers || []);
+                const allNums = ticket.numbers?.flat().filter(n => n !== null) || [];
+                const markedCount = allNums.filter(n => calledSet.has(n)).length;
+                const remaining = 15 - markedCount;
+                
+                return (
+                  <div key={ticket.ticket_id || idx} className="bg-white rounded-lg p-2 shadow-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-gray-700">{ticket.ticket_number}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        remaining <= 3 ? 'bg-red-100 text-red-600 font-bold' : 
+                        remaining <= 6 ? 'bg-amber-100 text-amber-600' : 
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {remaining} left
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-9 gap-0.5">
+                      {ticket.numbers?.map((row, rowIdx) => (
+                        row.map((num, colIdx) => {
+                          const isMarked = num && calledSet.has(num);
+                          return (
+                            <div
+                              key={`${rowIdx}-${colIdx}`}
+                              className={`aspect-square flex items-center justify-center text-[9px] md:text-[10px] font-bold rounded ${
+                                num 
+                                  ? isMarked 
+                                    ? 'bg-green-500 text-white ring-1 ring-green-600' 
+                                    : 'bg-amber-100 text-amber-900'
+                                  : 'bg-gray-100'
+                              }`}
+                            >
+                              {num || ''}
+                            </div>
+                          );
+                        })
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* If no tickets found, show option to enter name */}
+        {myTickets.length === 0 && !isHost && game?.status === 'live' && (
+          <div className="glass-card p-4 mb-6 text-center">
+            <p className="text-gray-400 mb-3">Enter your name to see your tickets:</p>
+            <div className="flex gap-2 max-w-xs mx-auto">
+              <input
+                type="text"
+                placeholder="Your name"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+              />
+              <button
+                onClick={() => {
+                  const myPlayer = players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+                  if (myPlayer) {
+                    setMyTickets(myPlayer.tickets || []);
+                    localStorage.setItem(`tambola_player_${userGameId}`, JSON.stringify({ name: playerName }));
+                    toast.success(`Found ${myPlayer.tickets?.length || 0} tickets!`);
+                  } else {
+                    toast.error('Player not found. Check your name.');
+                  }
+                }}
+                className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+              >
+                Find
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Players with Tickets (Host View) */}
         {isHost && (

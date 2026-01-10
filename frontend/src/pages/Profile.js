@@ -9,6 +9,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls (mobile fallback)
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 // Avatar options
 const AVATARS = [
   'https://images.unsplash.com/photo-1647663386171-7b4deaba904c',
@@ -36,12 +42,29 @@ export default function Profile() {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      const response = await axios.get(`${API}/auth/me`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       setUser(response.data);
       setName(response.data.name);
       setSelectedAvatar(response.data.picture || AVATARS[0]);
     } catch (error) {
       console.error('Failed to fetch user:', error);
+      // If fetch fails, try to get from localStorage
+      const storedUser = localStorage.getItem('tambola_user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          setName(userData.name || '');
+          setSelectedAvatar(userData.picture || AVATARS[0]);
+        } catch (e) {
+          navigate('/login');
+        }
+      } else {
+        navigate('/login');
+      }
     }
   };
 
@@ -54,9 +77,20 @@ export default function Profile() {
           name,
           avatar: selectedAvatar
         },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: getAuthHeaders()
+        }
       );
       toast.success('Profile updated successfully');
+      // Update localStorage
+      const storedUser = localStorage.getItem('tambola_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        userData.name = name;
+        userData.picture = selectedAvatar;
+        localStorage.setItem('tambola_user', JSON.stringify(userData));
+      }
       fetchUser();
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -68,19 +102,28 @@ export default function Profile() {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+      await axios.post(`${API}/auth/logout`, {}, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
+      // Clear localStorage
+      localStorage.removeItem('tambola_session');
+      localStorage.removeItem('tambola_user');
       toast.success('Logged out successfully');
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      toast.error('Failed to logout');
+      // Still clear localStorage and redirect
+      localStorage.removeItem('tambola_session');
+      localStorage.removeItem('tambola_user');
+      navigate('/login');
     }
   };
 
   const handleShareApp = () => {
     const shareData = {
-      title: 'Six Seven Tambola',
-      text: 'Join me in playing Six Seven Tambola and win amazing prizes!',
+      title: '67tambola',
+      text: 'Join me in playing 67tambola and win amazing prizes!',
       url: window.location.origin
     };
 

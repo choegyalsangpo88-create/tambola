@@ -58,3 +58,210 @@ h1, h2, h3, h4, h5, h6 {
         @apply bg-background text-foreground;
     }
 }
+
+/* ========================================
+   PREMIUM 3D TAMBOLA BALL ANIMATION
+   Simple, reliable casino-style ball
+   ======================================== */
+
+/* Ball entry animation - simple bounce in */
+@keyframes premiumBallEntry {
+    0% {
+        transform: scale(0.3) translateY(-50px);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1) translateY(0);
+        opacity: 1;
+    }
+    70% {
+        transform: scale(0.95) translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Premium ball idle floating */
+@keyframes premiumBallFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Premium ball glow pulse */
+@keyframes premiumGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 15px rgba(200,0,0,0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 30px rgba(200,0,0,0.6));
+    }
+}
+
+.premium-ball-animate {
+    animation: premiumBallEntry 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.premium-ball-idle {
+    animation: premiumBallFloat 3s ease-in-out infinite, premiumGlow 2s ease-in-out infinite;
+}
+
+/* OLD BALL EXITS - Gets kicked out to the side */
+@keyframes oldBallExit {
+    0% {
+        transform: translateY(0px) translateX(0px) rotateY(0deg) scale(1);
+        opacity: 1;
+    }
+    30% {
+        transform: translateY(-20px) translateX(-30px) rotateY(-90deg) scale(0.9);
+        opacity: 0.8;
+    }
+    60% {
+        transform: translateY(20px) translateX(-80px) rotateY(-180deg) scale(0.6);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(60px) translateX(-150px) rotateY(-360deg) scale(0.2);
+        opacity: 0;
+    }
+}
+
+.ball-exiting {
+    animation: oldBallExit 0.8s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+    transform-style: preserve-3d;
+}
+
+/* Subtle floating animation for idle ball */
+@keyframes ballFloat {
+    0%, 100% {
+        transform: translateY(0px) rotateY(0deg);
+    }
+    25% {
+        transform: translateY(-4px) rotateY(2deg);
+    }
+    50% {
+        transform: translateY(-6px) rotateY(0deg);
+    }
+    75% {
+        transform: translateY(-4px) rotateY(-2deg);
+    }
+}
+
+.ball-float {
+    animation: ballFloat 4s ease-in-out infinite;
+}
+
+/* Premium ball glow pulse */
+@keyframes premiumBallGlow {
+    0%, 100% {
+        box-shadow: 
+            0 30px 60px rgba(0,0,0,0.55),
+            0 15px 30px rgba(0,0,0,0.35),
+            inset -22px -22px 45px rgba(0,0,0,0.4),
+            inset 15px 15px 30px rgba(255,255,255,0.1),
+            0 0 40px rgba(183,28,28,0.2);
+    }
+    50% {
+        box-shadow: 
+            0 35px 70px rgba(0,0,0,0.6),
+            0 18px 35px rgba(0,0,0,0.4),
+            inset -25px -25px 50px rgba(0,0,0,0.45),
+            inset 18px 18px 35px rgba(255,255,255,0.12),
+            0 0 70px rgba(183,28,28,0.35);
+    }
+}
+
+.premium-ball {
+    animation: premiumBallGlow 3s ease-in-out infinite;
+}
+
+/* Legacy support for old animations */
+.ball-entering {
+    animation: ballSpinEnter 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform-style: preserve-3d;
+}
+
+.ball-idle {
+    animation: ballFloat 4s ease-in-out infinite;
+    transform-style: preserve-3d;
+}
+
+/* Shadow under the ball */
+@keyframes shadowMove {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translateX(-50%) scale(1.15);
+        opacity: 0.35;
+    }
+}
+
+.ball-shadow-animated {
+    animation: shadowMove 4s ease-in-out infinite;
+}
+
+/* Ball glow animation (legacy) */
+@keyframes ballGlow {
+    0%, 100% {
+        box-shadow: 
+            0 30px 60px rgba(0,0,0,0.5),
+            0 15px 30px rgba(0,0,0,0.3),
+            inset -25px -25px 50px rgba(0,0,0,0.35),
+            inset 20px 20px 40px rgba(255,255,255,0.08),
+            0 0 60px rgba(230,57,70,0.2);
+    }
+    50% {
+        box-shadow: 
+            0 35px 70px rgba(0,0,0,0.55),
+            0 18px 35px rgba(0,0,0,0.35),
+            inset -28px -28px 55px rgba(0,0,0,0.4),
+            inset 22px 22px 45px rgba(255,255,255,0.1),
+            0 0 100px rgba(230,57,70,0.4);
+    }
+}
+
+/* Ball pulse glow */
+@keyframes ballPulseGlow {
+    0%, 100% {
+        box-shadow: 
+            0 20px 50px rgba(0,0,0,0.5),
+            0 10px 20px rgba(0,0,0,0.3),
+            inset -15px -15px 40px rgba(0,0,0,0.4),
+            inset 15px 15px 30px rgba(255,255,255,0.1),
+            0 0 30px rgba(255,200,0,0);
+    }
+    50% {
+        box-shadow: 
+            0 25px 60px rgba(0,0,0,0.6),
+            0 12px 25px rgba(0,0,0,0.4),
+            inset -18px -18px 45px rgba(0,0,0,0.5),
+            inset 18px 18px 35px rgba(255,255,255,0.15),
+            0 0 50px rgba(255,200,0,0.3);
+    }
+}
+
+.ball-glow-pulse {
+    animation: ballPulseGlow 2.5s ease-in-out infinite;
+}
+
+/* Winner celebration glow */
+@keyframes winnerGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 165, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 165, 0, 0.5);
+    }
+}
+
+.winner-glow {
+    animation: winnerGlow 1s ease-in-out infinite;
+}

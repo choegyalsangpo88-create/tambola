@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Clock, Trophy, Users, Ticket, Check } from 'lucide-react';
+import { Calendar, Clock, Trophy, Users, Ticket, Check, Grid3X3 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -14,20 +14,35 @@ export default function JoinUserGame() {
   const navigate = useNavigate();
   
   const [game, setGame] = useState(null);
+  const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [playerName, setPlayerName] = useState('');
-  const [ticketCount, setTicketCount] = useState(1);
+  const [selectedTickets, setSelectedTickets] = useState([]);
   const [isJoining, setIsJoining] = useState(false);
   const [joinedData, setJoinedData] = useState(null);
+  const [viewMode, setViewMode] = useState('select'); // 'select' or 'random'
 
   useEffect(() => {
     fetchGame();
-  }, [shareCode]);
+    
+    // Auto-refresh tickets every 10 seconds to see real-time updates
+    const interval = setInterval(() => {
+      if (!joinedData) { // Only refresh if not already joined
+        fetchTickets();
+      }
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [shareCode, joinedData]);
 
   const fetchGame = async () => {
     try {
-      const response = await axios.get(`${API}/user-games/code/${shareCode}`);
-      setGame(response.data);
+      // Fetch game details
+      const gameResponse = await axios.get(`${API}/user-games/code/${shareCode}`);
+      setGame(gameResponse.data);
+      
+      // Fetch tickets for selection
+      await fetchTickets();
     } catch (error) {
       console.error('Failed to fetch game:', error);
       toast.error('Game not found');
@@ -36,17 +51,56 @@ export default function JoinUserGame() {
     }
   };
 
+  const fetchTickets = async () => {
+    try {
+      const ticketsResponse = await axios.get(`${API}/user-games/code/${shareCode}/tickets`);
+      const newTickets = ticketsResponse.data.tickets || [];
+      setTickets(newTickets);
+      
+      // Clear any selected tickets that are now booked
+      setSelectedTickets(prev => {
+        const bookedIds = new Set(newTickets.filter(t => t.assigned_to).map(t => t.ticket_id));
+        const stillAvailable = prev.filter(id => !bookedIds.has(id));
+        if (stillAvailable.length !== prev.length) {
+          toast.info('Some tickets were booked by others');
+        }
+        return stillAvailable;
+      });
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error);
+    }
+  };
+
+  const toggleTicket = (ticketId) => {
+    setSelectedTickets(prev => 
+      prev.includes(ticketId) 
+        ? prev.filter(id => id !== ticketId)
+        : [...prev, ticketId]
+    );
+  };
+
   const handleJoin = async () => {
     if (!playerName.trim()) {
       toast.error('Please enter your name');
       return;
     }
 
+    if (viewMode === 'select' && selectedTickets.length === 0) {
+      toast.error('Please select at least one ticket');
+      return;
+    }
+
     setIsJoining(true);
     try {
+      const payload = {
+        player_name: playerName.trim(),
+        ticket_count: viewMode === 'random' ? 1 : selectedTickets.length,
+        ticket_ids: viewMode === 'select' ? selectedTickets : null
+      };
+
       const response = await axios.post(
         `${API}/user-games/code/${shareCode}/join`,
-        { player_name: playerName.trim(), ticket_count: ticketCount }
+        payload
       );
       
       toast.success(`Welcome ${playerName}!`);
@@ -63,6 +117,9 @@ export default function JoinUserGame() {
       setIsJoining(false);
     }
   };
+
+  const availableTickets = tickets.filter(t => !t.assigned_to);
+  const bookedTickets = tickets.filter(t => t.assigned_to);
 
   if (isLoading) {
     return (
@@ -92,7 +149,7 @@ export default function JoinUserGame() {
             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-green-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">You're In!</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">You&apos;re In!</h1>
             <p className="text-gray-400">Welcome to {game.name}, {joinedData.player_name}!</p>
           </div>
 
@@ -151,47 +208,61 @@ export default function JoinUserGame() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4">
-      <div className="glass-card p-6 md:p-8 max-w-lg w-full">
+    <div className="min-h-screen bg-[#0a0a0c] p-4">
+      <div className="max-w-4xl mx-auto">
         {/* Game Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
-            {game.name}
-          </h1>
-          <p className="text-gray-400">Hosted by {game.host_name}</p>
-        </div>
-
-        {/* Game Details */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white/5 rounded-lg p-3">
-            <Calendar className="w-5 h-5 text-amber-500 mb-1" />
-            <p className="text-xs text-gray-500">Date</p>
-            <p className="text-white font-medium">{game.date}</p>
-          </div>
-          <div className="bg-white/5 rounded-lg p-3">
-            <Clock className="w-5 h-5 text-amber-500 mb-1" />
-            <p className="text-xs text-gray-500">Time</p>
-            <p className="text-white font-medium">{game.time}</p>
-          </div>
-        </div>
-
-        {game.prizes_description && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              <span className="font-semibold text-amber-400">Prizes</span>
+        <div className="glass-card p-6 mb-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center">
+              <Users className="w-7 h-7 text-white" />
             </div>
-            <p className="text-gray-300 text-sm whitespace-pre-wrap">{game.prizes_description}</p>
-          </div>
-        )}
-
-        {/* Join Form */}
-        {game.status === 'upcoming' ? (
-          <div className="space-y-4">
             <div>
+              <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                {game.name}
+              </h1>
+              <p className="text-gray-400 text-sm">Hosted by {game.host_name}</p>
+            </div>
+          </div>
+
+          {/* Game Details */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white/5 rounded-lg p-3">
+              <Calendar className="w-4 h-4 text-amber-500 mb-1" />
+              <p className="text-xs text-gray-500">Date</p>
+              <p className="text-white font-medium text-sm">{game.date}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <Clock className="w-4 h-4 text-amber-500 mb-1" />
+              <p className="text-xs text-gray-500">Time</p>
+              <p className="text-white font-medium text-sm">{game.time}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <Ticket className="w-4 h-4 text-green-500 mb-1" />
+              <p className="text-xs text-gray-500">Available</p>
+              <p className="text-green-400 font-medium text-sm">{availableTickets.length} tickets</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <Grid3X3 className="w-4 h-4 text-blue-500 mb-1" />
+              <p className="text-xs text-gray-500">Total</p>
+              <p className="text-blue-400 font-medium text-sm">{tickets.length} tickets</p>
+            </div>
+          </div>
+
+          {game.prizes_description && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mt-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span className="font-semibold text-amber-400 text-sm">Prizes</span>
+              </div>
+              <p className="text-gray-300 text-sm whitespace-pre-wrap">{game.prizes_description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Join Form - Name Input */}
+        {game.status === 'upcoming' && (
+          <>
+            <div className="glass-card p-4 mb-4">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Your Name *
               </label>
@@ -200,39 +271,80 @@ export default function JoinUserGame() {
                 placeholder="Enter your name"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 h-12 text-lg"
+                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 h-12"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                <Ticket className="inline w-4 h-4 mr-1" /> Number of Tickets
-              </label>
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-12 h-12 border-white/10 text-white"
-                  onClick={() => setTicketCount(Math.max(1, ticketCount - 1))}
-                >
-                  -
-                </Button>
-                <span className="text-2xl font-bold text-white w-12 text-center">{ticketCount}</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-12 h-12 border-white/10 text-white"
-                  onClick={() => setTicketCount(Math.min(6, ticketCount + 1))}
-                >
-                  +
-                </Button>
+            {/* Ticket Selection */}
+            <div className="glass-card p-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Select Your Tickets</h2>
+                <span className="text-sm text-amber-400">{selectedTickets.length} selected</span>
+              </div>
+
+              {/* Tickets Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+                {tickets.map((ticket) => {
+                  const isSelected = selectedTickets.includes(ticket.ticket_id);
+                  const isBooked = !!ticket.assigned_to;
+                  
+                  return (
+                    <div
+                      key={ticket.ticket_id}
+                      onClick={() => !isBooked && toggleTicket(ticket.ticket_id)}
+                      className={`rounded-lg p-2 cursor-pointer transition-all border-2 ${
+                        isBooked 
+                          ? 'bg-gray-800/50 border-gray-700 opacity-60 cursor-not-allowed'
+                          : isSelected 
+                            ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/50' 
+                            : 'bg-white border-white/20 hover:border-amber-500/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-xs font-bold ${isBooked ? 'text-gray-500' : 'text-gray-700'}`}>
+                          {ticket.ticket_number}
+                        </span>
+                        {isBooked && (
+                          <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded">
+                            Booked
+                          </span>
+                        )}
+                        {isSelected && !isBooked && (
+                          <Check className="w-4 h-4 text-amber-500" />
+                        )}
+                      </div>
+                      <div className="grid grid-cols-9 gap-0.5">
+                        {ticket.numbers?.map((row, rowIdx) => (
+                          row.map((num, colIdx) => (
+                            <div
+                              key={`${rowIdx}-${colIdx}`}
+                              className={`aspect-square flex items-center justify-center text-[8px] md:text-[9px] font-bold rounded ${
+                                num 
+                                  ? isBooked 
+                                    ? 'bg-gray-300 text-gray-600' 
+                                    : 'bg-amber-100 text-amber-900' 
+                                  : 'bg-gray-100'
+                              }`}
+                            >
+                              {num || ''}
+                            </div>
+                          ))
+                        ))}
+                      </div>
+                      {isBooked && ticket.assigned_to && (
+                        <p className="text-[9px] text-gray-500 mt-1 truncate">👤 {ticket.assigned_to}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
+            {/* Book Button */}
             <Button
               onClick={handleJoin}
-              disabled={isJoining || !playerName.trim()}
-              className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 mt-4"
+              disabled={isJoining || !playerName.trim() || selectedTickets.length === 0}
+              className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
             >
               {isJoining ? (
                 <div className="flex items-center gap-2">
@@ -240,12 +352,14 @@ export default function JoinUserGame() {
                   Booking...
                 </div>
               ) : (
-                <><Ticket className="w-5 h-5 mr-2" /> Book Ticket{ticketCount > 1 ? 's' : ''}</>
+                <><Ticket className="w-5 h-5 mr-2" /> Book {selectedTickets.length} Ticket{selectedTickets.length !== 1 ? 's' : ''}</>
               )}
             </Button>
-          </div>
-        ) : game.status === 'live' ? (
-          <div className="text-center">
+          </>
+        )}
+
+        {game.status === 'live' && (
+          <div className="glass-card p-6 text-center">
             <p className="text-yellow-400 mb-4">Game is live! Enter your name to view your tickets.</p>
             <Input
               type="text"
@@ -262,8 +376,12 @@ export default function JoinUserGame() {
               Join Live Game
             </Button>
           </div>
-        ) : (
-          <p className="text-center text-gray-400">This game has ended.</p>
+        )}
+
+        {game.status === 'completed' && (
+          <div className="glass-card p-6 text-center">
+            <p className="text-gray-400">This game has ended.</p>
+          </div>
         )}
       </div>
     </div>

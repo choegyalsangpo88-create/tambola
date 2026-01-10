@@ -13,6 +13,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 export default function UserGameDetails() {
   const { userGameId } = useParams();
   const navigate = useNavigate();
@@ -31,14 +37,25 @@ export default function UserGameDetails() {
   const fetchGameDetails = async () => {
     try {
       const [gameRes, playersRes] = await Promise.all([
-        axios.get(`${API}/user-games/${userGameId}`, { withCredentials: true }),
-        axios.get(`${API}/user-games/${userGameId}/players`, { withCredentials: true })
+        axios.get(`${API}/user-games/${userGameId}`, { 
+          headers: getAuthHeaders(),
+          withCredentials: true 
+        }),
+        axios.get(`${API}/user-games/${userGameId}/players`, { 
+          headers: getAuthHeaders(),
+          withCredentials: true 
+        })
       ]);
       setGame(gameRes.data);
       setPlayers(playersRes.data.players || []);
     } catch (error) {
       console.error('Failed to fetch game:', error);
-      toast.error('Failed to load game details');
+      if (error.response?.status === 401) {
+        toast.error('Please login to view this game');
+        navigate('/login');
+      } else {
+        toast.error('Failed to load game details');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +63,10 @@ export default function UserGameDetails() {
 
   const handleStartGame = async () => {
     try {
-      await axios.post(`${API}/user-games/${userGameId}/start`, {}, { withCredentials: true });
+      await axios.post(`${API}/user-games/${userGameId}/start`, {}, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Game started!');
       navigate(`/user-game-play/${userGameId}`);
     } catch (error) {
@@ -59,7 +79,7 @@ export default function UserGameDetails() {
   };
 
   const getWhatsAppMessage = () => {
-    const msg = `🎉 Join my Six Seven Game!\n\n🎮 ${game?.name}\n📅 ${game?.date} at ${game?.time}\n\n${game?.prizes_description ? `🏆 Prizes: ${game?.prizes_description}\n\n` : ''}👉 Click to join: ${getShareUrl()}\n\nJust enter your name and get your ticket!`;
+    const msg = `🎉 Join my 67tambola Game!\n\n🎮 ${game?.name}\n📅 ${game?.date} at ${game?.time}\n\n${game?.prizes_description ? `🏆 Prizes: ${game?.prizes_description}\n\n` : ''}👉 Click to join: ${getShareUrl()}\n\nJust enter your name and get your ticket!`;
     return encodeURIComponent(msg);
   };
 
@@ -101,7 +121,10 @@ export default function UserGameDetails() {
 
   const handleHostBookTicket = async () => {
     try {
-      await axios.post(`${API}/user-games/${userGameId}/host-join?ticket_count=1`, {}, { withCredentials: true });
+      await axios.post(`${API}/user-games/${userGameId}/host-join?ticket_count=1`, {}, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Ticket booked for you!');
       fetchGameDetails();
     } catch (error) {
@@ -112,7 +135,10 @@ export default function UserGameDetails() {
   const handleDeleteGame = async () => {
     if (!window.confirm('Are you sure you want to delete this game? This cannot be undone.')) return;
     try {
-      await axios.delete(`${API}/user-games/${userGameId}`, { withCredentials: true });
+      await axios.delete(`${API}/user-games/${userGameId}`, { 
+        headers: getAuthHeaders(),
+        withCredentials: true 
+      });
       toast.success('Game deleted');
       navigate('/my-games');
     } catch (error) {
