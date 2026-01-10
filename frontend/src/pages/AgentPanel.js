@@ -179,7 +179,7 @@ export default function AgentPanel() {
               <Users className="w-8 h-8 text-blue-400" />
             </div>
             <h1 className="text-2xl font-bold text-white">Agent Portal</h1>
-            <p className="text-zinc-500 text-sm mt-1">Six Seven Tambola</p>
+            <p className="text-zinc-500 text-sm mt-1">67tambola</p>
           </div>
 
           <form onSubmit={handleLogin} className="bg-zinc-900 rounded-xl p-6 space-y-4">

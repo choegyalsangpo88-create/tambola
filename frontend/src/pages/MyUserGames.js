@@ -109,7 +109,7 @@ export default function MyUserGames() {
           <div className="glass-card p-8 text-center">
             <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">No games yet</h2>
-            <p className="text-gray-400 mb-6">Create your first Six Seven Tambola game for family & friends!</p>
+            <p className="text-gray-400 mb-6">Create your first 67tambola game for family & friends!</p>
             <Button
               onClick={() => navigate('/create-game')}
               className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
