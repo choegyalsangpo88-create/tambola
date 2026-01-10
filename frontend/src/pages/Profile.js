@@ -122,8 +122,8 @@ export default function Profile() {
 
   const handleShareApp = () => {
     const shareData = {
-      title: 'Six Seven Tambola',
-      text: 'Join me in playing Six Seven Tambola and win amazing prizes!',
+      title: '67tambola',
+      text: 'Join me in playing 67tambola and win amazing prizes!',
       url: window.location.origin
     };
 
