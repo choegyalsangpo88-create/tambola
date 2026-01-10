@@ -102,12 +102,21 @@ export default function Profile() {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+      await axios.post(`${API}/auth/logout`, {}, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
+      // Clear localStorage
+      localStorage.removeItem('tambola_session');
+      localStorage.removeItem('tambola_user');
       toast.success('Logged out successfully');
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      toast.error('Failed to logout');
+      // Still clear localStorage and redirect
+      localStorage.removeItem('tambola_session');
+      localStorage.removeItem('tambola_user');
+      navigate('/login');
     }
   };
 
