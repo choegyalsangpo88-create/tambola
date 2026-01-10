@@ -9,6 +9,12 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Get auth headers for API calls (mobile fallback)
+const getAuthHeaders = () => {
+  const session = localStorage.getItem('tambola_session');
+  return session ? { 'Authorization': `Bearer ${session}` } : {};
+};
+
 // Avatar options
 const AVATARS = [
   'https://images.unsplash.com/photo-1647663386171-7b4deaba904c',
