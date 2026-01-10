@@ -1,67 +1,77 @@
 <analysis>**original_problem_statement:**
-The user wants to build a full-stack Tambola (Housie) game application. The platform is designed for Indian Tambola players and includes user authentication, a game dashboard, live game functionality, and a comprehensive admin panel for game management.
-
-Recent major requirements implemented include a complete overhaul of the admin panel and the introduction of a multi-region, role-based agent system for managing bookings and payments manually via WhatsApp.
+The user wants to build a full-stack Tambola (Housie) game application. The platform is designed for Indian Tambola players and includes user authentication, a game dashboard, live game functionality, and a comprehensive admin panel for game management. Recent major requirements implemented include a complete overhaul of the admin panel and the introduction of a multi-region, role-based agent system for managing bookings and payments manually via WhatsApp.
 
 PRODUCT REQUIREMENTS:
 - **Core Game:** User authentication (Google/Phone), game dashboard, live game screen, winner announcements.
 - **Admin Panel:** A comprehensive super-admin panel to create/manage games, manage agents, view all bookings, and see system-wide statistics.
 - **Agent System:**
     - Two roles: Super Admin (full access) and Agent (limited access).
-    - Agents are assigned to bookings based on the player's country code (e.g., +91 for India).
     - Agents manage their assigned bookings via a separate, limited Agent Panel.
-    - The workflow is manual: a user books, gets redirected to an agent's WhatsApp, pays the agent manually, and the agent marks the booking as Paid in their panel.
-    - Bookings expire after 10 minutes if not confirmed.
-    - Agents can only cancel Pending bookings for Upcoming games.
-- **Booking Lifecycle:**  ->  or . Paid bookings are locked.
-- **WhatsApp Integration:** Used for manual booking coordination and automated winner/reminder notifications from the admin panel.
+    - The workflow is manual: a user books, gets redirected to an agent's WhatsApp, pays the agent manually, and the agent marks the booking as Paid.
+- **Booking Lifecycle:**  ->  or .
+- **Full Sheet Bonus (FSB) Logic:** A recurring issue. The latest rule is: A player wins FSB if they have a full sheet of 6 tickets and each of the 6 tickets has at least one number called.
+- **UI/UX:** The user has requested a premium look and feel, persistent login, and various UI fixes for displaying tickets and game history.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack Tambola web application (Six Seven Tambola) with a React frontend, FastAPI backend, and MongoDB. The application features a core game engine, user authentication, and a sophisticated admin/agent system.
+A full-stack Tambola web application (67tambola) with a React frontend, FastAPI backend, and MongoDB. The application features user authentication, a core game engine, an admin/agent panel, and live game functionality.
 
-The previous session saw the implementation of a comprehensive multi-agent system from scratch, including role-based access control, separate admin/agent panels, and a manual WhatsApp-based booking and payment confirmation workflow. This was built on top of the existing game creation and management features. The system is now mostly feature-complete based on the user's detailed prompts, but a new critical bug regarding ticket generation has just been reported.
+The previous session focused heavily on fixing two critical, long-standing bugs:
+1.  **Ticket Generation:** The algorithm was completely rewritten and is now 100% reliable.
+2.  **Full Sheet Bonus (FSB) Detection:** The logic was simplified and made more robust, including a fallback to infer sheet IDs for older tickets. It works correctly in the preview environment but fails on the user's production site due to undeployed code.
+
+Several other user-requested features and fixes were also completed, including a major UI rebrand, persistent login, and fixing not authenticated errors on multiple pages for mobile users.
 
 **Last working item**:
-- **Last item agent was working:** The user reported that some generated game tickets do not have the required 15 numbers, providing a screenshot as evidence. The agent began investigating by analyzing the screenshot and viewing the  file, but the root cause has not yet been identified.
-- **Status:** IN PROGRESS
+- **Last item agent was working:** The user requested three new features for the Admin Panel, prompted by a screenshot:
+    1.  **Payment History Revamp:** Show payment history grouped by game, with ticket details expandable on click.
+    2.  **New Players Section:** A new tab to save and view contact details (WhatsApp number, email) of all users who have ever booked a ticket.
+    3.  **WhatsApp Confirmation on Approval:** When an admin/agent approves a ticket payment, trigger a pre-filled WhatsApp message for the agent to send to the user.
+- **Status:** NOT STARTED
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** backend testing agent
-    - The agent should write a dedicated test script to generate a large number of tickets using  and programmatically validate that each ticket contains exactly 15 unique numbers and adheres to all other Tambola ticket rules.
+- **Which testing method agent to use?** both
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Ticket Generation Bug (P0)**
-  - **Description:** Some generated tickets have fewer than 15 numbers, which breaks the game logic. The user provided a screenshot showing malformed tickets.
-  - **Attempted fixes:** The agent analyzed the user-provided screenshot and viewed the  file. The initial analysis was inconclusive.
+- **Issue 1: Implement New Admin Panel Features (P0)**
+  - **Description:** Implement the three features from the  section above (Payment History, Players Section, WhatsApp Confirmation).
+  - **Attempted fixes:** The agent located the relevant  file but has not started implementation.
   - **Next debug checklist:**
-    - Thoroughly review the logic in , specifically the loops and conditions that place numbers into the ticket grid.
-    - Create a test script that calls the  or  function repeatedly and asserts that every generated ticket has exactly 15 numbers.
-    - Log the state of the ticket grid during generation to identify where the logic fails.
-  - **Why fix this issue and what will be achieved with the fix?** This is a critical bug that makes the core game unplayable. Fixing it is essential for the application's basic functionality.
-  - **Status:** IN PROGRESS
+    - Modify  to add a Players tab and restructure the Payments tab UI.
+    - Create a new backend endpoint to fetch all unique players/users from the  or  collection.
+    - Modify the existing payment approval endpoint in  to return a pre-filled  link.
+  - **Why fix this issue and what will be achieved with the fix?** It will enhance the admin's ability to manage payments and user contacts, as requested by the user.
+  - **Status:** NOT STARTED
   - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Both
+- **Issue 2: Full Sheet Bonus (FSB) Not Detecting on Production (P0)**
+  - **Description:** The user reports FSB is still not working on their live site (), despite multiple fixes. The agent confirmed the logic works perfectly in the preview environment and the issue is that the production site has outdated code.
+  - **Attempted fixes:** The FSB logic in  was rewritten to use a simpler rule (1+ mark per ticket) and to infer  if missing. A diagnostic endpoint () was created to help debug this on production.
+  - **Next debug checklist:**
+    - The agent MUST NOT attempt to fix the code again.
+    - The agent MUST instruct the user to deploy the latest changes to their production environment.
+    - After deployment, the agent should guide the user to use the diagnostic endpoint to confirm the fix.
+  - **Why fix this issue and what will be achieved with the fix?** This is a critical gameplay feature and a major source of user frustration.
+  - **Status:** BLOCKED
+  - **Is recurring issue?** Y
   - **Should Test frontend/backend/both after fix?** Backend
-- **Issue 2: Google Login Fails on Custom Domain (P1)**
-  - **Description:** Google Login works on the preview URL but fails with a Network error on the user's custom domain (). This is a known CORS issue.
-  - **Attempted fixes:** Backend CORS configuration in  and  was updated to allow the custom domain.
-  - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker preventing users from accessing the application on its intended domain.
+  - **Blocked on other issue:** Blocked on user deploying the code to production.
+- **Issue 3: Google Login Fails on Custom Domain (P1)**
+  - **Description:** Google Login works on preview URLs but fails with a Network error on the user's custom domain, which is a known CORS issue.
+  - **Attempted fixes:** CORS configuration was updated in .
   - **Status:** USER VERIFICATION PENDING
   - **Is recurring issue?** Y
   - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on other issue:** This fix is pending user redeployment of the application. The agent should not attempt to re-fix it until the user confirms deployment.
-- **Issue 3: WhatsApp Login Not Authenticated on Mobile (P1)**
-  - **Description:** Users logging in via WhatsApp on a mobile device receive a not authenticated error.
-  - **Attempted fixes:** The  endpoint was fixed to return a , and the frontend was updated to store it in .
-  - **Why fix this issue and what will be achieved with the fix?** This unblocks the primary login method for users on mobile devices.
-  - **Status:** USER VERIFICATION PENDING
-  - **Is recurring issue?** N
-  - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on other issue:** This fix is also pending user redeployment.
+  - **Blocked on other issue:** Blocked on user deploying the code to production.
 
 **In progress Task List**:
-- No other tasks are in progress. The current focus is on the ticket generation bug.
+- **Task 1: Implement New Admin Panel Features (P0)**
+  - **Description:** Same as Issue 1 in the list above.
+  - **Where to resume:** Analyze  and  to plan the implementation of the three requested features.
+  - **What will be achieved with this?** Fulfills the user's latest feature request for better admin tooling.
+  - **Status:** NOT STARTED
+  - **Should Test frontend/backend/both after fix?** Both
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
@@ -73,118 +83,108 @@ The previous session saw the implementation of a comprehensive multi-agent syste
   - Implement a dashboard for admins with analytics on booking trends, revenue, and WhatsApp delivery rates.
 
 **Completed work in this session**
-- **Multi-Region Agent System (DONE):**
-  - Implemented a full role-based access system for Super Admins and Agents.
-  - Created a new  panel for agents to manage their assigned bookings.
-  - Created an Agents tab in the main admin panel for super admins to perform CRUD operations on agents.
-  - Implemented backend logic for location-based agent assignment for new bookings.
-- **Admin Panel Overhaul (DONE):**
-  - **Game Control Page:** Created a new  component with tabs for Info, Tickets, WhatsApp Controls, Winner Declaration, and Logs.
-  - **Bookings Management:** Added a section to approve payments, view booking details (player name, ticket numbers), and see payment status. Payment approval now automatically triggers a WhatsApp confirmation if the user opted in.
-  - **WhatsApp Logs:** Created an immutable log view for all templated WhatsApp messages sent from the system, showing status, recipient, and content.
-  - **Winner Declaration:** Added a Winners tab in the Game Control modal for admins to view declared winners and send individual winner announcement messages via WhatsApp.
-- **User Authentication Fix (DONE):**
-  - Resolved a Not Authenticated error for users creating their own games by adding the  header to API calls in , , and .
-- **Twilio Configuration (DONE):**
-  - Verified and confirmed that the user's updated Twilio Account SID, Auth Token, and WhatsApp number are correctly configured in .
+- **Critical Bug Fix: Ticket Generator (DONE)**
+  - Completely rewrote the ticket generation logic in  to be 100% reliable. Verified with thousands of automated tests.
+- **Critical Bug Fix: Full Sheet Bonus (FSB) Detection (DONE in preview)**
+  - Rewrote FSB logic in  with a simpler, user-approved rule (≥1 mark per ticket).
+  - Added a robust fallback to infer  from ticket numbers (e.g., T001-T006 -> FS001), fixing issues with older tickets.
+  - Created a diagnostic endpoint  to help debug on production.
+- **Authentication & UI Fixes (DONE)**
+  - **Persistent Login:** Implemented stay logged in functionality by checking  in  and .
+  - **Mobile Auth:** Fixed not authenticated errors on mobile across , , and  by adding  headers.
+  - **Profile Page:** Fixed the profile page, which was stuck on a loading screen.
+  - **My Tickets Page:** Rewrote the page to sort games correctly (upcoming first) and allow viewing of tickets.
+  - **Live Game Tickets:** Fixed an issue where a user's tickets were not displayed during a live game.
+- **Branding and Admin UX (DONE)**
+  - **Rebranding:** Changed the app name to 67tambola with a new premium font () and gold-gradient styling on the , , and .
+  - **Game Creation:** Added a confirmation popup and backend validation in  and  to prevent creating duplicate games.
+  - **Game History:** Created a new  page to show results of completed games, as requested by the user.
 
 **Earlier issues found/mentioned but not fixed**
 - **Mobile Audio Reliability**: An ongoing issue from a previous fork, unverified on target iOS devices. The focus has been on more critical bugs.
 
 **Known issue recurrence from previous fork**
-- **Google Login Failure**: This remains the most persistent issue, now specifically isolated to the custom domain. The root cause is confirmed to be CORS, and a fix has been implemented but awaits user deployment.
+- **Google Login Failure**: This remains a persistent issue, isolated to the custom domain. A CORS fix has been implemented but awaits user deployment.
+- **Full Sheet Bonus (FSB) Detection**: This is the most recurring issue. While the code is now correct and robust in the preview environment, the user continues to report it as failing on their live site, which has not been updated.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, Shadcn UI, , , .
-- **Backend:** FastAPI, Pydantic, Motor (for MongoDB).
-- **Database:** MongoDB.
-- **Authentication:**
-    - Dual system: Emergent-managed Google Auth and custom Twilio WhatsApp OTP.
-    - JWT-based session management using  and Authorization headers.
-    - Role-Based Access Control (RBAC) with  and  roles, enforced by FastAPI dependencies.
-- **Agent System:** Manual booking workflow centered around WhatsApp click-to-chat links and agent-driven payment confirmation.
+- **Frontend:** React, Tailwind CSS, Shadcn UI
+- **Backend:** FastAPI, Pydantic, Motor (for MongoDB)
+- **Authentication:** JWT-based session management using  for mobile-first persistent login.
+- **FSB Logic:** The system now infers  from the ticket number (e.g., - becomes ) if the field is missing, making the logic backward-compatible.
+- **Ticket Generation:** A deterministic, constraint-based algorithm is now used to guarantee the creation of valid Tambola tickets and full sheets.
 
 **key DB schema**
-- **agents**: 
-- **bookings**: 
-- **whatsapp_logs**: 
-- **games**: 
+- **tickets**: . The  is critical for FSB detection and is now inferred if missing.
+- **games**: .
+- **bookings**: .
 
 **changes in tech stack**
 - None.
 
 **All files of reference**
-- : **CURRENTLY BEING DEBUGGED.**
-- : Heavily modified to add all agent system models, authentication, and endpoints.
-- : Updated with a new Agents tab and agent management UI.
-- : Newly created file for the agent-facing portal.
-- : Newly created and heavily modified to serve as the main game management interface.
-- : Modified to add the  route.
-- , , : Patched to include correct authentication headers.
+- : **CRITICAL FILE.** Contains the latest FSB logic.
+- : Contains the fixed, stable ticket generation algorithm.
+- : Contains new endpoints () and validation logic.
+- : Target file for the next set of feature requests.
+- : Recently rewritten to fix user-reported bugs.
+- : Newly created page for game results.
+- : Contains the persistent login logic.
 
 **Areas that need refactoring**:
-- **CRITICAL:**  is a large monolith. It should be broken down into smaller, manageable files under a  directory (e.g., , , ).
+- **CRITICAL:**  is a large monolith. It should be broken down into smaller, manageable files under a  directory. This is significant technical debt.
 
 **key api endpoints**
-- **Agent Management (Admin only):**
-  - : Create agent.
-  - : List agents.
-  - : Update agent.
-  - : Delete agent.
-- **Agent Panel:**
-  - : Agent login.
-  - : Get bookings assigned to the authenticated agent.
-  - : Mark a booking as paid.
-  - : Cancel a pending booking.
-- **User Game Creation:**
-  - : (Now requires user authentication).
+- : **NEW.** A diagnostic endpoint created to help the user debug FSB issues on their production server.
 
 **Critical Info for New Agent**
-- **PRIORITY 1: Fix the Ticket Generation Bug.** The application's core functionality is broken until  produces valid tickets every time.
-- **Do not re-investigate CORS/Login issues.** The Google Login (custom domain) and WhatsApp Login (mobile) issues are fixed in the code but require the user to redeploy their application. Confirm deployment with the user before touching these again.
-- The new agent system relies on a **manual workflow**. There is no automated WhatsApp messaging for booking confirmation; agents perform this manually after getting paid. The system facilitates this by assigning agents and allowing them to update the booking status.
-- The  file is extremely large and contains logic for all parts of the application. Be careful when modifying it. A future refactor is highly recommended.
+- **DO NOT 'FIX' THE FSB LOGIC AGAIN.** The Full Sheet Bonus detection is working correctly in the preview environment. The user's problem is that their production site has not been updated with the latest code. Your primary task is to guide the user to **deploy the changes**. Use the  endpoint to prove the fix works post-deployment.
+- Your immediate priority is the user's latest request: build the Payment History, Players, and WhatsApp Confirmation features in the Admin Panel.
+- The pattern for fixing mobile authentication issues has been to add  headers to  calls, sourcing the token from . Follow this pattern for any new authenticated endpoints.
+- The backend  file is a monolith and fragile. Be careful when adding new endpoints.
 
 **documents and test reports created in this job**
--  (Created and updated)
 - 
-- 
-- 
-- 
-- 
+-  (updated with recent fixes)
+-  (created by testing agent)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** tickets are not generated properly, some tickets doesn’t have 15 numbers. **Status:** IN PROGRESS. This is the current high-priority bug.
-2.  **User:** Provided a large 12-step prompt to build a multi-region agent system. **Status:** Completed.
-3.  **User:** Asked to connect their Twilio account and remove the old number. **Status:** Completed. The agent confirmed the new credentials were already in place and restarted the backend.
-4.  **User:** user can not create a game for their party saying not authenticated fix it **Status:** Completed. The agent fixed the missing auth headers on user-facing pages.
-5.  **User:** Provided a prompt to implement a winner declaration section in the admin panel. **Status:** Completed.
-6.  **User:** Provided prompts to implement booking management and WhatsApp message logs. **Status:** Completed.
-7.  **User:** Provided prompts to implement a detailed Game Control Page and WhatsApp button logic. **Status:** Completed.
-8.  **User:** Provided prompts for the new Manage Games section of the admin panel. **Status:** Completed.
+1.  **User:** Requests new features: improved payment history, a new Players contact list section, and a pre-filled WhatsApp confirmation message on payment approval. **Status:** NOT STARTED.
+2.  **User:** Asks for profile page fix and persistent login. **Status:** COMPLETED.
+3.  **User:** Asks to rebrand app to 67tambola with a premium look. **Status:** COMPLETED.
+4.  **User:** Provides a production game URL () and asks why FSB is not working. **Status:** BLOCKED. Agent explained the code needs to be deployed to production.
+5.  **User:** Asks to check a live game dddss for FSB failure. **Status:** BLOCKED. Agent couldn't find the game and reiterated the need to deploy changes to production.
+6.  **User:** Reports FSB is still not working with a screenshot showing one ticket in a sheet has 0 marks. **Status:** COMPLETED. Agent implemented a final, robust fix to infer sheet IDs even if they are missing from the ticket data.
+7.  **User:** Re-states that FSB is not working. **Status:** COMPLETED. Agent simplified the FSB rule to be more lenient (1+ mark per ticket) as per user's request.
+8.  **User:** Reports FSB not detecting and asks for a new rule. **Status:** COMPLETED. Agent proposed simpler rules and awaited user's choice.
+9.  **User:** Asks for confirmation popup and duplicate prevention when creating games. **Status:** COMPLETED.
+10. **User:** Reports live game tickets not showing, asks to sort My Tickets, and requests a Game History page with a design from a screenshot. **Status:** COMPLETED.
 
 **Project Health Check:**
 - **Broken:**
-  - **Ticket Generation:** The function in  is producing invalid tickets.
+  - None in the current preview environment.
 - **Mocked:**
   - None.
 - **Potentially Fixed (Pending User Verification & Deployment):**
-  - Google OAuth Login Flow on .
-  - WhatsApp OTP Login flow on mobile devices.
+  - **Full Sheet Bonus (FSB) Detection:** The code is fixed and works in preview, but the user's production environment is out of date.
+  - **Google OAuth on Custom Domain:** CORS fix is implemented but not deployed.
+  - **Live Game Ticket Display:** Fixed by adding auth headers, not yet deployed.
+  - **Persistent Login:** Implemented, not yet deployed.
+  - **Profile Page Loading:** Fixed, not yet deployed.
 
 **3rd Party Integrations**
 - **Emergent-managed Google Auth**: For user login.
 - **Twilio (SMS/WhatsApp)**: For OTP and admin-initiated notifications. Uses a user-provided API key.
-- **OpenAI TTS**: For audio announcements during the game.
+- **Google Fonts**:  was added for new branding.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. The agent ran the testing agent after each major feature of the admin/agent panel was completed.
+- **Testing agent used after significant changes:** YES. Used to validate the ticket generator fix.
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** None. Testing was done via the .
-- **Known regressions:** The new ticket generation bug is a critical regression.
+- **Test files created:** 
+- **Known regressions:** None. The major ticket generation regression was fixed.
 
 **Credentials to test flow:**
 - **Super Admin Panel URL:** 
@@ -194,4 +194,4 @@ The previous session saw the implementation of a comprehensive multi-agent syste
 - **Test Agent Credentials:** username=, password=
 
 **What agent forgot to execute**
-- The backend refactoring of the monolithic  file remains a significant piece of technical debt that has not been addressed.</analysis>
+- The backend refactoring of the monolithic  file remains a significant piece of technical debt that has not been addressed despite being identified in the previous handover.</analysis>

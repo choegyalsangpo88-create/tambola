@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone, timedelta
 
 class ComprehensiveAutoArchiveTest:
-    def __init__(self, base_url="https://indian-housie.preview.emergentagent.com"):
+    def __init__(self, base_url="https://tambola-game-5.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0

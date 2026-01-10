@@ -8,7 +8,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://indian-housie.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tambola-game-5.preview.emergentagent.com')
 
 # Admin credentials
 ADMIN_USERNAME = "sixtysevenceo"
