@@ -42,12 +42,29 @@ export default function Profile() {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      const response = await axios.get(`${API}/auth/me`, { 
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
       setUser(response.data);
       setName(response.data.name);
       setSelectedAvatar(response.data.picture || AVATARS[0]);
     } catch (error) {
       console.error('Failed to fetch user:', error);
+      // If fetch fails, try to get from localStorage
+      const storedUser = localStorage.getItem('tambola_user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          setName(userData.name || '');
+          setSelectedAvatar(userData.picture || AVATARS[0]);
+        } catch (e) {
+          navigate('/login');
+        }
+      } else {
+        navigate('/login');
+      }
     }
   };
 
