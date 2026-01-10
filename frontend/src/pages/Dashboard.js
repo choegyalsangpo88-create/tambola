@@ -67,14 +67,22 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#0a0a0c]">
       {/* Header */}
-      <div className="bg-[#121216] border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#121216] via-[#1a1a20] to-[#121216] border-b border-amber-500/20 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
-              Six Seven Tambola
+            <h1 
+              className="text-3xl font-black tracking-tight bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent drop-shadow-lg"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: '-0.02em' }}
+            >
+              67tambola
             </h1>
             {user && (
-              <p className="text-sm text-gray-400">Hello, {user.name}!</p>
+              <p 
+                className="text-base text-gray-300 mt-1 font-medium"
+                style={{ fontFamily: "'Outfit', sans-serif" }}
+              >
+                Welcome, <span className="text-amber-400 font-semibold">{user.name}</span>
+              </p>
             )}
           </div>
           <Button
