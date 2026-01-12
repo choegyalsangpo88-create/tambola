@@ -199,11 +199,16 @@ export default function UserGameDetails() {
             <div className="flex-1 bg-white/5 rounded-lg px-4 py-3 text-gray-300 text-sm truncate">
               {getShareUrl()}
             </div>
-            <CopyToClipboard text={getShareUrl()} onCopy={handleCopy}>
-              <Button variant="outline" className="border-white/10 hover:bg-white/10">
-                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              </Button>
-            </CopyToClipboard>
+            <Button 
+              variant="outline" 
+              className="border-white/10 hover:bg-white/10"
+              onClick={() => {
+                navigator.clipboard.writeText(getShareUrl());
+                handleCopy();
+              }}
+            >
+              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+            </Button>
           </div>
 
           {/* WhatsApp & QR Buttons */}
