@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+// Using native clipboard API instead of react-copy-to-clipboard
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft, Copy, Share2, Users, Calendar, Clock,
