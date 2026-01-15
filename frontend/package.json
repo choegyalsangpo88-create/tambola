@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "18.x"
+    "node": "18"
+  },
+  "overrides": {
+    "camera-controls": "2.7.3"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
