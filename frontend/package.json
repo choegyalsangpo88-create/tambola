@@ -2,9 +2,12 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "18.x"
-  },
+"engines": {
+  "node": "18"
+},
+"overrides": {
+  "camera-controls": "2.7.3"
+},
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-accordion": "^1.2.8",
