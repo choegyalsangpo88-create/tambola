@@ -6,7 +6,6 @@
     "node": "18"
   },
   "overrides": {
-    "camera-controls": "2.7.3",
     "ajv": "8.12.0",
     "ajv-keywords": "5.1.0"
   },
