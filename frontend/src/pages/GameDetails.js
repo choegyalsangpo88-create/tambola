@@ -14,7 +14,7 @@ const getAuthHeaders = () => {
   return session ? { 'Authorization': `Bearer ${session}` } : {};
 };
 
-// Classic Lotto Ticket - Exact design specifications
+// Printed Tambola Ticket - Accurate replica of physical Indian Tambola tickets
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
   const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
@@ -26,7 +26,7 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   
   return (
     <div
-      className={`cursor-pointer transition-all ${
+      className={`cursor-pointer transition-transform ${
         isBooked && !isSelected
           ? 'opacity-40 cursor-not-allowed'
           : isSelected
@@ -35,52 +35,91 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
       }`}
       onClick={() => !isBooked && onToggle(ticket.ticket_id)}
       style={{
-        background: '#f1c40f',
-        padding: '12px',
-        borderRadius: '4px',
-        boxShadow: isSelected ? '0 0 0 3px #22c55e' : '0 2px 4px rgba(0,0,0,0.1)'
+        backgroundColor: '#f1c40f',
+        padding: '8px',
+        display: 'inline-block'
       }}
     >
-      {/* Ticket Title */}
+      {/* Ticket container with white background */}
       <div style={{
-        textAlign: 'center',
-        fontWeight: 'bold',
-        marginBottom: '6px',
-        color: '#000',
-        fontSize: '12px'
+        backgroundColor: '#ffffff',
+        border: isSelected ? '3px solid #22c55e' : '2px solid #000000',
+        boxShadow: isSelected ? '0 0 0 2px #22c55e' : 'none'
       }}>
-        LOTTO TICKET {ticket.ticket_number}
-        {shortName && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#333' }}>({shortName})</span>}
-        {isSelected && <span style={{ marginLeft: '8px', color: '#22c55e' }}>✓</span>}
-      </div>
-      
-      {/* Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(9, 1fr)',
-        gridTemplateRows: 'repeat(3, 32px)',
-        gap: '0',
-        background: 'black'
-      }}>
-        {ticket.numbers.map((row, rowIndex) => (
-          row.map((num, colIndex) => (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              style={{
-                background: 'white',
-                border: '1px solid black',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold',
-                fontSize: '14px',
-                color: '#000'
-              }}
-            >
-              {num || ''}
-            </div>
-          ))
-        ))}
+        {/* Header - LOTTO TICKET number */}
+        <div style={{
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #000000',
+          padding: '3px 6px',
+          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span style={{
+            fontFamily: 'Arial, Helvetica, sans-serif',
+            fontWeight: 'bold',
+            fontSize: '11px',
+            color: '#000000',
+            letterSpacing: '0.5px'
+          }}>
+            LOTTO TICKET {ticket.ticket_number}
+          </span>
+          {shortName && (
+            <span style={{
+              fontSize: '9px',
+              color: '#666666'
+            }}>
+              ({shortName})
+            </span>
+          )}
+          {isSelected && (
+            <span style={{
+              color: '#22c55e',
+              fontWeight: 'bold',
+              fontSize: '14px'
+            }}>✓</span>
+          )}
+        </div>
+        
+        {/* Grid - 3 rows x 9 columns using table for accurate print layout */}
+        <table 
+          style={{
+            borderCollapse: 'collapse',
+            width: '100%'
+          }}
+          cellSpacing="0"
+          cellPadding="0"
+        >
+          <tbody>
+            {ticket.numbers.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((num, colIndex) => (
+                  <td
+                    key={`${rowIndex}-${colIndex}`}
+                    style={{
+                      width: '11.11%',
+                      height: '28px',
+                      border: '1px solid #000000',
+                      textAlign: 'center',
+                      verticalAlign: 'middle',
+                      backgroundColor: '#e8f4fc',
+                      fontFamily: 'Arial Black, Arial, sans-serif',
+                      fontWeight: 'bold',
+                      fontSize: '13px',
+                      color: '#000000',
+                      padding: '0',
+                      margin: '0'
+                    }}
+                  >
+                    {num || ''}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
