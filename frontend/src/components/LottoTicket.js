@@ -1,13 +1,15 @@
 import React from 'react';
 
 /**
- * LottoTicket - Clean realistic design
- * Yellow background, white cells, black borders
+ * LottoTicket - Accurate replica of physical Indian Tambola tickets
+ * Matches real printed housie book tickets
+ * Used for gameplay views (LiveGame, MyTickets, etc.)
  */
 const LottoTicket = ({ 
   ticketNumber, 
   numbers, 
   calledNumbers = [], 
+  backgroundColor = '#f1c40f',
   showRemaining = true,
   size = 'normal'
 }) => {
@@ -18,80 +20,117 @@ const LottoTicket = ({
 
   // Size configurations
   const sizeConfig = {
-    small: { rowHeight: '24px', fontSize: '10px', padding: '8px', titleSize: '10px' },
-    normal: { rowHeight: '32px', fontSize: '14px', padding: '12px', titleSize: '12px' },
-    large: { rowHeight: '40px', fontSize: '18px', padding: '12px', titleSize: '14px' }
+    small: { 
+      cellHeight: '24px', 
+      fontSize: '11px', 
+      headerFontSize: '9px',
+      padding: '6px'
+    },
+    normal: { 
+      cellHeight: '32px', 
+      fontSize: '14px', 
+      headerFontSize: '11px',
+      padding: '8px'
+    },
+    large: { 
+      cellHeight: '40px', 
+      fontSize: '18px', 
+      headerFontSize: '13px',
+      padding: '10px'
+    }
   };
 
   const config = sizeConfig[size] || sizeConfig.normal;
 
   return (
     <div style={{
-      background: '#f1c40f',
+      backgroundColor: backgroundColor,
       padding: config.padding,
-      borderRadius: '4px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      display: 'inline-block',
+      width: '100%'
     }}>
-      {/* Ticket Title */}
+      {/* Ticket container */}
       <div style={{
-        textAlign: 'center',
-        fontWeight: 'bold',
-        marginBottom: '6px',
-        color: '#000',
-        fontSize: config.titleSize
+        backgroundColor: '#ffffff',
+        border: '2px solid #000000'
       }}>
-        LOTTO TICKET {ticketNumber || 'T001'}
-      </div>
-      
-      {/* Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(9, 1fr)',
-        gridTemplateRows: `repeat(3, ${config.rowHeight})`,
-        gap: '0',
-        background: 'black'
-      }}>
-        {numbers?.map((row, rowIndex) => (
-          row.map((num, colIndex) => {
-            const isMarked = num && calledSet.has(num);
-            return (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                style={{
-                  background: isMarked ? '#22c55e' : 'white',
-                  border: '1px solid black',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  fontSize: config.fontSize,
-                  color: isMarked ? 'white' : '#000'
-                }}
-              >
-                {num || ''}
-              </div>
-            );
-          })
-        ))}
+        {/* Header */}
+        <div style={{
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #000000',
+          padding: '3px 6px',
+          textAlign: 'center'
+        }}>
+          <span style={{
+            fontFamily: 'Arial, Helvetica, sans-serif',
+            fontWeight: 'bold',
+            fontSize: config.headerFontSize,
+            color: '#000000',
+            letterSpacing: '0.5px'
+          }}>
+            LOTTO TICKET {ticketNumber || '001'}
+          </span>
+        </div>
+        
+        {/* Grid - using table for accurate print-style layout */}
+        <table 
+          style={{
+            borderCollapse: 'collapse',
+            width: '100%'
+          }}
+          cellSpacing="0"
+          cellPadding="0"
+        >
+          <tbody>
+            {numbers?.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((num, colIndex) => {
+                  const isMarked = num && calledSet.has(num);
+                  return (
+                    <td
+                      key={`${rowIndex}-${colIndex}`}
+                      style={{
+                        width: '11.11%',
+                        height: config.cellHeight,
+                        border: '1px solid #000000',
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        backgroundColor: isMarked ? '#22c55e' : '#e8f4fc',
+                        fontFamily: 'Arial Black, Arial, sans-serif',
+                        fontWeight: 'bold',
+                        fontSize: config.fontSize,
+                        color: isMarked ? '#ffffff' : '#000000',
+                        padding: '0',
+                        margin: '0',
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      {num || ''}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Footer - remaining count */}
+      {/* Remaining count during gameplay */}
       {showRemaining && calledNumbers.length > 0 && (
         <div style={{
+          marginTop: '4px',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: '6px',
-          fontSize: '10px',
-          color: '#000'
+          fontSize: '9px',
+          color: '#000000',
+          fontFamily: 'Arial, sans-serif',
+          fontWeight: 'bold'
         }}>
-          <span>{markedCount}/15 marked</span>
+          <span>{markedCount}/15</span>
           <span style={{
-            background: remaining <= 3 ? '#ef4444' : remaining <= 6 ? '#f97316' : '#6b7280',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontWeight: 'bold'
+            backgroundColor: remaining <= 3 ? '#dc2626' : remaining <= 6 ? '#ea580c' : '#4b5563',
+            color: '#ffffff',
+            padding: '1px 6px'
           }}>
             {remaining} left
           </span>
