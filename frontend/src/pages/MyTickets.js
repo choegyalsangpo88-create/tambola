@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, Trophy, Clock, CheckCircle, Eye, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import LottoTicket from '@/components/LottoTicket';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -14,34 +15,16 @@ const getAuthHeaders = () => {
   return session ? { 'Authorization': `Bearer ${session}` } : {};
 };
 
-// Ticket Display Component
+// Ticket Display Component - Now uses LottoTicket
 const TicketView = ({ ticket, calledNumbers = [] }) => {
-  const calledSet = new Set(calledNumbers);
-  
   return (
-    <div className="bg-white rounded-lg p-2 shadow-lg">
-      <div className="text-center font-bold text-gray-800 text-sm mb-1">{ticket.ticket_number}</div>
-      <div className="grid grid-cols-9 gap-0.5">
-        {ticket.numbers?.map((row, rowIdx) =>
-          row.map((num, colIdx) => (
-            <div
-              key={`${rowIdx}-${colIdx}`}
-              className={`
-                w-6 h-6 flex items-center justify-center text-xs font-bold rounded
-                ${num === null 
-                  ? 'bg-gray-100' 
-                  : calledSet.has(num)
-                    ? 'bg-green-500 text-white'
-                    : 'bg-amber-100 text-gray-800'
-                }
-              `}
-            >
-              {num || ''}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+    <LottoTicket
+      ticketNumber={ticket.ticket_number}
+      numbers={ticket.numbers}
+      calledNumbers={calledNumbers}
+      showRemaining={calledNumbers.length > 0}
+      size="normal"
+    />
   );
 };
 
