@@ -709,27 +709,16 @@ export default function LiveGame() {
             </div>
             
             <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-3' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {myTickets.map((ticket) => {
-                return (
-                  <div key={ticket.ticket_id} className={`bg-amber-50 rounded-lg transition-all duration-300 ${ticketZoom === 1 ? 'p-1' : ticketZoom === 2 ? 'p-2' : 'p-3'}`}>
-                    <p className={`font-bold text-amber-700 mb-1 ${ticketZoom === 1 ? 'text-[7px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-sm'}`}>{ticket.ticket_number}</p>
-                    <div className="grid grid-cols-9 gap-px">
-                      {ticket.numbers.map((row, rowIndex) => (
-                        row.map((num, colIndex) => {
-                          const isMarked = num && markedNumbers.has(num);
-                          return (
-                            <div key={`${rowIndex}-${colIndex}`} className={`flex items-center justify-center font-bold rounded-sm transition-all ${
-                              ticketZoom === 1 ? 'aspect-square text-[6px]' : ticketZoom === 2 ? 'aspect-square text-[10px]' : 'aspect-[1.3/1] text-base py-1'
-                            } ${num === null ? 'bg-amber-100' : isMarked ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
-                              {num || ''}
-                            </div>
-                          );
-                        })
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+              {myTickets.map((ticket) => (
+                <LottoTicket
+                  key={ticket.ticket_id}
+                  ticketNumber={ticket.ticket_number}
+                  numbers={ticket.numbers}
+                  calledNumbers={Array.from(markedNumbers)}
+                  showRemaining={true}
+                  size={ticketZoom === 1 ? 'small' : ticketZoom === 2 ? 'normal' : 'large'}
+                />
+              ))}
             </div>
           </div>
         )}
