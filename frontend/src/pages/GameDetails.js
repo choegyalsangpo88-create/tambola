@@ -14,7 +14,7 @@ const getAuthHeaders = () => {
   return session ? { 'Authorization': `Bearer ${session}` } : {};
 };
 
-// Wide compact ticket component
+// Classic Lotto Ticket design - Yellow paper style
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
   const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
@@ -27,47 +27,54 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   
   return (
     <div
-      className={`relative rounded-lg cursor-pointer transition-all ${
+      className={`relative cursor-pointer transition-all ${
         isBooked && !isSelected
           ? 'opacity-40 cursor-not-allowed'
           : isSelected
-          ? 'ring-2 ring-amber-500 shadow-lg shadow-amber-500/20'
-          : 'hover:ring-1 hover:ring-white/30'
+          ? 'scale-[1.02] shadow-xl shadow-amber-500/30'
+          : 'hover:scale-[1.01]'
       }`}
       onClick={() => !isBooked && onToggle(ticket.ticket_id)}
     >
-      {/* Ticket number and booked by - positioned just above ticket */}
-      <div className="flex items-center justify-between px-1 mb-0.5">
-        <div className="flex items-center gap-1">
-          <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
-            {ticket.ticket_number}
-          </span>
-          {shortName && (
-            <span className="text-[8px] text-purple-400 truncate max-w-[50px]">• {shortName}</span>
+      {/* Yellow Lotto Ticket Container */}
+      <div className={`bg-amber-400 rounded-lg overflow-hidden border-2 ${
+        isSelected ? 'border-green-500 ring-2 ring-green-400' : 'border-amber-600'
+      }`}>
+        {/* Header - LOTTO TICKET with number */}
+        <div className="bg-amber-500 py-1 px-2 flex items-center justify-between border-b-2 border-amber-600">
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] font-bold text-amber-900 tracking-wider">LOTTO TICKET</span>
+            <span className="text-xs font-black text-amber-900">{ticket.ticket_number}</span>
+          </div>
+          {isSelected && (
+            <span className="text-xs font-bold text-green-700 bg-green-200 px-1.5 rounded">✓</span>
+          )}
+          {shortName && !isSelected && (
+            <span className="text-[8px] text-amber-800 font-medium truncate max-w-[50px]">{shortName}</span>
           )}
         </div>
-        {isSelected && (
-          <span className="text-[10px] text-amber-400">✓</span>
-        )}
-      </div>
-      
-      {/* Ticket grid - wide and clear */}
-      <div className={`bg-white rounded-md overflow-hidden ${isSelected ? 'ring-1 ring-amber-400' : ''}`}>
-        <div className="grid grid-cols-9">
-          {ticket.numbers.map((row, rowIndex) => (
-            row.map((num, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`aspect-[1.2/1] flex items-center justify-center text-[9px] sm:text-[10px] font-bold border-r border-b border-gray-200 last:border-r-0 ${
-                  num === null 
-                    ? 'bg-gray-50' 
-                    : 'bg-white text-gray-900'
-                }`}
-              >
-                {num || ''}
-              </div>
-            ))
-          ))}
+        
+        {/* Ticket Grid */}
+        <div className="p-1 bg-amber-300">
+          <div className="grid grid-cols-9 gap-[2px]">
+            {ticket.numbers.map((row, rowIndex) => (
+              row.map((num, colIndex) => (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className={`
+                    w-full aspect-square flex items-center justify-center 
+                    text-[9px] sm:text-[10px] font-bold rounded-sm
+                    ${num === null 
+                      ? 'bg-amber-200 border border-amber-300' 
+                      : 'bg-white text-gray-800 border border-gray-300 shadow-sm'
+                    }
+                  `}
+                >
+                  {num || ''}
+                </div>
+              ))
+            ))}
+          </div>
         </div>
       </div>
     </div>
