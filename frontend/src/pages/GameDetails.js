@@ -14,11 +14,10 @@ const getAuthHeaders = () => {
   return session ? { 'Authorization': `Bearer ${session}` } : {};
 };
 
-// Classic Lotto Ticket design - Yellow paper style
+// Classic Lotto Ticket design - Realistic paper style matching physical tickets
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
   const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
-  // Format name: "A. Sharma" style
   const shortName = holderName ? (
     holderName.split(' ').length > 1 
       ? holderName.split(' ')[0][0] + '. ' + holderName.split(' ')[1].slice(0, 6)
@@ -31,48 +30,75 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
         isBooked && !isSelected
           ? 'opacity-40 cursor-not-allowed'
           : isSelected
-          ? 'scale-[1.02] shadow-xl shadow-amber-500/30'
+          ? 'scale-[1.02] shadow-xl'
           : 'hover:scale-[1.01]'
       }`}
       onClick={() => !isBooked && onToggle(ticket.ticket_id)}
     >
-      {/* Yellow Lotto Ticket Container */}
-      <div className={`bg-amber-400 rounded-lg overflow-hidden border-2 ${
-        isSelected ? 'border-green-500 ring-2 ring-green-400' : 'border-amber-600'
-      }`}>
-        {/* Header - LOTTO TICKET with number */}
-        <div className="bg-amber-500 py-1 px-2 flex items-center justify-between border-b-2 border-amber-600">
-          <div className="flex items-center gap-1">
-            <span className="text-[9px] font-bold text-amber-900 tracking-wider">LOTTO TICKET</span>
-            <span className="text-xs font-black text-amber-900">{ticket.ticket_number}</span>
-          </div>
-          {isSelected && (
-            <span className="text-xs font-bold text-green-700 bg-green-200 px-1.5 rounded">✓</span>
+      {/* Realistic Yellow Paper Ticket */}
+      <div 
+        className={`rounded overflow-hidden ${isSelected ? 'ring-2 ring-green-500' : ''}`}
+        style={{ 
+          backgroundColor: '#f5d742',
+          boxShadow: isSelected ? '0 4px 12px rgba(34, 197, 94, 0.4)' : '0 2px 4px rgba(0,0,0,0.1)'
+        }}
+      >
+        {/* Header - LOTTO TICKET centered */}
+        <div 
+          className="text-center py-1 border-b"
+          style={{ 
+            backgroundColor: '#f5d742',
+            borderColor: '#c9a82c'
+          }}
+        >
+          <span 
+            className="font-bold tracking-wide"
+            style={{ 
+              fontSize: '10px',
+              color: '#1a1a1a',
+              fontFamily: 'Arial, sans-serif'
+            }}
+          >
+            LOTTO TICKET {ticket.ticket_number}
+          </span>
+          {shortName && (
+            <span className="ml-2 text-[8px] text-gray-700">({shortName})</span>
           )}
-          {shortName && !isSelected && (
-            <span className="text-[8px] text-amber-800 font-medium truncate max-w-[50px]">{shortName}</span>
+          {isSelected && (
+            <span className="ml-2 text-green-700 text-xs">✓</span>
           )}
         </div>
         
-        {/* Ticket Grid */}
-        <div className="p-1 bg-amber-300">
-          <div className="grid grid-cols-9 gap-[2px]">
+        {/* Ticket Grid - Light blue cells like physical ticket */}
+        <div className="p-1" style={{ backgroundColor: '#f5d742' }}>
+          <div 
+            className="border"
+            style={{ 
+              borderColor: '#1a1a1a',
+              backgroundColor: '#d8e4f0'
+            }}
+          >
             {ticket.numbers.map((row, rowIndex) => (
-              row.map((num, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={`
-                    w-full aspect-square flex items-center justify-center 
-                    text-[9px] sm:text-[10px] font-bold rounded-sm
-                    ${num === null 
-                      ? 'bg-amber-200 border border-amber-300' 
-                      : 'bg-white text-gray-800 border border-gray-300 shadow-sm'
-                    }
-                  `}
-                >
-                  {num || ''}
-                </div>
-              ))
+              <div key={rowIndex} className="flex">
+                {row.map((num, colIndex) => (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    className="flex items-center justify-center font-bold"
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1.2/1',
+                      backgroundColor: '#d8e4f0',
+                      borderRight: colIndex < 8 ? '1px solid #1a1a1a' : 'none',
+                      borderBottom: rowIndex < 2 ? '1px solid #1a1a1a' : 'none',
+                      fontSize: '11px',
+                      color: '#1a1a1a',
+                      fontFamily: 'Arial Black, Arial, sans-serif'
+                    }}
+                  >
+                    {num || ''}
+                  </div>
+                ))}
+              </div>
             ))}
           </div>
         </div>
