@@ -14,7 +14,7 @@ const getAuthHeaders = () => {
   return session ? { 'Authorization': `Bearer ${session}` } : {};
 };
 
-// Classic Lotto Ticket design - Realistic paper style matching physical tickets
+// Classic Lotto Ticket - Exact design specifications
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
   const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
@@ -26,82 +26,61 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   
   return (
     <div
-      className={`relative cursor-pointer transition-all ${
+      className={`cursor-pointer transition-all ${
         isBooked && !isSelected
           ? 'opacity-40 cursor-not-allowed'
           : isSelected
-          ? 'scale-[1.02] shadow-xl'
+          ? 'scale-[1.02]'
           : 'hover:scale-[1.01]'
       }`}
       onClick={() => !isBooked && onToggle(ticket.ticket_id)}
+      style={{
+        background: '#f1c40f',
+        padding: '12px',
+        borderRadius: '4px',
+        boxShadow: isSelected ? '0 0 0 3px #22c55e' : '0 2px 4px rgba(0,0,0,0.1)'
+      }}
     >
-      {/* Realistic Yellow Paper Ticket */}
-      <div 
-        className={`rounded overflow-hidden ${isSelected ? 'ring-2 ring-green-500' : ''}`}
-        style={{ 
-          backgroundColor: '#f5d742',
-          boxShadow: isSelected ? '0 4px 12px rgba(34, 197, 94, 0.4)' : '0 2px 4px rgba(0,0,0,0.1)'
-        }}
-      >
-        {/* Header - LOTTO TICKET centered */}
-        <div 
-          className="text-center py-1 border-b"
-          style={{ 
-            backgroundColor: '#f5d742',
-            borderColor: '#c9a82c'
-          }}
-        >
-          <span 
-            className="font-bold tracking-wide"
-            style={{ 
-              fontSize: '10px',
-              color: '#1a1a1a',
-              fontFamily: 'Arial, sans-serif'
-            }}
-          >
-            LOTTO TICKET {ticket.ticket_number}
-          </span>
-          {shortName && (
-            <span className="ml-2 text-[8px] text-gray-700">({shortName})</span>
-          )}
-          {isSelected && (
-            <span className="ml-2 text-green-700 text-xs">✓</span>
-          )}
-        </div>
-        
-        {/* Ticket Grid - Light blue cells like physical ticket */}
-        <div className="p-1" style={{ backgroundColor: '#f5d742' }}>
-          <div 
-            className="border"
-            style={{ 
-              borderColor: '#1a1a1a',
-              backgroundColor: '#d8e4f0'
-            }}
-          >
-            {ticket.numbers.map((row, rowIndex) => (
-              <div key={rowIndex} className="flex">
-                {row.map((num, colIndex) => (
-                  <div
-                    key={`${rowIndex}-${colIndex}`}
-                    className="flex items-center justify-center font-bold"
-                    style={{
-                      width: '100%',
-                      aspectRatio: '1.2/1',
-                      backgroundColor: '#d8e4f0',
-                      borderRight: colIndex < 8 ? '1px solid #1a1a1a' : 'none',
-                      borderBottom: rowIndex < 2 ? '1px solid #1a1a1a' : 'none',
-                      fontSize: '11px',
-                      color: '#1a1a1a',
-                      fontFamily: 'Arial Black, Arial, sans-serif'
-                    }}
-                  >
-                    {num || ''}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Ticket Title */}
+      <div style={{
+        textAlign: 'center',
+        fontWeight: 'bold',
+        marginBottom: '6px',
+        color: '#000',
+        fontSize: '12px'
+      }}>
+        LOTTO TICKET {ticket.ticket_number}
+        {shortName && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#333' }}>({shortName})</span>}
+        {isSelected && <span style={{ marginLeft: '8px', color: '#22c55e' }}>✓</span>}
+      </div>
+      
+      {/* Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(9, 1fr)',
+        gridTemplateRows: 'repeat(3, 32px)',
+        gap: '0',
+        background: 'black'
+      }}>
+        {ticket.numbers.map((row, rowIndex) => (
+          row.map((num, colIndex) => (
+            <div
+              key={`${rowIndex}-${colIndex}`}
+              style={{
+                background: 'white',
+                border: '1px solid black',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '14px',
+                color: '#000'
+              }}
+            >
+              {num || ''}
+            </div>
+          ))
+        ))}
       </div>
     </div>
   );
