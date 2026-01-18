@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { getCallName } from '@/utils/tambolaCallNames';
 import { unlockMobileAudio, playBase64Audio, speakText } from '@/utils/audioHelper';
+import LottoTicket from '@/components/LottoTicket';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
