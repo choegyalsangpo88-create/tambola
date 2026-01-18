@@ -1,8 +1,8 @@
 import React from 'react';
 
 /**
- * LottoTicket - A classic physical Tambola/Lotto ticket design
- * Mimics the yellow paper tickets with "LOTTO TICKET" header
+ * LottoTicket - Realistic physical Tambola/Lotto ticket design
+ * Matches the classic yellow paper tickets with light blue cells
  */
 const LottoTicket = ({ 
   ticketNumber, 
@@ -19,96 +19,106 @@ const LottoTicket = ({
   // Size configurations
   const sizeConfig = {
     small: {
-      padding: 'p-1',
-      headerText: 'text-[8px]',
-      ticketNumText: 'text-[10px]',
-      cellText: 'text-[8px]',
-      cellSize: 'w-5 h-5',
-      gap: 'gap-[1px]',
-      headerPadding: 'py-0.5 px-1',
+      headerSize: '8px',
+      cellSize: '10px',
+      padding: '2px',
     },
     normal: {
-      padding: 'p-1.5',
-      headerText: 'text-[10px]',
-      ticketNumText: 'text-sm',
-      cellText: 'text-[10px]',
-      cellSize: 'w-6 h-6 md:w-7 md:h-7',
-      gap: 'gap-[2px]',
-      headerPadding: 'py-1 px-2',
+      headerSize: '10px',
+      cellSize: '12px',
+      padding: '4px',
     },
     large: {
-      padding: 'p-2',
-      headerText: 'text-xs',
-      ticketNumText: 'text-base',
-      cellText: 'text-xs md:text-sm',
-      cellSize: 'w-8 h-8 md:w-9 md:h-9',
-      gap: 'gap-1',
-      headerPadding: 'py-1.5 px-3',
+      headerSize: '12px',
+      cellSize: '14px',
+      padding: '6px',
     }
   };
 
   const config = sizeConfig[size] || sizeConfig.normal;
 
   return (
-    <div className={`bg-amber-400 rounded-lg shadow-lg overflow-hidden border-2 border-amber-600 ${config.padding}`}>
-      {/* Header with LOTTO TICKET */}
-      <div className={`bg-amber-500 ${config.headerPadding} rounded-t-md mb-1 text-center border-b-2 border-amber-600`}>
-        <span className={`font-bold text-amber-900 tracking-wider ${config.headerText}`}>
-          LOTTO TICKET
-        </span>
-        <span className={`font-black text-amber-900 ml-1 ${config.ticketNumText}`}>
-          {ticketNumber || 'T001'}
+    <div 
+      className="rounded overflow-hidden"
+      style={{ 
+        backgroundColor: '#f5d742',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+      }}
+    >
+      {/* Header - LOTTO TICKET centered */}
+      <div 
+        className="text-center py-1 border-b"
+        style={{ 
+          backgroundColor: '#f5d742',
+          borderColor: '#c9a82c'
+        }}
+      >
+        <span 
+          className="font-bold tracking-wide"
+          style={{ 
+            fontSize: config.headerSize,
+            color: '#1a1a1a',
+            fontFamily: 'Arial, sans-serif'
+          }}
+        >
+          LOTTO TICKET {ticketNumber || 'T001'}
         </span>
       </div>
-
-      {/* Ticket Grid - 3 rows x 9 columns */}
-      <div className={`grid grid-cols-9 ${config.gap} bg-amber-300 p-1 rounded-md`}>
-        {numbers?.map((row, rowIdx) => (
-          row.map((num, colIdx) => {
-            const isMarked = num && calledSet.has(num);
-            return (
-              <div
-                key={`${rowIdx}-${colIdx}`}
-                className={`
-                  ${config.cellSize} 
-                  flex items-center justify-center 
-                  ${config.cellText} 
-                  font-bold 
-                  rounded-sm
-                  transition-all duration-200
-                  ${num 
-                    ? isMarked 
-                      ? 'bg-green-500 text-white shadow-md ring-2 ring-green-600 scale-105' 
-                      : 'bg-white text-gray-800 border border-gray-300'
-                    : 'bg-amber-200 border border-amber-300'
-                  }
-                `}
-              >
-                {num || ''}
-              </div>
-            );
-          })
-        ))}
+      
+      {/* Ticket Grid - Light blue cells like physical ticket */}
+      <div style={{ padding: config.padding, backgroundColor: '#f5d742' }}>
+        <div 
+          className="border"
+          style={{ 
+            borderColor: '#1a1a1a',
+            backgroundColor: '#d8e4f0'
+          }}
+        >
+          {numbers?.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex">
+              {row.map((num, colIndex) => {
+                const isMarked = num && calledSet.has(num);
+                return (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    className="flex items-center justify-center font-bold transition-all"
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1.2/1',
+                      backgroundColor: isMarked ? '#22c55e' : '#d8e4f0',
+                      borderRight: colIndex < 8 ? '1px solid #1a1a1a' : 'none',
+                      borderBottom: rowIndex < 2 ? '1px solid #1a1a1a' : 'none',
+                      fontSize: config.cellSize,
+                      color: isMarked ? '#ffffff' : '#1a1a1a',
+                      fontFamily: 'Arial Black, Arial, sans-serif'
+                    }}
+                  >
+                    {num || ''}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Footer showing remaining count */}
-      {showRemaining && (
-        <div className="mt-1 flex justify-between items-center px-1">
-          <span className={`${config.headerText} text-amber-800`}>
-            {markedCount}/15 marked
+      {showRemaining && calledNumbers.length > 0 && (
+        <div 
+          className="flex justify-between items-center px-2 py-1"
+          style={{ backgroundColor: '#f5d742', borderTop: '1px solid #c9a82c' }}
+        >
+          <span style={{ fontSize: '9px', color: '#1a1a1a' }}>
+            {markedCount}/15
           </span>
-          <span className={`
-            ${config.headerText} 
-            px-1.5 py-0.5 
-            rounded 
-            font-bold
-            ${remaining <= 3 
-              ? 'bg-red-500 text-white animate-pulse' 
-              : remaining <= 6 
-                ? 'bg-orange-500 text-white' 
-                : 'bg-amber-600 text-amber-100'
-            }
-          `}>
+          <span 
+            className="px-1.5 py-0.5 rounded font-bold"
+            style={{ 
+              fontSize: '9px',
+              backgroundColor: remaining <= 3 ? '#ef4444' : remaining <= 6 ? '#f97316' : '#6b7280',
+              color: '#ffffff'
+            }}
+          >
             {remaining} left
           </span>
         </div>
