@@ -1835,8 +1835,7 @@ async def create_booking_request(
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
     
-    # Allow bookings for upcoming and live games (not completed)
-    if game["status"] not in ["upcoming", "live"]:
+    if game["status"] != "upcoming":
         raise HTTPException(status_code=400, detail="Game is not accepting bookings")
     
     # Check tickets are available
