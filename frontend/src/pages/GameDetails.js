@@ -495,11 +495,9 @@ Txn Ref: ${txnRef}
           </div>
         )}
 
-        {/* Full Sheets Display - Print-ready style like ChatGPT image */}
+        {/* Full Sheets Display - Print-ready style with individual ticket selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedSheets.map((sheet, sheetIndex) => {
-            const isSelected = isFullSheetSelected(sheet.tickets);
-            const allBooked = sheet.tickets.every(t => t.is_booked);
             const pageNumber = sheetIndex + 1;
             
             return (
@@ -507,8 +505,9 @@ Txn Ref: ${txnRef}
                 key={sheet.sheetId}
                 sheetId={sheet.sheetId}
                 tickets={sheet.tickets}
-                isSelected={isSelected}
-                onToggle={(tickets) => selectFullSheet(tickets)}
+                selectedTickets={selectedTickets}
+                onToggleTicket={toggleTicket}
+                onSelectAll={selectFullSheet}
                 pageNumber={pageNumber}
               />
             );
