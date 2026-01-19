@@ -167,6 +167,40 @@ Rules enforced:
 - Pending → Approved workflow
 - WhatsApp confirmation
 
+### 6. UPI + WhatsApp Booking Checkout Flow ✅ (NEW - 2026-01-19)
+**Two-Step Payment Process:**
+1. **Step 1: UPI Payment**
+   - "Pay ₹<amount> via UPI" button opens `upi://pay` deep link
+   - UPI ID: `choegyalsangpo@ibl`
+   - Fallback text shown if UPI app doesn't open
+   
+2. **Step 2: WhatsApp Confirmation**
+   - "Send Payment Confirmation on WhatsApp" button opens WhatsApp with pre-filled message
+   - WhatsApp Number: +91 8837489781
+   - Message format:
+     ```
+     ✅ PAYMENT DONE
+
+     Game: <game_name>
+     Tickets: <ticket_list>
+     Amount: ₹<amount>
+     Txn Ref: TMB<6_chars>
+
+     📸 Screenshot attached
+     ```
+   - Fallback text shown if WhatsApp doesn't open
+
+**UI Components:**
+- Booking Summary (read-only): Game name, Tickets, Total Amount
+- Instruction text between buttons
+- Transaction Reference display (TMB + 6 alphanumeric chars)
+- "View My Tickets" and "Back to Home" navigation
+
+**Rules:**
+- NO automatic redirects - all actions require explicit user clicks
+- Both buttons work independently
+- Deep links work on mobile; fallback info for desktop users
+
 ### 6. User Games (Create Your Own)
 - Host private games with share codes
 - Assign tickets to players
