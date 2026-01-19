@@ -14,15 +14,36 @@ const UPI_NAME = 'SixSevenTambola';
 const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
-// Single Lotto Ticket Component (for inside the sheet)
-function LottoTicketCard({ ticket, isFirst, pageNumber }) {
+// Single Lotto Ticket Component (clickable for individual selection)
+function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked }) {
+  const bookedByName = ticket.booked_by_name;
+  const shortName = bookedByName ? (
+    bookedByName.split(' ').length > 1 
+      ? bookedByName.split(' ')[0][0] + '. ' + bookedByName.split(' ')[1].slice(0, 6)
+      : bookedByName.slice(0, 8)
+  ) : null;
+
   return (
     <div 
-      className="bg-white"
-      style={{ borderBottom: '1px solid #000' }}
+      className={`bg-white cursor-pointer transition-all ${
+        isBooked 
+          ? 'opacity-50 cursor-not-allowed' 
+          : isSelected 
+          ? 'ring-2 ring-amber-400 shadow-lg' 
+          : 'hover:ring-1 hover:ring-amber-300'
+      }`}
+      style={{ 
+        border: isSelected ? '2px solid #f59e0b' : '1px solid #E6B800',
+        margin: '2px'
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!isBooked) onToggle(ticket.ticket_id);
+      }}
+      data-testid={`ticket-${ticket.ticket_number}`}
     >
       {/* Header with ticket number and page number */}
-      <div className="relative py-1 border-b border-black">
+      <div className="relative py-1 border-b border-black bg-gray-50">
         {/* Page number on first ticket only - left side */}
         {isFirst && pageNumber && (
           <span 
@@ -33,12 +54,20 @@ function LottoTicketCard({ ticket, isFirst, pageNumber }) {
           </span>
         )}
         {/* Centered ticket header */}
-        <p 
-          className="text-center text-xs font-bold text-black uppercase tracking-wide"
-          style={{ fontFamily: 'Arial, sans-serif' }}
-        >
-          LOTTO TICKET {ticket.ticket_number}
-        </p>
+        <div className="flex items-center justify-center gap-2">
+          <p 
+            className="text-center text-xs font-bold text-black uppercase tracking-wide"
+            style={{ fontFamily: 'Arial, sans-serif' }}
+          >
+            LOTTO TICKET {ticket.ticket_number}
+          </p>
+          {isSelected && (
+            <span className="text-amber-500 text-xs">✓</span>
+          )}
+          {shortName && (
+            <span className="text-[9px] text-purple-600">• {shortName}</span>
+          )}
+        </div>
       </div>
       
       {/* Number Grid - 3 rows x 9 columns */}
@@ -47,11 +76,11 @@ function LottoTicketCard({ ticket, isFirst, pageNumber }) {
           row.map((num, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
-              className="flex items-center justify-center border-r border-b border-black last:border-r-0"
+              className="flex items-center justify-center border-r border-b border-gray-300 last:border-r-0"
               style={{
-                height: '28px',
+                height: '24px',
                 fontFamily: 'Arial, sans-serif',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 'bold',
                 color: '#000'
               }}
@@ -65,76 +94,64 @@ function LottoTicketCard({ ticket, isFirst, pageNumber }) {
   );
 }
 
-// Full Sheet Component - 6 tickets stacked vertically (matches ChatGPT image)
-function FullSheet({ sheetId, tickets, isSelected, onToggle, pageNumber }) {
-  // Check if any ticket in the sheet is booked
+// Full Sheet Component - 6 tickets stacked vertically with individual selection
+function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelectAll, pageNumber }) {
+  // Check booking status
   const hasBookedTickets = tickets.some(t => t.is_booked);
   const allBooked = tickets.every(t => t.is_booked);
-  
-  // Get booked by name for display
-  const bookedByName = tickets.find(t => t.is_booked)?.booked_by_name;
-  const shortName = bookedByName ? (
-    bookedByName.split(' ').length > 1 
-      ? bookedByName.split(' ')[0][0] + '. ' + bookedByName.split(' ')[1].slice(0, 6)
-      : bookedByName.slice(0, 8)
-  ) : null;
+  const availableTickets = tickets.filter(t => !t.is_booked);
+  const selectedCount = tickets.filter(t => selectedTickets.includes(t.ticket_id)).length;
+  const allAvailableSelected = availableTickets.length > 0 && availableTickets.every(t => selectedTickets.includes(t.ticket_id));
   
   return (
-    <div
-      className={`cursor-pointer transition-all duration-200 ${
-        allBooked
-          ? 'opacity-50 cursor-not-allowed'
-          : isSelected
-          ? 'scale-[1.02] z-10'
-          : 'hover:scale-[1.01]'
-      }`}
-      onClick={() => !allBooked && onToggle(tickets)}
-      data-testid={`full-sheet-${sheetId}`}
-    >
-      {/* Sheet header with ID and status */}
+    <div data-testid={`full-sheet-${sheetId}`}>
+      {/* Sheet header with ID, status, and Select All button */}
       <div className="flex items-center justify-between mb-1 px-1">
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
+          <span className={`text-xs font-bold ${selectedCount > 0 ? 'text-amber-400' : 'text-amber-500/80'}`}>
             {sheetId}
           </span>
           <span className="text-[10px] text-gray-500">
             {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
           </span>
-          {shortName && (
-            <span className="text-[10px] text-purple-400">• {shortName}</span>
+          {selectedCount > 0 && (
+            <span className="text-xs text-amber-400 font-bold">{selectedCount}/6 selected</span>
           )}
         </div>
-        {isSelected && (
-          <span className="text-xs text-amber-400 font-bold">✓ Selected</span>
-        )}
-        {hasBookedTickets && !allBooked && (
-          <span className="text-[10px] text-red-400">Partially Booked</span>
+        {!allBooked && (
+          <button
+            onClick={() => onSelectAll(tickets)}
+            className={`text-[10px] px-2 py-0.5 rounded ${
+              allAvailableSelected 
+                ? 'bg-amber-500 text-black' 
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            {allAvailableSelected ? '✓ All Selected' : 'Select All 6'}
+          </button>
         )}
       </div>
       
-      {/* The Full Sheet - Mustard Yellow background with white margin */}
+      {/* The Full Sheet - Mustard Yellow background */}
       <div 
-        className={`p-2 ${isSelected ? 'ring-3 ring-amber-500 shadow-xl shadow-amber-500/30' : ''}`}
+        className="p-1"
         style={{
-          backgroundColor: '#E6B800', // Mustard yellow
-          border: isSelected ? '3px solid #f59e0b' : '2px solid #cca300'
+          backgroundColor: '#E6B800',
+          border: selectedCount > 0 ? '2px solid #f59e0b' : '1px solid #cca300'
         }}
       >
-        {/* White inner margin */}
-        <div 
-          className="bg-white"
-          style={{ border: '1px solid #000' }}
-        >
-          {/* 6 Tickets stacked vertically */}
-          {tickets.map((ticket, index) => (
-            <LottoTicketCard
-              key={ticket.ticket_id}
-              ticket={ticket}
-              isFirst={index === 0}
-              pageNumber={pageNumber}
-            />
-          ))}
-        </div>
+        {/* 6 Tickets stacked vertically - each individually selectable */}
+        {tickets.map((ticket, index) => (
+          <LottoTicketCard
+            key={ticket.ticket_id}
+            ticket={ticket}
+            isFirst={index === 0}
+            pageNumber={pageNumber}
+            isSelected={selectedTickets.includes(ticket.ticket_id)}
+            onToggle={onToggleTicket}
+            isBooked={ticket.is_booked}
+          />
+        ))}
       </div>
     </div>
   );
