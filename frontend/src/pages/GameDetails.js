@@ -478,68 +478,22 @@ Txn Ref: ${txnRef}
           </div>
         )}
 
-        {/* Full Sheets Grid */}
-        <div className="space-y-3">
+        {/* Full Sheets Display - Print-ready style like ChatGPT image */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedSheets.map((sheet, sheetIndex) => {
             const isSelected = isFullSheetSelected(sheet.tickets);
-            const isFullyAvailable = sheet.availableCount === 6;
-            
-            const bgColors = [
-              'bg-blue-500/5', 'bg-purple-500/5', 'bg-pink-500/5', 'bg-emerald-500/5',
-              'bg-orange-500/5', 'bg-cyan-500/5', 'bg-indigo-500/5', 'bg-rose-500/5'
-            ];
-            const borderColors = [
-              'border-l-blue-500', 'border-l-purple-500', 'border-l-pink-500', 'border-l-emerald-500',
-              'border-l-orange-500', 'border-l-cyan-500', 'border-l-indigo-500', 'border-l-rose-500'
-            ];
-            
-            const bgColor = isSelected ? 'bg-amber-500/10' : bgColors[sheetIndex % bgColors.length];
-            const borderColor = isSelected ? 'border-l-amber-500' : borderColors[sheetIndex % borderColors.length];
+            const allBooked = sheet.tickets.every(t => t.is_booked);
+            const pageNumber = sheetIndex + 1;
             
             return (
-              <div
+              <FullSheet
                 key={sheet.sheetId}
-                className={`rounded-lg p-3 border-l-4 ${borderColor} ${bgColor} border border-white/5`}
-                data-testid={`full-sheet-${sheet.sheetId}`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-white">{sheet.sheetId}</span>
-                    <span className="text-xs text-gray-500">
-                      {sheet.tickets[0]?.ticket_number} - {sheet.tickets[5]?.ticket_number}
-                    </span>
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
-                      isFullyAvailable ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                    }`}>
-                      {sheet.availableCount}/6
-                    </span>
-                  </div>
-                  {isFullyAvailable && (
-                    <Button
-                      onClick={() => selectFullSheet(sheet.tickets)}
-                      size="sm"
-                      className={`h-7 px-3 text-xs rounded-full font-semibold ${
-                        isSelected ? 'bg-amber-500 text-black' : 'bg-white/10 text-white hover:bg-white/20'
-                      }`}
-                      data-testid={`select-sheet-${sheet.sheetId}`}
-                    >
-                      {isSelected ? '✓ Selected' : 'Select All'}
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                  {sheet.tickets.map((ticket) => (
-                    <TambolaTicket
-                      key={ticket.ticket_id}
-                      ticket={ticket}
-                      isSelected={selectedTickets.includes(ticket.ticket_id)}
-                      onToggle={toggleTicket}
-                      bookedBy={ticket.is_booked ? ticket.booked_by_name : null}
-                    />
-                  ))}
-                </div>
-              </div>
+                sheetId={sheet.sheetId}
+                tickets={sheet.tickets}
+                isSelected={isSelected}
+                onToggle={(tickets) => selectFullSheet(tickets)}
+                pageNumber={pageNumber}
+              />
             );
           })}
         </div>
