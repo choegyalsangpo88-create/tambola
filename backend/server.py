@@ -1896,6 +1896,34 @@ async def get_my_booking_requests(user: User = Depends(get_current_user)):
     ).to_list(100)
     return requests
 
+@api_router.get("/booking-requests/{request_id}")
+async def get_booking_request(request_id: str, user: User = Depends(get_current_user)):
+    """Get a specific booking request by ID (for checkout page)"""
+    req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Booking request not found")
+    
+    # Verify user owns this request
+    if req["user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this booking request")
+    
+    # Enrich with game info
+    game = await db.games.find_one({"game_id": req["game_id"]}, {"_id": 0, "name": 1, "date": 1, "time": 1, "price": 1})
+    if game:
+        req["game_name"] = game.get("name", "Tambola Game")
+        req["game_date"] = game.get("date")
+        req["game_time"] = game.get("time")
+    
+    # Get ticket numbers
+    tickets = await db.tickets.find(
+        {"ticket_id": {"$in": req.get("ticket_ids", [])}},
+        {"_id": 0, "ticket_number": 1}
+    ).to_list(100)
+    req["ticket_numbers"] = [t["ticket_number"] for t in tickets]
+    req["ticket_count"] = len(req.get("ticket_ids", []))
+    
+    return req
+
 @api_router.get("/admin/booking-requests")
 async def get_all_booking_requests(request: Request, status: Optional[str] = None, _: bool = Depends(verify_admin)):
     """Get all booking requests (admin)"""
