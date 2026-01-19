@@ -39,6 +39,7 @@ function AppRouter() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/game/:gameId" element={<ProtectedRoute><GameDetails /></ProtectedRoute>} />
+        <Route path="/checkout/:requestId" element={<ProtectedRoute><BookingCheckout /></ProtectedRoute>} />
         <Route path="/live/:gameId" element={<ProtectedRoute><LiveGame /></ProtectedRoute>} />
         <Route path="/my-tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
         <Route path="/game-history/:gameId" element={<ProtectedRoute><GameHistory /></ProtectedRoute>} />
