@@ -14,7 +14,7 @@ const UPI_NAME = 'SixSevenTambola';
 const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
-// Premium Realistic Tambola Ticket
+// Wide compact ticket component (original design)
 function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   const isBooked = ticket.is_booked || bookedBy;
   const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
@@ -26,140 +26,48 @@ function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
   
   return (
     <div
-      className={`cursor-pointer transition-all duration-300 ${
+      className={`relative rounded-lg cursor-pointer transition-all ${
         isBooked && !isSelected
-          ? 'opacity-50 cursor-not-allowed grayscale'
+          ? 'opacity-40 cursor-not-allowed'
           : isSelected
-          ? 'scale-[1.03] z-10'
-          : 'hover:scale-[1.02] hover:z-5'
+          ? 'ring-2 ring-amber-500 shadow-lg shadow-amber-500/20'
+          : 'hover:ring-1 hover:ring-white/30'
       }`}
       onClick={() => !isBooked && onToggle(ticket.ticket_id)}
       data-testid={`ticket-${ticket.ticket_number}`}
-      style={{
-        background: 'linear-gradient(145deg, #ffd54f 0%, #ffb300 100%)',
-        padding: '10px',
-        borderRadius: '12px',
-        boxShadow: isSelected 
-          ? '0 8px 32px rgba(34, 197, 94, 0.4), 0 0 0 3px #22c55e, inset 0 1px 0 rgba(255,255,255,0.3)' 
-          : '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}
     >
-      {/* Paper texture overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")',
-        opacity: 0.03,
-        pointerEvents: 'none',
-        borderRadius: '12px'
-      }} />
-
-      {/* Ticket card */}
-      <div style={{
-        background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05)',
-        position: 'relative'
-      }}>
-        {/* Header */}
-        <div style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f0f0f0 100%)',
-          padding: '6px 10px',
-          borderBottom: '1px solid #e0e0e0',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{
-            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            fontWeight: '700',
-            fontSize: '11px',
-            color: '#1a1a1a',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase'
-          }}>
-            Lotto Ticket
-          </span>
-          <span style={{
-            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-            fontWeight: '800',
-            fontSize: '13px',
-            color: '#f59e0b',
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-          }}>
+      {/* Ticket number and booked by - positioned just above ticket */}
+      <div className="flex items-center justify-between px-1 mb-0.5">
+        <div className="flex items-center gap-1">
+          <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
             {ticket.ticket_number}
           </span>
           {shortName && (
-            <span style={{
-              fontSize: '9px',
-              color: '#888',
-              fontStyle: 'italic'
-            }}>
-              • {shortName}
-            </span>
-          )}
-          {isSelected && (
-            <span style={{
-              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-              color: '#fff',
-              borderRadius: '50%',
-              width: '18px',
-              height: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 4px rgba(34, 197, 94, 0.4)'
-            }}>✓</span>
+            <span className="text-[8px] text-purple-400 truncate max-w-[50px]">• {shortName}</span>
           )}
         </div>
-        
-        {/* Grid */}
-        <div style={{ padding: '8px' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(9, 1fr)',
-            gap: '3px',
-            background: 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)',
-            padding: '3px',
-            borderRadius: '6px'
-          }}>
-            {ticket.numbers.map((row, rowIndex) => (
-              row.map((num, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  style={{
-                    aspectRatio: '1',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: num 
-                      ? 'linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)'
-                      : 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)',
-                    borderRadius: '4px',
-                    fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontWeight: '700',
-                    fontSize: '12px',
-                    color: num ? '#1e293b' : 'transparent',
-                    boxShadow: num 
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.08)'
-                      : 'inset 0 1px 2px rgba(0,0,0,0.05)',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {num || ''}
-                </div>
-              ))
-            ))}
-          </div>
+        {isSelected && (
+          <span className="text-[10px] text-amber-400">✓</span>
+        )}
+      </div>
+      
+      {/* Ticket grid - wide and clear */}
+      <div className={`bg-white rounded-md overflow-hidden ${isSelected ? 'ring-1 ring-amber-400' : ''}`}>
+        <div className="grid grid-cols-9">
+          {ticket.numbers.map((row, rowIndex) => (
+            row.map((num, colIndex) => (
+              <div
+                key={`${rowIndex}-${colIndex}`}
+                className={`aspect-[1.2/1] flex items-center justify-center text-[9px] sm:text-[10px] font-bold border-r border-b border-gray-200 last:border-r-0 ${
+                  num === null 
+                    ? 'bg-gray-50' 
+                    : 'bg-white text-gray-900'
+                }`}
+              >
+                {num || ''}
+              </div>
+            ))
+          ))}
         </div>
       </div>
     </div>
