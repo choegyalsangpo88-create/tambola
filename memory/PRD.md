@@ -337,8 +337,10 @@ Rules enforced:
 - [x] ~~Ticket Generator Bug~~ - FIXED (2026-01-09)
 - [x] ~~WhatsApp Number Update~~ - FIXED (2026-01-09)
 - [x] ~~Mobile Authentication Fix~~ - FIXED (2026-01-09)
+- [x] ~~UPI + WhatsApp Booking Flow~~ - COMPLETED (2026-01-19)
 
 ### P1 - Medium Priority
+- [ ] Admin Panel enhancements: Payment History revamp, Players contact list, WhatsApp on payment approval
 - [ ] In-game chat feature
 - [ ] Backend refactoring (`server.py` → modular routes)
 
