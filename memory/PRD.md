@@ -238,7 +238,18 @@ Rules enforced:
 
 ## Changelog
 
-### 2026-01-09 (Session 4 - Current)
+### 2026-01-19 (Session 5 - Current)
+- **UPI + WhatsApp Booking Checkout Flow (COMPLETED)**
+  - Created `/app/frontend/src/pages/BookingCheckout.js` with two-step payment process
+  - Added `/checkout/:requestId` route to App.js
+  - UPI Payment: `upi://pay` deep link to `choegyalsangpo@ibl`
+  - WhatsApp Confirmation: `wa.me/918837489781` with pre-filled message
+  - Transaction Reference format: TMB + 6 alphanumeric chars (no I,O,0,1)
+  - Added `GET /api/booking-requests/{request_id}` endpoint for direct URL navigation
+  - All 14 backend tests passing
+  - Test file: `/app/tests/test_booking_checkout.py`
+
+### 2026-01-09 (Session 4)
 - **Ticket Generator Bug Fix (CRITICAL)**
   - Fixed ticket generation algorithm that was producing invalid tickets (fewer than 15 numbers)
   - Complete rewrite of `generate_full_sheet()` function with constraint-aware distribution
