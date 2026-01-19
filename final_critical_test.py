@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 
 class FinalCriticalTester:
-    def __init__(self, base_url="https://tambola-game-5.preview.emergentagent.com"):
+    def __init__(self, base_url="https://housie-game-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.session_token = "9740c20a7af441c6be784ececbe13a422a63031193f24b9d80c795d5a461a5d3"
