@@ -304,13 +304,6 @@ export default function GameDetails() {
 
     setIsBooking(true);
     try {
-      // Get user info with auth headers for mobile fallback
-      const userResponse = await axios.get(`${API}/auth/me`, { 
-        withCredentials: true,
-        headers: getAuthHeaders()
-      });
-      const user = userResponse.data;
-
       // Create booking REQUEST (not direct booking) - goes to admin for approval
       const response = await axios.post(
         `${API}/booking-requests`,
@@ -326,41 +319,26 @@ export default function GameDetails() {
 
       const bookingRequest = response.data;
       
-      // Get selected ticket numbers for the message
+      // Get selected ticket numbers for the booking
       const selectedTicketNumbers = tickets
         .filter(t => selectedTickets.includes(t.ticket_id))
-        .map(t => t.ticket_number)
-        .join(', ');
+        .map(t => t.ticket_number);
 
-      // Build detailed WhatsApp message
-      const message = `🎫 *NEW TICKET BOOKING REQUEST*
-
-👤 *Player:* ${user.name || 'Guest'}
-📧 *Email:* ${user.email || 'N/A'}
-📱 *Phone:* ${user.phone || 'N/A'}
-
-🎮 *Game:* ${game.name}
-📅 *Date:* ${game.date} at ${game.time}
-
-🎟️ *Tickets:* ${selectedTicketNumbers}
-📊 *Quantity:* ${selectedTickets.length} ticket(s)
-💰 *Total Amount:* ₹${bookingRequest.total_amount}
-
-🆔 *Request ID:* ${bookingRequest.request_id}
-
-⏳ Status: PENDING APPROVAL
-
-Please approve my booking request. 🙏`;
-
-      // WhatsApp Business Number
-      const whatsappNumber = '918837489781';
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      
-      toast.success('Booking request sent! Opening WhatsApp...');
-      window.open(whatsappUrl, '_blank');
+      // Navigate to checkout page with booking details
+      navigate(`/checkout/${bookingRequest.request_id}`, {
+        state: {
+          booking: {
+            ...bookingRequest,
+            game_name: game.name,
+            game_date: game.date,
+            game_time: game.time,
+            ticket_numbers: selectedTicketNumbers,
+            ticket_count: selectedTickets.length
+          }
+        }
+      });
       
       setSelectedTickets([]);
-      fetchAllTickets();
     } catch (error) {
       console.error('Booking request failed:', error);
       const errorMsg = error.response?.data?.detail || 'Failed to create booking request';
