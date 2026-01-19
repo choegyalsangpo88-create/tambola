@@ -14,59 +14,125 @@ const UPI_NAME = 'SixSevenTambola';
 const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
-// Wide compact ticket component (original design)
-function TambolaTicket({ ticket, isSelected, onToggle, bookedBy }) {
-  const isBooked = ticket.is_booked || bookedBy;
-  const holderName = bookedBy || ticket.holder_name || ticket.booked_by_name;
-  const shortName = holderName ? (
-    holderName.split(' ').length > 1 
-      ? holderName.split(' ')[0][0] + '. ' + holderName.split(' ')[1].slice(0, 6)
-      : holderName.slice(0, 8)
+// Single Lotto Ticket Component (for inside the sheet)
+function LottoTicketCard({ ticket, isFirst, pageNumber }) {
+  return (
+    <div 
+      className="bg-white"
+      style={{ borderBottom: '1px solid #000' }}
+    >
+      {/* Header with ticket number and page number */}
+      <div className="relative py-1 border-b border-black">
+        {/* Page number on first ticket only - left side */}
+        {isFirst && pageNumber && (
+          <span 
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-black"
+            style={{ fontFamily: 'Arial, sans-serif' }}
+          >
+            {pageNumber}
+          </span>
+        )}
+        {/* Centered ticket header */}
+        <p 
+          className="text-center text-xs font-bold text-black uppercase tracking-wide"
+          style={{ fontFamily: 'Arial, sans-serif' }}
+        >
+          LOTTO TICKET {ticket.ticket_number}
+        </p>
+      </div>
+      
+      {/* Number Grid - 3 rows x 9 columns */}
+      <div className="grid grid-cols-9">
+        {ticket.numbers.map((row, rowIndex) => (
+          row.map((num, colIndex) => (
+            <div
+              key={`${rowIndex}-${colIndex}`}
+              className="flex items-center justify-center border-r border-b border-black last:border-r-0"
+              style={{
+                height: '28px',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#000'
+              }}
+            >
+              {num || ''}
+            </div>
+          ))
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Full Sheet Component - 6 tickets stacked vertically (matches ChatGPT image)
+function FullSheet({ sheetId, tickets, isSelected, onToggle, pageNumber }) {
+  // Check if any ticket in the sheet is booked
+  const hasBookedTickets = tickets.some(t => t.is_booked);
+  const allBooked = tickets.every(t => t.is_booked);
+  
+  // Get booked by name for display
+  const bookedByName = tickets.find(t => t.is_booked)?.booked_by_name;
+  const shortName = bookedByName ? (
+    bookedByName.split(' ').length > 1 
+      ? bookedByName.split(' ')[0][0] + '. ' + bookedByName.split(' ')[1].slice(0, 6)
+      : bookedByName.slice(0, 8)
   ) : null;
   
   return (
     <div
-      className={`relative rounded-lg cursor-pointer transition-all ${
-        isBooked && !isSelected
-          ? 'opacity-40 cursor-not-allowed'
+      className={`cursor-pointer transition-all duration-200 ${
+        allBooked
+          ? 'opacity-50 cursor-not-allowed'
           : isSelected
-          ? 'ring-2 ring-amber-500 shadow-lg shadow-amber-500/20'
-          : 'hover:ring-1 hover:ring-white/30'
+          ? 'scale-[1.02] z-10'
+          : 'hover:scale-[1.01]'
       }`}
-      onClick={() => !isBooked && onToggle(ticket.ticket_id)}
-      data-testid={`ticket-${ticket.ticket_number}`}
+      onClick={() => !allBooked && onToggle(tickets)}
+      data-testid={`full-sheet-${sheetId}`}
     >
-      {/* Ticket number and booked by - positioned just above ticket */}
-      <div className="flex items-center justify-between px-1 mb-0.5">
-        <div className="flex items-center gap-1">
-          <span className={`text-[10px] font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
-            {ticket.ticket_number}
+      {/* Sheet header with ID and status */}
+      <div className="flex items-center justify-between mb-1 px-1">
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold ${isSelected ? 'text-amber-400' : 'text-amber-500/80'}`}>
+            {sheetId}
+          </span>
+          <span className="text-[10px] text-gray-500">
+            {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
           </span>
           {shortName && (
-            <span className="text-[8px] text-purple-400 truncate max-w-[50px]">• {shortName}</span>
+            <span className="text-[10px] text-purple-400">• {shortName}</span>
           )}
         </div>
         {isSelected && (
-          <span className="text-[10px] text-amber-400">✓</span>
+          <span className="text-xs text-amber-400 font-bold">✓ Selected</span>
+        )}
+        {hasBookedTickets && !allBooked && (
+          <span className="text-[10px] text-red-400">Partially Booked</span>
         )}
       </div>
       
-      {/* Ticket grid - wide and clear */}
-      <div className={`bg-white rounded-md overflow-hidden ${isSelected ? 'ring-1 ring-amber-400' : ''}`}>
-        <div className="grid grid-cols-9">
-          {ticket.numbers.map((row, rowIndex) => (
-            row.map((num, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`aspect-[1.2/1] flex items-center justify-center text-[9px] sm:text-[10px] font-bold border-r border-b border-gray-200 last:border-r-0 ${
-                  num === null 
-                    ? 'bg-gray-50' 
-                    : 'bg-white text-gray-900'
-                }`}
-              >
-                {num || ''}
-              </div>
-            ))
+      {/* The Full Sheet - Mustard Yellow background with white margin */}
+      <div 
+        className={`p-2 ${isSelected ? 'ring-3 ring-amber-500 shadow-xl shadow-amber-500/30' : ''}`}
+        style={{
+          backgroundColor: '#E6B800', // Mustard yellow
+          border: isSelected ? '3px solid #f59e0b' : '2px solid #cca300'
+        }}
+      >
+        {/* White inner margin */}
+        <div 
+          className="bg-white"
+          style={{ border: '1px solid #000' }}
+        >
+          {/* 6 Tickets stacked vertically */}
+          {tickets.map((ticket, index) => (
+            <LottoTicketCard
+              key={ticket.ticket_id}
+              ticket={ticket}
+              isFirst={index === 0}
+              pageNumber={pageNumber}
+            />
           ))}
         </div>
       </div>
