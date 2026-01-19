@@ -5,6 +5,7 @@ import LoginScreen from './pages/LoginScreen';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import GameDetails from './pages/GameDetails';
+import BookingCheckout from './pages/BookingCheckout';
 import LiveGame from './pages/LiveGame';
 import MyTickets from './pages/MyTickets';
 import GameHistory from './pages/GameHistory';
