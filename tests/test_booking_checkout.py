@@ -6,35 +6,32 @@ import pytest
 import requests
 import os
 import uuid
+import subprocess
 from datetime import datetime, timedelta
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://housie-game-1.preview.emergentagent.com').rstrip('/')
-
-# Test data
-TEST_SESSION_TOKEN = None
-TEST_USER_ID = None
-TEST_GAME_ID = None
-TEST_REQUEST_ID = None
 
 
 class TestBookingCheckoutFlow:
     """Test the complete booking checkout flow"""
     
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        """Setup test data before each test"""
-        global TEST_SESSION_TOKEN, TEST_USER_ID, TEST_GAME_ID
-        
-        # Create test user and session via mongosh
-        import subprocess
+    # Class-level variables to share between tests
+    session_token = None
+    user_id = None
+    game_id = None
+    request_id = None
+    
+    @classmethod
+    def setup_class(cls):
+        """Setup test data once for all tests in this class"""
         timestamp = int(datetime.now().timestamp() * 1000)
-        user_id = f"test-checkout-{timestamp}"
-        session_token = f"test_session_checkout_{timestamp}"
+        cls.user_id = f"test-checkout-{timestamp}"
+        cls.session_token = f"test_session_checkout_{timestamp}"
         
         mongo_script = f"""
         use('test_database');
         db.users.insertOne({{
-          user_id: '{user_id}',
+          user_id: '{cls.user_id}',
           email: 'test.checkout.{timestamp}@example.com',
           name: 'Checkout Test User',
           phone: '+918837489781',
@@ -42,39 +39,40 @@ class TestBookingCheckoutFlow:
           created_at: new Date()
         }});
         db.user_sessions.insertOne({{
-          user_id: '{user_id}',
-          session_token: '{session_token}',
+          user_id: '{cls.user_id}',
+          session_token: '{cls.session_token}',
           expires_at: new Date(Date.now() + 7*24*60*60*1000),
           created_at: new Date()
         }});
         """
         subprocess.run(['mongosh', '--quiet', '--eval', mongo_script], capture_output=True)
-        
-        TEST_SESSION_TOKEN = session_token
-        TEST_USER_ID = user_id
-        
-        yield
-        
-        # Cleanup after test
+        print(f"Created test user: {cls.user_id}")
+    
+    @classmethod
+    def teardown_class(cls):
+        """Cleanup after all tests in this class"""
         cleanup_script = f"""
         use('test_database');
-        db.users.deleteMany({{user_id: '{user_id}'}});
-        db.user_sessions.deleteMany({{session_token: '{session_token}'}});
-        db.booking_requests.deleteMany({{user_id: '{user_id}'}});
+        db.users.deleteMany({{user_id: '{cls.user_id}'}});
+        db.user_sessions.deleteMany({{session_token: '{cls.session_token}'}});
+        db.booking_requests.deleteMany({{user_id: '{cls.user_id}'}});
+        if ('{cls.game_id}' !== 'None') {{
+            db.games.deleteOne({{game_id: '{cls.game_id}'}});
+            db.tickets.deleteMany({{game_id: '{cls.game_id}'}});
+        }}
         """
         subprocess.run(['mongosh', '--quiet', '--eval', cleanup_script], capture_output=True)
+        print(f"Cleaned up test data")
     
     def get_auth_headers(self):
         """Get authorization headers"""
         return {
-            "Authorization": f"Bearer {TEST_SESSION_TOKEN}",
+            "Authorization": f"Bearer {self.session_token}",
             "Content-Type": "application/json"
         }
     
     def test_01_create_upcoming_game(self):
         """Create an upcoming game for testing"""
-        global TEST_GAME_ID
-        
         game_data = {
             "name": f"Checkout Test Game {uuid.uuid4().hex[:8]}",
             "date": "2026-02-01",
@@ -95,13 +93,13 @@ class TestBookingCheckoutFlow:
         assert response.status_code == 200, f"Failed to create game: {response.text}"
         data = response.json()
         assert data["status"] == "upcoming"
-        TEST_GAME_ID = data["game_id"]
-        print(f"Created test game: {TEST_GAME_ID}")
+        TestBookingCheckoutFlow.game_id = data["game_id"]
+        print(f"Created test game: {TestBookingCheckoutFlow.game_id}")
     
     def test_02_get_game_tickets(self):
         """Get available tickets for the game"""
         response = requests.get(
-            f"{BASE_URL}/api/games/{TEST_GAME_ID}/tickets?limit=10"
+            f"{BASE_URL}/api/games/{self.game_id}/tickets?limit=10"
         )
         
         assert response.status_code == 200
@@ -118,11 +116,9 @@ class TestBookingCheckoutFlow:
     
     def test_03_create_booking_request(self):
         """Create a booking request"""
-        global TEST_REQUEST_ID
-        
         # Get first 2 available tickets
         response = requests.get(
-            f"{BASE_URL}/api/games/{TEST_GAME_ID}/tickets?limit=2&available_only=true"
+            f"{BASE_URL}/api/games/{self.game_id}/tickets?limit=2&available_only=true"
         )
         tickets = response.json()["tickets"]
         ticket_ids = [t["ticket_id"] for t in tickets[:2]]
@@ -131,7 +127,7 @@ class TestBookingCheckoutFlow:
         response = requests.post(
             f"{BASE_URL}/api/booking-requests",
             json={
-                "game_id": TEST_GAME_ID,
+                "game_id": self.game_id,
                 "ticket_ids": ticket_ids
             },
             headers=self.get_auth_headers()
@@ -144,13 +140,13 @@ class TestBookingCheckoutFlow:
         assert data["request_id"].startswith("req_")
         assert data["total_amount"] == 200  # 2 tickets * 100
         
-        TEST_REQUEST_ID = data["request_id"]
-        print(f"Created booking request: {TEST_REQUEST_ID}")
+        TestBookingCheckoutFlow.request_id = data["request_id"]
+        print(f"Created booking request: {TestBookingCheckoutFlow.request_id}")
     
     def test_04_get_booking_request_by_id(self):
         """Get booking request by ID (for checkout page)"""
         response = requests.get(
-            f"{BASE_URL}/api/booking-requests/{TEST_REQUEST_ID}",
+            f"{BASE_URL}/api/booking-requests/{self.request_id}",
             headers=self.get_auth_headers()
         )
         
@@ -158,8 +154,8 @@ class TestBookingCheckoutFlow:
         data = response.json()
         
         # Verify all required fields for checkout page
-        assert data["request_id"] == TEST_REQUEST_ID
-        assert data["game_id"] == TEST_GAME_ID
+        assert data["request_id"] == self.request_id
+        assert data["game_id"] == self.game_id
         assert data["total_amount"] == 200
         assert "game_name" in data
         assert "ticket_numbers" in data
@@ -182,7 +178,7 @@ class TestBookingCheckoutFlow:
         assert len(data) >= 1
         
         # Find our request
-        our_request = next((r for r in data if r["request_id"] == TEST_REQUEST_ID), None)
+        our_request = next((r for r in data if r["request_id"] == self.request_id), None)
         assert our_request is not None
         assert our_request["status"] == "pending"
         
@@ -192,7 +188,7 @@ class TestBookingCheckoutFlow:
         """Verify duplicate booking request is rejected"""
         # Get more tickets
         response = requests.get(
-            f"{BASE_URL}/api/games/{TEST_GAME_ID}/tickets?limit=10&available_only=true"
+            f"{BASE_URL}/api/games/{self.game_id}/tickets?limit=10&available_only=true"
         )
         tickets = response.json()["tickets"]
         ticket_ids = [t["ticket_id"] for t in tickets[:2]]
@@ -201,7 +197,7 @@ class TestBookingCheckoutFlow:
         response = requests.post(
             f"{BASE_URL}/api/booking-requests",
             json={
-                "game_id": TEST_GAME_ID,
+                "game_id": self.game_id,
                 "ticket_ids": ticket_ids
             },
             headers=self.get_auth_headers()
@@ -215,7 +211,7 @@ class TestBookingCheckoutFlow:
         """Verify unauthorized access to booking request is rejected"""
         # Try to access without auth
         response = requests.get(
-            f"{BASE_URL}/api/booking-requests/{TEST_REQUEST_ID}"
+            f"{BASE_URL}/api/booking-requests/{self.request_id}"
         )
         
         assert response.status_code == 401
@@ -241,7 +237,6 @@ class TestBookingCheckoutFlow:
                     ticket_ids = [t["ticket_id"] for t in tickets[:2]]
                     
                     # Create a new user for this test
-                    import subprocess
                     timestamp = int(datetime.now().timestamp() * 1000)
                     new_user_id = f"test-live-{timestamp}"
                     new_session = f"test_session_live_{timestamp}"
@@ -294,22 +289,6 @@ class TestBookingCheckoutFlow:
                 print("Skipping live game test - couldn't get tickets")
         else:
             print("Skipping live game test - no live games found")
-    
-    def test_09_cleanup_test_game(self):
-        """Cleanup test game"""
-        global TEST_GAME_ID
-        
-        if TEST_GAME_ID:
-            # Delete via admin endpoint
-            import subprocess
-            cleanup_script = f"""
-            use('test_database');
-            db.games.deleteOne({{game_id: '{TEST_GAME_ID}'}});
-            db.tickets.deleteMany({{game_id: '{TEST_GAME_ID}'}});
-            db.booking_requests.deleteMany({{game_id: '{TEST_GAME_ID}'}});
-            """
-            subprocess.run(['mongosh', '--quiet', '--eval', cleanup_script], capture_output=True)
-            print(f"Cleaned up test game: {TEST_GAME_ID}")
 
 
 class TestTransactionReferenceFormat:
@@ -317,7 +296,7 @@ class TestTransactionReferenceFormat:
     
     def test_txn_ref_format(self):
         """Verify transaction reference format: TMB + 6 alphanumeric chars"""
-        import re
+        import random
         
         # The format should be TMB followed by 6 characters from:
         # ABCDEFGHJKLMNPQRSTUVWXYZ23456789 (excluding I,O,0,1)
@@ -326,7 +305,6 @@ class TestTransactionReferenceFormat:
         # Generate multiple refs and verify format
         for _ in range(10):
             ref = "TMB"
-            import random
             for _ in range(6):
                 ref += random.choice(valid_chars)
             
@@ -413,6 +391,43 @@ class TestUPIConfiguration:
         assert whatsapp_display.startswith("+")
         
         print(f"WhatsApp number format verified: {whatsapp_display}")
+
+
+class TestRouteConfiguration:
+    """Test route configuration in App.js"""
+    
+    def test_checkout_route_exists(self):
+        """Verify /checkout/:requestId route exists in App.js"""
+        with open('/app/frontend/src/App.js', 'r') as f:
+            app_content = f.read()
+        
+        # Check for checkout route
+        assert '/checkout/:requestId' in app_content or 'checkout/:requestId' in app_content
+        assert 'BookingCheckout' in app_content
+        
+        print("Checkout route verified in App.js")
+    
+    def test_booking_checkout_component_exists(self):
+        """Verify BookingCheckout component exists"""
+        import os
+        assert os.path.exists('/app/frontend/src/pages/BookingCheckout.js')
+        
+        with open('/app/frontend/src/pages/BookingCheckout.js', 'r') as f:
+            content = f.read()
+        
+        # Check for required data-testid attributes
+        assert 'data-testid="booking-summary"' in content
+        assert 'data-testid="pay-upi-btn"' in content
+        assert 'data-testid="send-whatsapp-btn"' in content
+        
+        # Check for UPI ID
+        assert 'choegyalsangpo@ibl' in content
+        
+        # Check for WhatsApp number
+        assert '918837489781' in content
+        assert '+91 8837489781' in content
+        
+        print("BookingCheckout component verified")
 
 
 if __name__ == "__main__":
