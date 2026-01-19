@@ -291,7 +291,7 @@ Txn Ref: ${txnRef}
               <p className="text-amber-500 font-mono text-lg">{txnRef}</p>
             </div>
             <p className="text-gray-500 text-xs">
-              You'll receive a confirmation on WhatsApp within 5-10 minutes.
+              You&apos;ll receive a confirmation on WhatsApp within 5-10 minutes.
             </p>
           </div>
         )}
