@@ -218,7 +218,7 @@ Txn Ref: ${txnRef}
           <div className="mt-4 p-3 bg-black/30 rounded-lg">
             <p className="text-gray-400 text-sm mb-2 flex items-center gap-1">
               <Info className="w-4 h-4" />
-              If UPI app didn't open, pay manually to:
+              If UPI app didn&apos;t open, pay manually to:
             </p>
             <div className="flex items-center justify-between">
               <span className="text-white font-mono text-base">{UPI_ID}</span>
