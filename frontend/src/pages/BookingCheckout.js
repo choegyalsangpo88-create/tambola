@@ -268,7 +268,7 @@ Txn Ref: ${txnRef}
           <div className="mt-4 p-3 bg-black/30 rounded-lg">
             <p className="text-gray-400 text-sm mb-1 flex items-center gap-1">
               <Info className="w-4 h-4" />
-              If WhatsApp doesn't open:
+              If WhatsApp doesn&apos;t open:
             </p>
             <p className="text-green-400 font-mono text-base">
               WhatsApp Number: {WHATSAPP_DISPLAY}
