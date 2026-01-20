@@ -781,7 +781,6 @@ export default function LiveGame() {
                   numbers={ticket.numbers}
                   calledNumbers={Array.from(markedNumbers)}
                   showRemaining={false}
-                  holderName={ticket.holder_name || ticket.booked_by_name}
                   size={ticketZoom === 1 ? 'small' : ticketZoom === 2 ? 'normal' : 'large'}
                 />
               ))}
