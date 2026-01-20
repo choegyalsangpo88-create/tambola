@@ -122,7 +122,7 @@ class GameCreate(BaseModel):
         "Middle Line": 1000,
         "Bottom Line": 1000,
         "Four Corners": 1500,
-        "Full Sheet Bonus": 2000,
+        "Full Sheet Corner": 2000,
         "1st Full House": 5000,
         "2nd Full House": 3000,
         "3rd Full House": 2000
