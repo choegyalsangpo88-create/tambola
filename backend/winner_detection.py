@@ -440,7 +440,7 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
             except Exception as e:
                 logger.debug(f"Could not infer full_sheet_id from {ticket_number}: {e}")
         
-        # Group by user and full sheet for Full Sheet Bonus
+        # Group by user and full sheet for Full Sheet Corner detection
         # Check if this ticket is part of a full sheet (regardless of booking_type)
         group_key = user_id or holder_name
         if full_sheet_id and group_key:
