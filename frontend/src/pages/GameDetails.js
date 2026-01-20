@@ -620,7 +620,7 @@ Txn Ref: ${txnRef}
                 
                 <button
                   type="button"
-                  onClick={handlePayViaUPI}
+                  onClick={openUPIPayment}
                   className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl"
                   data-testid="pay-upi-btn"
                 >
@@ -670,7 +670,7 @@ Txn Ref: ${txnRef}
 
                 <button
                   type="button"
-                  onClick={handleSendWhatsApp}
+                  onClick={openWhatsAppConfirmation}
                   className="w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl"
                   data-testid="send-whatsapp-btn"
                 >
