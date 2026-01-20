@@ -642,14 +642,27 @@ export default function LiveGame() {
                 const winner = session.winners?.[prize];
                 // Get first name only for cleaner display
                 const winnerFirstName = winner?.holder_name?.split(' ')[0] || winner?.name?.split(' ')[0] || '';
+                const isFullSheetCorner = winner?.is_full_sheet || prize.toLowerCase().includes('full sheet corner');
                 return (
                   <div 
                     key={prize} 
                     className={`px-1.5 py-1.5 rounded cursor-pointer transition-all ${winner ? 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' : 'bg-white/5 hover:bg-white/10'}`}
                     onClick={() => {
-                      if (winner && winner.ticket_id) {
-                        const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
-                        if (winningTicket) setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                      if (winner) {
+                        if (isFullSheetCorner) {
+                          // For Full Sheet Corner, show special modal with corner info
+                          setSelectedWinnerTicket({ 
+                            prize, 
+                            winner,
+                            isFullSheetCorner: true,
+                            corner_numbers: winner.corner_numbers,
+                            sheet_tickets: winner.sheet_tickets,
+                            ticket_number: winner.ticket_number
+                          });
+                        } else if (winner.ticket_id) {
+                          const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
+                          if (winningTicket) setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                        }
                       }
                     }}
                   >
