@@ -615,25 +615,52 @@ export default function GameDetails() {
 
       {/* ===== PAYMENT PANEL (Slide-up) ===== */}
       {showPaymentPanel && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60" onClick={() => setShowPaymentPanel(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60" onClick={handleCancelBooking}>
           <div 
             className="w-full max-w-lg bg-[#0f0f14] rounded-t-3xl border-t border-white/10 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Panel Header */}
-            <div className="sticky top-0 bg-[#0f0f14] px-4 py-3 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">Complete Payment</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowPaymentPanel(false)}
-                className="h-8 w-8 text-gray-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+            {/* Panel Header with Timer */}
+            <div className="sticky top-0 bg-[#0f0f14] px-4 py-3 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-white">Complete Payment</h2>
+                <div className="flex items-center gap-3">
+                  {/* Timer */}
+                  <div className={`px-3 py-1 rounded-full font-mono text-sm font-bold ${
+                    timeLeft <= 60 ? 'bg-red-500/20 text-red-400' : 
+                    timeLeft <= 180 ? 'bg-amber-500/20 text-amber-400' : 
+                    'bg-green-500/20 text-green-400'
+                  }`}>
+                    ⏱️ {formatTime(timeLeft)}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleCancelBooking}
+                    className="h-8 w-8 text-gray-400 hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+              {/* Booking Request ID */}
+              {bookingRequestId && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Booking ID: <span className="text-amber-500 font-mono">{bookingRequestId}</span>
+                </p>
+              )}
             </div>
 
             <div className="p-4 space-y-4">
+              {/* Timer Warning */}
+              {timeLeft <= 120 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+                  <p className="text-red-400 text-sm text-center font-medium">
+                    ⚠️ Complete payment within {formatTime(timeLeft)} or booking will expire!
+                  </p>
+                </div>
+              )}
+
               {/* ===== A. BOOKING SUMMARY (Read-only) ===== */}
               <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
                 <h3 className="text-base font-bold text-white mb-3">🧾 Booking Summary</h3>
