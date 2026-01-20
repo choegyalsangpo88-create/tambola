@@ -169,41 +169,6 @@ const LottoTicket = ({
             ))}
           </div>
         </div>
-
-        {/* Remaining count */}
-        {showRemaining && calledNumbers.length > 0 && (
-          <div style={{
-            padding: '6px 10px',
-            borderTop: '1px solid #e0e0e0',
-            background: 'linear-gradient(180deg, #fafafa 0%, #f0f0f0 100%)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <span style={{
-              fontSize: '10px',
-              color: '#64748b',
-              fontWeight: '600'
-            }}>
-              {markedCount}/15 marked
-            </span>
-            <span style={{
-              background: remaining <= 3 
-                ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                : remaining <= 6 
-                  ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
-                  : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-              color: '#ffffff',
-              padding: '3px 10px',
-              borderRadius: '12px',
-              fontSize: '10px',
-              fontWeight: '700',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              {remaining} left
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
