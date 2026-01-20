@@ -580,21 +580,45 @@ export default function GameDetails() {
                   Step 1: Pay via UPI
                 </h3>
                 
-                {/* UPI BUTTON - Direct anchor link to UPI app */}
-                <a
-                  href={`upi://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
-                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center no-underline"
-                  data-testid="pay-upi-btn"
-                  style={{ textDecoration: 'none' }}
-                  onClick={() => console.log('UPI CLICKED - href should be upi://')}
-                >
-                  💳 Pay ₹{getTotalAmount()} via UPI
-                </a>
+                {/* UPI App Selection for iOS compatibility */}
+                <div className="space-y-2">
+                  {/* Google Pay */}
+                  <a
+                    href={`gpay://upi/pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
+                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl flex items-center justify-center no-underline"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Pay ₹{getTotalAmount()} with Google Pay
+                  </a>
+                  
+                  {/* PhonePe */}
+                  <a
+                    href={`phonepe://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
+                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl flex items-center justify-center no-underline"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Pay ₹{getTotalAmount()} with PhonePe
+                  </a>
+                  
+                  {/* Paytm */}
+                  <a
+                    href={`paytmmp://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
+                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-xl flex items-center justify-center no-underline"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Pay ₹{getTotalAmount()} with Paytm
+                  </a>
 
-                {/* Show the actual UPI link for debugging */}
-                <p className="text-[10px] text-gray-500 mt-2 break-all">
-                  Link: upi://pay?pa=choegyalsangpo@ibl&pn=Choegyal%20Sangpo&am={getTotalAmount()}&cu=INR&tn=Order-{txnRef}
-                </p>
+                  {/* Generic UPI (for Android) */}
+                  <a
+                    href={`upi://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
+                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center no-underline"
+                    style={{ textDecoration: 'none' }}
+                    data-testid="pay-upi-btn"
+                  >
+                    Pay ₹{getTotalAmount()} with Other UPI App
+                  </a>
+                </div>
 
                 {/* Fallback for UPI */}
                 <div className="mt-3 p-3 bg-black/30 rounded-lg">
