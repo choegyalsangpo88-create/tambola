@@ -8,7 +8,8 @@ const LottoTicket = ({
   ticketNumber, 
   numbers, 
   calledNumbers = [], 
-  showRemaining = true,
+  showRemaining = false,
+  holderName = null,
   size = 'normal'
 }) => {
   const calledSet = new Set(calledNumbers);
@@ -81,29 +82,44 @@ const LottoTicket = ({
           padding: '6px 10px',
           borderBottom: '1px solid #e0e0e0',
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '8px'
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <span style={{
-            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-            fontWeight: '700',
-            fontSize: config.headerFont,
-            color: '#1a1a1a',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase'
-          }}>
-            Lotto Ticket
-          </span>
-          <span style={{
-            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-            fontWeight: '800',
-            fontSize: config.ticketFont,
-            color: '#f59e0b',
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-          }}>
-            {ticketNumber || 'T001'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+              fontWeight: '700',
+              fontSize: config.headerFont,
+              color: '#1a1a1a',
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase'
+            }}>
+              Lotto Ticket
+            </span>
+            <span style={{
+              fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+              fontWeight: '800',
+              fontSize: config.ticketFont,
+              color: '#f59e0b',
+              textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            }}>
+              {ticketNumber || 'T001'}
+            </span>
+          </div>
+          {holderName && (
+            <span style={{
+              fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+              fontWeight: '700',
+              fontSize: config.ticketFont,
+              color: '#1a1a1a',
+              maxWidth: '120px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {holderName}
+            </span>
+          )}
         </div>
         
         {/* Grid */}
