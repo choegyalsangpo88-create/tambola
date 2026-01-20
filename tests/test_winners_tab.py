@@ -17,7 +17,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://housie-game-1.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tambola-live-7.preview.emergentagent.com').rstrip('/')
 
 # Test game IDs
 LIVE_GAME_ID = "game_f7d76225"  # Auto-Start Test Game 013955 (LIVE)
