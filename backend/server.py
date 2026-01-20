@@ -4130,82 +4130,8 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
                 )
                 logger.info(f"Winner found for {prize} in user game {user_game_id}: {candidate['holder_name']}")
         
-        # Check Full Sheet Bonus
-        # Group tickets by player and full_sheet_id
-        for prize_type in dividends.keys():
-            if "Full Sheet" in prize_type or "Bonus" in prize_type:
-                if prize_type in current_winners:
-                    continue
-                
-                # Group tickets by player name and full_sheet_id
-                player_sheets = {}  # player_name -> {full_sheet_id -> [tickets]}
-                
-                for ticket in assigned_tickets:
-                    player_name = ticket.get("assigned_to")
-                    full_sheet_id = ticket.get("full_sheet_id")
-                    if not player_name or not full_sheet_id:
-                        continue
-                    
-                    if player_name not in player_sheets:
-                        player_sheets[player_name] = {}
-                    if full_sheet_id not in player_sheets[player_name]:
-                        player_sheets[player_name][full_sheet_id] = []
-                    player_sheets[player_name][full_sheet_id].append(ticket)
-                
-                # Check each player's complete sheets
-                for player_name, sheets in player_sheets.items():
-                    for sheet_id, sheet_tickets in sheets.items():
-                        # Must have all 6 tickets of the sheet
-                        if len(sheet_tickets) != 6:
-                            continue
-                        
-                        # Verify all 6 positions are present
-                        positions = {t.get("ticket_position_in_sheet") for t in sheet_tickets}
-                        if positions != {1, 2, 3, 4, 5, 6}:
-                            continue
-                        
-                        # Check if each ticket has at least 2 numbers marked (STRICT RULE)
-                        called_set = set(called_numbers)
-                        all_have_marks = True
-                        marks_per_ticket = []
-                        
-                        for ticket in sheet_tickets:
-                            ticket_numbers = ticket.get("numbers", [])
-                            marked_count = sum(
-                                1 for row in ticket_numbers 
-                                for num in row 
-                                if num is not None and num != 0 and num in called_set
-                            )
-                            marks_per_ticket.append(marked_count)
-                            if marked_count < 2:  # Each ticket must have at least 2 marked numbers
-                                all_have_marks = False
-                                break
-                        
-                        logger.debug(f"Full Sheet Bonus Check - Player: {player_name}, Sheet: {sheet_id}, Marks: {marks_per_ticket}, Eligible: {all_have_marks} (need >=2 per ticket)")
-                        
-                        if all_have_marks:
-                            current_winners[prize_type] = {
-                                "holder_name": player_name,
-                                "name": player_name,
-                                "full_sheet_id": sheet_id,
-                                "pattern": "Full Sheet Bonus",
-                                "won_at": datetime.now(timezone.utc).isoformat()
-                            }
-                            await db.user_games.update_one(
-                                {"user_game_id": user_game_id},
-                                {"$set": {"winners": current_winners}}
-                            )
-                            logger.info(f"Winner found for Full Sheet Bonus in user game {user_game_id}: {player_name}")
-                            break
-                    
-                    if prize_type in current_winners:
-                        break
-        
         # Auto-end game if all prizes won
-        # Filter out Full Sheet Bonus from check
-        actual_dividends = {k: v for k, v in dividends.items() if "Full Sheet" not in k and "Bonus" not in k}
-        
-        if actual_dividends and len(current_winners) >= len(actual_dividends):
+        if dividends and len(current_winners) >= len(dividends):
             await db.user_games.update_one(
                 {"user_game_id": user_game_id},
                 {"$set": {
