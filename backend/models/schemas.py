@@ -64,7 +64,7 @@ class Booking(BaseModel):
     booking_date: datetime
     status: str
     whatsapp_confirmed: bool = False
-    has_full_sheet_bonus: bool = False
+    full_sheet_booked: bool = False  # True if all 6 tickets of a sheet are booked
     full_sheet_id: Optional[str] = None
 
 
