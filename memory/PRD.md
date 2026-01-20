@@ -68,7 +68,7 @@ A full-stack Tambola (Housie) game application designed for Indian players with 
 - Game name, date, time fields
 - Tickets count (must be multiple of 6 for full sheets)
 - Price per ticket
-- Prize configuration (Quick Five, Four Corners, Full Sheet Bonus, Top/Middle/Bottom Line, 1st/2nd/3rd Full House)
+- Prize configuration (Quick Five, Four Corners, Full Sheet Corner, Top/Middle/Bottom Line, 1st/2nd/3rd Full House)
   
 #### Manage Games Section ✅
 - Table view with columns: Game, Date & Time, Tickets (with progress bar), Revenue, Status, Actions
