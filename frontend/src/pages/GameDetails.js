@@ -772,13 +772,12 @@ export default function GameDetails() {
 
                 {/* WHATSAPP BUTTON - Direct anchor link to WhatsApp */}
                 <a
-                  href={`https://wa.me/918837489781?text=${encodeURIComponent(`✅ PAYMENT DONE\n\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ₹${getTotalAmount()}\nTxn Ref: ${txnRef}\n\n📸 Screenshot attached`)}`}
+                  href={`https://wa.me/918837489781?text=${encodeURIComponent(`✅ PAYMENT DONE\n\nBooking ID: ${bookingRequestId || 'N/A'}\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ₹${getTotalAmount()}\nTxn Ref: ${txnRef}\n\n📸 Screenshot attached`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl flex items-center justify-center no-underline"
                   data-testid="send-whatsapp-btn"
                   style={{ textDecoration: 'none' }}
-                  onClick={() => console.log('WHATSAPP CLICKED - href should be wa.me')}
                 >
                   📱 Send Payment Confirmation on WhatsApp
                 </a>
@@ -797,13 +796,15 @@ export default function GameDetails() {
               <Button
                 onClick={() => {
                   setShowPaymentPanel(false);
+                  setTimerActive(false);
                   setSelectedTickets([]);
-                  toast.success('Your booking will be confirmed after payment verification');
+                  setBookingRequestId(null);
+                  toast.success('Your booking request has been submitted! We will confirm after payment verification.');
                 }}
                 variant="outline"
                 className="w-full h-12 border-white/20 text-white"
               >
-                Done
+                Done - I've Sent Payment Confirmation
               </Button>
             </div>
           </div>
