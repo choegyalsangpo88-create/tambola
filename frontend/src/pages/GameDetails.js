@@ -598,15 +598,15 @@ export default function GameDetails() {
               )}
               <Button
                 onClick={handleProceedToPayment}
-                disabled={selectedTickets.length === 0}
+                disabled={selectedTickets.length === 0 || isCreatingBooking}
                 className={`font-bold h-10 px-6 ${
-                  selectedTickets.length > 0 
+                  selectedTickets.length > 0 && !isCreatingBooking
                     ? 'bg-amber-500 hover:bg-amber-600 text-black' 
                     : 'bg-gray-600 cursor-not-allowed'
                 }`}
                 data-testid="proceed-to-payment-btn"
               >
-                Proceed to Payment
+                {isCreatingBooking ? 'Creating...' : 'Proceed to Payment'}
               </Button>
             </div>
           </div>
