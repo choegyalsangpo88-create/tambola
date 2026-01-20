@@ -313,29 +313,22 @@ export default function GameDetails() {
   };
 
   // ===== BUTTON 1: PAY VIA UPI =====
-  // Opens UPI app ONLY - no WhatsApp, no navigation
-  const handlePayViaUPI = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+  // Opens UPI app directly with pre-filled amount
+  const openUPIPayment = () => {
     const amount = getTotalAmount();
-    const note = `SixSevenTambola-${txnRef}`;
-    const upiLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const orderRef = `Order-${txnRef}`;
     
-    // Create a temporary link and click it - better UPI handling
-    const link = document.createElement('a');
-    link.href = upiLink;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Exact UPI deep link format as specified
+    // upi://pay?pa=choegyalsangpo@ibl&pn=Choegyal Sangpo&am={amount}&cu=INR&tn={order_reference}
+    const upiURL = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(orderRef)}`;
+    
+    // Open UPI link directly
+    window.location.href = upiURL;
   };
 
   // ===== BUTTON 2: SEND WHATSAPP CONFIRMATION =====
-  // Opens WhatsApp ONLY on click - exact message format
-  const handleSendWhatsApp = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Opens WhatsApp with pre-filled message
+  const openWhatsAppConfirmation = () => {
     const ticketNumbers = getSelectedTicketNumbers();
     const amount = getTotalAmount();
     const gameName = game?.name || 'Tambola Game';
@@ -351,10 +344,10 @@ Txn Ref: ${txnRef}
 📸 Screenshot attached`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
     
-    // Open WhatsApp - ONLY on click, no async, no auto-redirect
-    window.open(whatsappUrl, '_blank');
+    // Open WhatsApp
+    window.open(whatsappURL, '_blank');
   };
 
   // Copy UPI ID to clipboard
