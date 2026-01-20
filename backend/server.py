@@ -87,7 +87,7 @@ class Booking(BaseModel):
     status: str  # pending, paid, cancelled (no deletion allowed)
     whatsapp_confirmed: bool = False
     whatsapp_opt_in: bool = True  # User opts in for WhatsApp notifications
-    has_full_sheet_bonus: bool = False
+    full_sheet_booked: bool = False  # True if all 6 tickets of a sheet are booked
     full_sheet_id: Optional[str] = None
     # Agent assignment fields
     assigned_agent_id: Optional[str] = None
