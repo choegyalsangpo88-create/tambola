@@ -1566,7 +1566,7 @@ async def create_booking(
     if len(tickets) != len(booking_data.ticket_ids):
         raise HTTPException(status_code=400, detail="Some tickets are already booked")
     
-    # Check for Full Sheet Bonus (all 6 tickets of same sheet)
+    # Check for Full Sheet booking (all 6 tickets of same sheet) - for Full Sheet Corner eligibility
     full_sheets = {}
     for ticket in tickets:
         sheet_id = ticket.get("full_sheet_id", "")
@@ -1575,22 +1575,17 @@ async def create_booking(
         full_sheets[sheet_id].append(ticket["ticket_position_in_sheet"])
     
     # Check if any full sheet has all 6 tickets
-    full_sheet_bonus = False
-    bonus_sheet_id = None
+    full_sheet_booked = False
+    booked_sheet_id = None
     for sheet_id, positions in full_sheets.items():
         if len(positions) == 6 and set(positions) == {1, 2, 3, 4, 5, 6}:
-            full_sheet_bonus = True
-            bonus_sheet_id = sheet_id
+            full_sheet_booked = True
+            booked_sheet_id = sheet_id
             break
     
     # Create booking
     booking_id = f"booking_{uuid.uuid4().hex[:8]}"
     total_amount = game["price"] * len(booking_data.ticket_ids)
-    
-    # Add Full Sheet Bonus to amount if applicable
-    full_sheet_bonus_amount = 0
-    if full_sheet_bonus:
-        full_sheet_bonus_amount = game["prizes"].get("Full Sheet Bonus", 1000)
     
     booking = {
         "booking_id": booking_id,
@@ -1601,25 +1596,25 @@ async def create_booking(
         "booking_date": datetime.now(timezone.utc),
         "status": "pending",
         "whatsapp_confirmed": False,
-        "has_full_sheet_bonus": full_sheet_bonus,
-        "full_sheet_id": bonus_sheet_id
+        "full_sheet_booked": full_sheet_booked,
+        "full_sheet_id": booked_sheet_id
     }
     
     await db.bookings.insert_one(booking)
     
-    # Mark tickets as booked - Include booking_type for full sheet bonus eligibility
+    # Mark tickets as booked
     update_fields = {
         "is_booked": True,
         "user_id": user.user_id,
         "booking_status": "pending",
-        "holder_name": user.name  # Store user's name on the ticket
+        "holder_name": user.name
     }
     
     # If this is a full sheet booking, mark those tickets specially
-    if full_sheet_bonus and bonus_sheet_id:
+    if full_sheet_booked and booked_sheet_id:
         # Mark the full sheet tickets with booking_type = "FULL_SHEET"
         await db.tickets.update_many(
-            {"ticket_id": {"$in": booking_data.ticket_ids}, "full_sheet_id": bonus_sheet_id},
+            {"ticket_id": {"$in": booking_data.ticket_ids}, "full_sheet_id": booked_sheet_id},
             {
                 "$set": {
                     **update_fields,
@@ -1629,7 +1624,7 @@ async def create_booking(
             }
         )
         # Mark remaining tickets (if any) as regular
-        non_sheet_tickets = [t["ticket_id"] for t in tickets if t.get("full_sheet_id") != bonus_sheet_id]
+        non_sheet_tickets = [t["ticket_id"] for t in tickets if t.get("full_sheet_id") != booked_sheet_id]
         if non_sheet_tickets:
             await db.tickets.update_many(
                 {"ticket_id": {"$in": non_sheet_tickets}},
@@ -1647,9 +1642,6 @@ async def create_booking(
         {"game_id": booking_data.game_id},
         {"$inc": {"available_tickets": -len(booking_data.ticket_ids)}}
     )
-    
-    if full_sheet_bonus:
-        toast_msg = f"Booking created! 🎉 Full Sheet Bonus eligible for {bonus_sheet_id}!"
     
     return Booking(**booking)
 
