@@ -350,14 +350,66 @@ export default function GameDetails() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Open payment panel
-  const handleProceedToPayment = () => {
+  // Create booking request and open payment panel
+  const handleProceedToPayment = async () => {
     if (selectedTickets.length === 0) {
       toast.error('Please select at least one ticket');
       return;
     }
-    generateTxnRef();
-    setShowPaymentPanel(true);
+    
+    setIsCreatingBooking(true);
+    
+    try {
+      // Get auth token
+      const session = localStorage.getItem('tambola_session');
+      if (!session) {
+        toast.error('Please login first');
+        navigate('/login');
+        return;
+      }
+      
+      // Create booking request
+      const response = await axios.post(
+        `${API}/booking-requests`,
+        {
+          game_id: gameId,
+          ticket_ids: selectedTickets
+        },
+        {
+          headers: { 'Authorization': `Bearer ${session}` },
+          withCredentials: true
+        }
+      );
+      
+      if (response.data.request_id) {
+        setBookingRequestId(response.data.request_id);
+        generateTxnRef();
+        setTimeLeft(600); // Reset timer to 10 minutes
+        setTimerActive(true);
+        setShowPaymentPanel(true);
+        toast.success('Booking request created! Complete payment within 10 minutes.');
+      }
+    } catch (error) {
+      console.error('Failed to create booking request:', error);
+      if (error.response?.status === 400) {
+        toast.error(error.response.data?.detail || 'Some tickets are no longer available');
+        fetchAllTickets(); // Refresh tickets
+      } else {
+        toast.error('Failed to create booking. Please try again.');
+      }
+    } finally {
+      setIsCreatingBooking(false);
+    }
+  };
+
+  // Cancel booking and close panel
+  const handleCancelBooking = () => {
+    setShowPaymentPanel(false);
+    setTimerActive(false);
+    setTimeLeft(600);
+    setSelectedTickets([]);
+    setBookingRequestId(null);
+    toast.info('Booking cancelled');
   };
 
   // Filter sheets
