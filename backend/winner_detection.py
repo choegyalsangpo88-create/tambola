@@ -161,7 +161,7 @@ def check_full_sheet_corner(tickets, called_numbers):
     
     # Rule 1: Must have exactly 6 tickets
     if len(tickets) != 6:
-        logger.debug(f"Full Sheet Corner FAIL: {len(tickets)} tickets (need exactly 6)")
+        logger.info(f"Full Sheet Corner FAIL: {len(tickets)} tickets (need exactly 6)")
         return False
     
     # Get first ticket (ticket 1) and last ticket (ticket 6)
@@ -171,17 +171,23 @@ def check_full_sheet_corner(tickets, called_numbers):
     # Extract numbers array
     if isinstance(first_ticket, dict):
         first_numbers = first_ticket.get("numbers", [])
+        first_tn = first_ticket.get("ticket_number", "?")
     else:
         first_numbers = first_ticket
+        first_tn = "?"
     
     if isinstance(last_ticket, dict):
         last_numbers = last_ticket.get("numbers", [])
+        last_tn = last_ticket.get("ticket_number", "?")
     else:
         last_numbers = last_ticket
+        last_tn = "?"
+    
+    logger.info(f"Full Sheet Corner checking: First ticket={first_tn}, Last ticket={last_tn}")
     
     # Validate ticket structure
     if len(first_numbers) < 1 or len(last_numbers) < 3:
-        logger.debug("Full Sheet Corner FAIL: Invalid ticket structure")
+        logger.info("Full Sheet Corner FAIL: Invalid ticket structure")
         return False
     
     # Get top row of first ticket and bottom row of last ticket
@@ -202,11 +208,11 @@ def check_full_sheet_corner(tickets, called_numbers):
     bottom_left, bottom_right = get_corners(last_bottom_row)
     
     if None in [top_left, top_right, bottom_left, bottom_right]:
-        logger.debug("Full Sheet Corner FAIL: Could not find all corner numbers")
+        logger.info("Full Sheet Corner FAIL: Could not find all corner numbers")
         return False
     
     corners = [top_left, top_right, bottom_left, bottom_right]
-    logger.debug(f"Full Sheet Corner numbers: TL={top_left}, TR={top_right}, BL={bottom_left}, BR={bottom_right}")
+    logger.info(f"Full Sheet Corner numbers: TL={top_left} (from {first_tn}), TR={top_right} (from {first_tn}), BL={bottom_left} (from {last_tn}), BR={bottom_right} (from {last_tn})")
     
     # Check if all four corners are called
     all_marked = all(corner in called_set for corner in corners)
@@ -215,7 +221,8 @@ def check_full_sheet_corner(tickets, called_numbers):
         logger.info(f"Full Sheet Corner PASS: All 4 corners marked {corners}")
     else:
         marked = [c for c in corners if c in called_set]
-        logger.debug(f"Full Sheet Corner: {len(marked)}/4 marked - {marked}")
+        not_marked = [c for c in corners if c not in called_set]
+        logger.info(f"Full Sheet Corner: {len(marked)}/4 marked. Marked: {marked}, Not marked: {not_marked}")
     
     return all_marked
 
