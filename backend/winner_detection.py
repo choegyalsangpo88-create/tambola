@@ -354,18 +354,12 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     
     # Determine which prizes to check
     prizes_to_check = list(game_dividends.keys()) if game_dividends else [
-        "Quick Five", "Early Five", "Four Corners", "Full Sheet Bonus",
+        "Quick Five", "Early Five", "Four Corners", "Full Sheet Corner",
         "Top Line", "Middle Line", "Bottom Line",
         "1st Full House", "2nd Full House", "3rd Full House"
     ]
     
     logger.info(f"Checking prizes: {prizes_to_check}")
-    
-    # ALWAYS include Full Sheet Bonus in checks (even if not in game prizes)
-    # This ensures Full Sheet Bonus is always detected when earned
-    if "Full Sheet Bonus" not in prizes_to_check:
-        prizes_to_check.append("Full Sheet Bonus")
-        logger.info("Added Full Sheet Bonus to prizes_to_check (always check)")
     
     # Normalize prize names for comparison (handle different formats)
     def normalize_prize_name(name):
