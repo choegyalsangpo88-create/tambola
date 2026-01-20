@@ -4038,8 +4038,7 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
         # Track Full House winners for sequential assignment
         full_house_candidates = []
         
-        # Check Full Sheet Bonus first (requires grouped tickets)
-        # Note: Full Sheet Bonus is removed, only Full Sheet Corner remains
+        # Check Full Sheet Corner first (requires grouped tickets)
         
         # Use assigned_tickets or participants
         ticket_source = assigned_tickets if assigned_tickets else [
