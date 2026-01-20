@@ -611,19 +611,34 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     logger.info(f"Full Sheet Corner prize name: {full_sheet_corner_prize}")
     
     if full_sheet_corner_prize and full_sheet_corner_prize not in existing_winners and full_sheet_corner_prize not in new_winners:
+        logger.info(f"Checking Full Sheet Corner for {len(user_sheets)} users/groups")
         for group_key, sheets in user_sheets.items():
+            logger.info(f"User/Group {group_key} has {len(sheets)} sheets")
             for sheet_id, sheet_data in sheets.items():
                 if not sheet_id:
                     continue
                 
                 ticket_count = len(sheet_data["tickets"])
+                logger.info(f"Sheet {sheet_id} has {ticket_count} tickets for user {group_key}")
                 
                 # Must have exactly 6 tickets (full sheet)
                 if ticket_count != 6:
+                    logger.info(f"Sheet {sheet_id} skipped - has {ticket_count} tickets, need 6")
                     continue
                 
-                # Sort tickets by position to ensure correct order (1-6)
-                sorted_tickets = sorted(sheet_data["tickets"], key=lambda t: t.get("ticket_position_in_sheet", 0))
+                # Sort tickets by position OR by ticket number as fallback
+                def sort_key(t):
+                    pos = t.get("ticket_position_in_sheet")
+                    if pos is not None and pos > 0:
+                        return pos
+                    # Fallback: extract number from ticket_number
+                    tn = t.get("ticket_number", "")
+                    num_str = ''.join(filter(str.isdigit, tn))
+                    return int(num_str) if num_str else 0
+                
+                sorted_tickets = sorted(sheet_data["tickets"], key=sort_key)
+                ticket_nums = [t.get("ticket_number") for t in sorted_tickets]
+                logger.info(f"Sheet {sheet_id} sorted ticket order: {ticket_nums}")
                 
                 # Check Full Sheet Corner
                 if check_full_sheet_corner(sorted_tickets, called_set):
@@ -664,6 +679,8 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                     }
                     logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Corner (Sheet: {sheet_id}, Corners: {corner_numbers})")
                     break
+                else:
+                    logger.info(f"Sheet {sheet_id} - Full Sheet Corner check FAILED")
             if full_sheet_corner_prize in new_winners:
                 break
     
