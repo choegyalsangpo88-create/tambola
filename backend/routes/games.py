@@ -212,7 +212,7 @@ async def book_tickets(
         "total_amount": game["price"] * len(ticket_ids),
         "booking_date": datetime.now(timezone.utc),
         "status": "confirmed",
-        "has_full_sheet_bonus": is_full_sheet,
+        "full_sheet_booked": is_full_sheet,
         "full_sheet_id": tickets[0].get("full_sheet_id") if is_full_sheet else None
     }
     
