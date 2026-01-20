@@ -25,20 +25,23 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
 
   return (
     <div 
-      className={`bg-white cursor-pointer transition-all ${
+      className={`bg-white cursor-pointer transition-all duration-200 ${
         isBooked 
           ? 'opacity-50 cursor-not-allowed' 
-          : isSelected 
-          ? 'ring-2 ring-amber-400 shadow-lg' 
-          : 'hover:ring-1 hover:ring-amber-300'
+          : ''
       }`}
       style={{ 
-        border: isSelected ? '2px solid #f59e0b' : '1px solid #E6B800',
-        margin: '2px'
+        border: isSelected ? '3px solid #f59e0b' : '2px solid #D4A017',
+        margin: '3px',
+        borderRadius: '4px',
+        boxShadow: isSelected ? '0 0 10px rgba(245, 158, 11, 0.5)' : 'none'
       }}
       onClick={(e) => {
+        e.preventDefault();
         e.stopPropagation();
-        if (!isBooked) onToggle(ticket.ticket_id);
+        if (!isBooked && onToggle) {
+          onToggle(ticket.ticket_id);
+        }
       }}
       data-testid={`ticket-${ticket.ticket_number}`}
     >
@@ -62,7 +65,7 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
             LOTTO TICKET {ticket.ticket_number}
           </p>
           {isSelected && (
-            <span className="text-amber-500 text-xs">✓</span>
+            <span className="text-amber-500 text-sm font-bold">✓</span>
           )}
           {shortName && (
             <span className="text-[9px] text-purple-600">• {shortName}</span>
