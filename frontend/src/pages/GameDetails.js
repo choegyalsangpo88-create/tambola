@@ -611,21 +611,21 @@ Txn Ref: ${txnRef}
                 </div>
               </div>
 
-              {/* ===== B. BUTTON 1 — UPI PAYMENT ===== */}
+              {/* ===== B. BUTTON 1 — UPI PAYMENT (INLINE HANDLER) ===== */}
               <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-amber-500" />
                   Step 1: Pay via UPI
                 </h3>
                 
-                <button
-                  type="button"
-                  onClick={openUPIPayment}
-                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl"
+                {/* UPI BUTTON - Opens UPI app ONLY */}
+                <a
+                  href={`upi://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
+                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center"
                   data-testid="pay-upi-btn"
                 >
                   Pay ₹{getTotalAmount()} via UPI
-                </button>
+                </a>
 
                 {/* Fallback for UPI */}
                 <div className="mt-3 p-3 bg-black/30 rounded-lg">
@@ -655,7 +655,7 @@ Txn Ref: ${txnRef}
                 </p>
               </div>
 
-              {/* ===== D. BUTTON 2 — WHATSAPP CONFIRMATION ===== */}
+              {/* ===== D. BUTTON 2 — WHATSAPP CONFIRMATION (INLINE HANDLER) ===== */}
               <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-green-500" />
@@ -668,14 +668,16 @@ Txn Ref: ${txnRef}
                   <p className="text-amber-500 font-mono text-lg font-bold">{txnRef}</p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={openWhatsAppConfirmation}
-                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl"
+                {/* WHATSAPP BUTTON - Opens WhatsApp ONLY */}
+                <a
+                  href={`https://wa.me/918837489781?text=${encodeURIComponent(`✅ PAYMENT DONE\n\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ₹${getTotalAmount()}\nTxn Ref: ${txnRef}\n\n📸 Screenshot attached`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl flex items-center justify-center"
                   data-testid="send-whatsapp-btn"
                 >
                   Send Payment Confirmation on WhatsApp
-                </button>
+                </a>
 
                 {/* Fallback for WhatsApp */}
                 <div className="mt-3 p-3 bg-black/30 rounded-lg">
