@@ -573,21 +573,28 @@ export default function GameDetails() {
                 </div>
               </div>
 
-              {/* ===== B. BUTTON 1 — UPI PAYMENT (INLINE HANDLER) ===== */}
+              {/* ===== B. BUTTON 1 — UPI PAYMENT ===== */}
               <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-amber-500" />
                   Step 1: Pay via UPI
                 </h3>
                 
-                {/* UPI BUTTON - Opens UPI app ONLY */}
+                {/* UPI BUTTON - Direct anchor link to UPI app */}
                 <a
                   href={`upi://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
-                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center"
+                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center no-underline"
                   data-testid="pay-upi-btn"
+                  style={{ textDecoration: 'none' }}
+                  onClick={() => console.log('UPI CLICKED - href should be upi://')}
                 >
-                  Pay ₹{getTotalAmount()} via UPI
+                  💳 Pay ₹{getTotalAmount()} via UPI
                 </a>
+
+                {/* Show the actual UPI link for debugging */}
+                <p className="text-[10px] text-gray-500 mt-2 break-all">
+                  Link: upi://pay?pa=choegyalsangpo@ibl&pn=Choegyal%20Sangpo&am={getTotalAmount()}&cu=INR&tn=Order-{txnRef}
+                </p>
 
                 {/* Fallback for UPI */}
                 <div className="mt-3 p-3 bg-black/30 rounded-lg">
@@ -617,7 +624,7 @@ export default function GameDetails() {
                 </p>
               </div>
 
-              {/* ===== D. BUTTON 2 — WHATSAPP CONFIRMATION (INLINE HANDLER) ===== */}
+              {/* ===== D. BUTTON 2 — WHATSAPP CONFIRMATION ===== */}
               <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-green-500" />
@@ -630,15 +637,17 @@ export default function GameDetails() {
                   <p className="text-amber-500 font-mono text-lg font-bold">{txnRef}</p>
                 </div>
 
-                {/* WHATSAPP BUTTON - Opens WhatsApp ONLY */}
+                {/* WHATSAPP BUTTON - Direct anchor link to WhatsApp */}
                 <a
                   href={`https://wa.me/918837489781?text=${encodeURIComponent(`✅ PAYMENT DONE\n\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ₹${getTotalAmount()}\nTxn Ref: ${txnRef}\n\n📸 Screenshot attached`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl flex items-center justify-center"
+                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl flex items-center justify-center no-underline"
                   data-testid="send-whatsapp-btn"
+                  style={{ textDecoration: 'none' }}
+                  onClick={() => console.log('WHATSAPP CLICKED - href should be wa.me')}
                 >
-                  Send Payment Confirmation on WhatsApp
+                  📱 Send Payment Confirmation on WhatsApp
                 </a>
 
                 {/* Fallback for WhatsApp */}
