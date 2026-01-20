@@ -622,13 +622,14 @@ Txn Ref: ${txnRef}
                   Step 1: Pay via UPI
                 </h3>
                 
-                <Button
+                <button
+                  type="button"
                   onClick={handlePayViaUPI}
                   className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl"
                   data-testid="pay-upi-btn"
                 >
                   Pay ₹{getTotalAmount()} via UPI
-                </Button>
+                </button>
 
                 {/* Fallback for UPI */}
                 <div className="mt-3 p-3 bg-black/30 rounded-lg">
@@ -671,13 +672,14 @@ Txn Ref: ${txnRef}
                   <p className="text-amber-500 font-mono text-lg font-bold">{txnRef}</p>
                 </div>
 
-                <Button
+                <button
+                  type="button"
                   onClick={handleSendWhatsApp}
                   className="w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl"
                   data-testid="send-whatsapp-btn"
                 >
                   Send Payment Confirmation on WhatsApp
-                </Button>
+                </button>
 
                 {/* Fallback for WhatsApp */}
                 <div className="mt-3 p-3 bg-black/30 rounded-lg">
