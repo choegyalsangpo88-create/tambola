@@ -312,44 +312,6 @@ export default function GameDetails() {
     return selectedTickets.length * (game?.price || 0);
   };
 
-  // ===== BUTTON 1: PAY VIA UPI =====
-  // Opens UPI app directly with pre-filled amount
-  const openUPIPayment = () => {
-    const amount = getTotalAmount();
-    const orderRef = `Order-${txnRef}`;
-    
-    // Exact UPI deep link format as specified
-    // upi://pay?pa=choegyalsangpo@ibl&pn=Choegyal Sangpo&am={amount}&cu=INR&tn={order_reference}
-    const upiURL = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(orderRef)}`;
-    
-    // Open UPI link directly
-    window.location.href = upiURL;
-  };
-
-  // ===== BUTTON 2: SEND WHATSAPP CONFIRMATION =====
-  // Opens WhatsApp with pre-filled message
-  const openWhatsAppConfirmation = () => {
-    const ticketNumbers = getSelectedTicketNumbers();
-    const amount = getTotalAmount();
-    const gameName = game?.name || 'Tambola Game';
-    
-    // Exact message format as specified
-    const message = `✅ PAYMENT DONE
-
-Game: ${gameName}
-Tickets: ${ticketNumbers}
-Amount: ₹${amount}
-Txn Ref: ${txnRef}
-
-📸 Screenshot attached`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-    
-    // Open WhatsApp
-    window.open(whatsappURL, '_blank');
-  };
-
   // Copy UPI ID to clipboard
   const copyUPIId = () => {
     navigator.clipboard.writeText(UPI_ID);
