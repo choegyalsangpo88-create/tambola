@@ -4059,8 +4059,8 @@ async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
             if "full house" in prize_lower:
                 continue
             
-            # Skip Full Sheet Bonus - handle separately
-            if "full sheet" in prize_lower or "bonus" in prize_lower:
+            # Skip Full Sheet prizes - handle separately
+            if "full sheet" in prize_lower:
                 continue
             
             for ticket in ticket_source:
