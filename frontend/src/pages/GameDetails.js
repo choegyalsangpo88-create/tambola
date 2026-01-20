@@ -173,6 +173,36 @@ export default function GameDetails() {
   const [showPaymentPanel, setShowPaymentPanel] = useState(false);
   const [txnRef, setTxnRef] = useState('');
   const [copied, setCopied] = useState(false);
+  const [bookingRequestId, setBookingRequestId] = useState(null);
+  const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  
+  // Timer state (10 minutes = 600 seconds)
+  const [timeLeft, setTimeLeft] = useState(600);
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Timer countdown effect
+  useEffect(() => {
+    let interval = null;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((time) => time - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      // Timer expired
+      setShowPaymentPanel(false);
+      setTimerActive(false);
+      toast.error('Payment time expired. Please try again.');
+      setSelectedTickets([]);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     fetchGame();
