@@ -3949,11 +3949,8 @@ async def auto_call_user_game_numbers():
             dividends = game.get("dividends", {})
             winners = game.get("winners", {})
             
-            # Filter out Full Sheet Bonus from dividend check
-            actual_dividends = {k: v for k, v in dividends.items() if "Full Sheet" not in k and "Bonus" not in k}
-            
             # End game if all dividends claimed
-            if actual_dividends and len(winners) >= len(actual_dividends):
+            if dividends and len(winners) >= len(dividends):
                 await db.user_games.update_one(
                     {"user_game_id": game["user_game_id"]},
                     {"$set": {
