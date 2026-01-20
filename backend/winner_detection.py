@@ -244,69 +244,6 @@ def check_quick_five(ticket_numbers, called_numbers):
     return check_early_five(ticket_numbers, called_numbers)
 
 
-def check_full_sheet_bonus(tickets, called_numbers, min_marks_per_ticket=1, min_total_marks=6):
-    """
-    FULL SHEET BONUS - SIMPLIFIED RULE:
-    
-    A player wins the Full Sheet Bonus when ALL of the following are true:
-    1️⃣ Player booked exactly 6 tickets belonging to the same Full Sheet ID
-    2️⃣ Each of the 6 tickets has at least 1 marked number (minimum 1 per ticket)
-    3️⃣ Total marked numbers across the sheet is ≥ 6
-    4️⃣ All marked numbers are from called numbers
-    
-    Single tickets can win all other prizes but CANNOT win FSB.
-    Only valid Full Sheets (6 tickets with same FS ID) can win FSB.
-    
-    Args:
-        tickets: List of 6 tickets from the same full sheet
-        called_numbers: Set of called numbers
-        min_marks_per_ticket: Minimum marks required per ticket (default 1)
-        min_total_marks: Minimum total marks across all tickets (default 6)
-    
-    Returns:
-        True if bonus condition is met
-    """
-    called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
-    
-    # Rule 1: Must have exactly 6 tickets
-    if len(tickets) != 6:
-        logger.debug(f"Full Sheet Bonus FAIL: {len(tickets)} tickets (need exactly 6)")
-        return False
-    
-    # Rule 2 & 3: Check each ticket has >= 1 mark and total >= 6
-    total_marks = 0
-    per_ticket_marks = []
-    
-    for i, ticket in enumerate(tickets):
-        if isinstance(ticket, dict):
-            ticket_numbers = ticket.get("numbers", [])
-        else:
-            ticket_numbers = ticket
-        
-        ticket_marks = 0
-        for row in ticket_numbers:
-            for num in row:
-                if num is not None and num != 0 and num in called_set:
-                    ticket_marks += 1
-        
-        per_ticket_marks.append(ticket_marks)
-        
-        # Rule 2: Each ticket must have at least min_marks_per_ticket (1)
-        if ticket_marks < min_marks_per_ticket:
-            logger.debug(f"Full Sheet Bonus FAIL: Ticket {i+1} has {ticket_marks} marks (need >= {min_marks_per_ticket})")
-            return False
-        
-        total_marks += ticket_marks
-    
-    # Rule 3: Total marks must be >= min_total_marks (6)
-    if total_marks < min_total_marks:
-        logger.debug(f"Full Sheet Bonus FAIL: Total marks {total_marks} (need >= {min_total_marks})")
-        return False
-    
-    logger.info(f"Full Sheet Bonus PASS: Per-ticket marks = {per_ticket_marks}, Total = {total_marks}")
-    return True
-
-
 # ============ UTILITY FUNCTIONS ============
 
 def get_marked_count(ticket_numbers, called_numbers):
