@@ -42,7 +42,7 @@ adminAxios.interceptors.response.use(
 const DEFAULT_DIVIDENDS = {
   'Quick Five': { enabled: true, amount: 500 },
   'Four Corners': { enabled: true, amount: 300 },
-  'Full Sheet Bonus': { enabled: true, amount: 1000 },
+  'Full Sheet Corner': { enabled: true, amount: 1000 },
   'Top Line': { enabled: true, amount: 200 },
   'Middle Line': { enabled: true, amount: 200 },
   'Bottom Line': { enabled: true, amount: 200 },
