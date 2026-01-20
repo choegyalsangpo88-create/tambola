@@ -136,6 +136,90 @@ def check_four_corners(ticket_numbers, called_numbers):
 
 # ============ SPECIAL PATTERNS ============
 
+def check_full_sheet_corner(tickets, called_numbers):
+    """
+    FULL SHEET CORNER: Mark four corner numbers across the full sheet (6 tickets)
+    
+    A full sheet consists of 6 tickets (1-2-3-4-5-6)
+    The Full Sheet Corner is defined as four numbers:
+    - Top-left corner of the FIRST ticket (ticket 1, row 0)
+    - Top-right corner of the FIRST ticket (ticket 1, row 0)
+    - Bottom-left corner of the LAST ticket (ticket 6, row 2)
+    - Bottom-right corner of the LAST ticket (ticket 6, row 2)
+    
+    This prize is applicable only if all 6 tickets are booked by one player.
+    The prize is won only when all four of these numbers are called.
+    
+    Args:
+        tickets: List of 6 ticket dicts/arrays from the same full sheet
+        called_numbers: Set of called numbers
+    
+    Returns:
+        True if all four corner numbers are called
+    """
+    called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
+    
+    # Rule 1: Must have exactly 6 tickets
+    if len(tickets) != 6:
+        logger.debug(f"Full Sheet Corner FAIL: {len(tickets)} tickets (need exactly 6)")
+        return False
+    
+    # Get first ticket (ticket 1) and last ticket (ticket 6)
+    first_ticket = tickets[0]
+    last_ticket = tickets[5]
+    
+    # Extract numbers array
+    if isinstance(first_ticket, dict):
+        first_numbers = first_ticket.get("numbers", [])
+    else:
+        first_numbers = first_ticket
+    
+    if isinstance(last_ticket, dict):
+        last_numbers = last_ticket.get("numbers", [])
+    else:
+        last_numbers = last_ticket
+    
+    # Validate ticket structure
+    if len(first_numbers) < 1 or len(last_numbers) < 3:
+        logger.debug("Full Sheet Corner FAIL: Invalid ticket structure")
+        return False
+    
+    # Get top row of first ticket and bottom row of last ticket
+    first_top_row = first_numbers[0]
+    last_bottom_row = last_numbers[2]
+    
+    # Find corner numbers (first and last non-null numbers in each row)
+    def get_corners(row):
+        """Get first (left) and last (right) numbers in a row"""
+        numbers_with_pos = [(idx, num) for idx, num in enumerate(row) if num is not None and num != 0]
+        if len(numbers_with_pos) < 2:
+            return None, None
+        numbers_with_pos.sort(key=lambda x: x[0])
+        return numbers_with_pos[0][1], numbers_with_pos[-1][1]
+    
+    # Get corner numbers
+    top_left, top_right = get_corners(first_top_row)
+    bottom_left, bottom_right = get_corners(last_bottom_row)
+    
+    if None in [top_left, top_right, bottom_left, bottom_right]:
+        logger.debug("Full Sheet Corner FAIL: Could not find all corner numbers")
+        return False
+    
+    corners = [top_left, top_right, bottom_left, bottom_right]
+    logger.debug(f"Full Sheet Corner numbers: TL={top_left}, TR={top_right}, BL={bottom_left}, BR={bottom_right}")
+    
+    # Check if all four corners are called
+    all_marked = all(corner in called_set for corner in corners)
+    
+    if all_marked:
+        logger.info(f"Full Sheet Corner PASS: All 4 corners marked {corners}")
+    else:
+        marked = [c for c in corners if c in called_set]
+        logger.debug(f"Full Sheet Corner: {len(marked)}/4 marked - {marked}")
+    
+    return all_marked
+
+
 def check_early_five(ticket_numbers, called_numbers):
     """
     EARLY FIVE (Quick Five): First to mark ANY 5 numbers anywhere
