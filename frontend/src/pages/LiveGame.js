@@ -311,33 +311,85 @@ export default function LiveGame() {
                 <p className="text-sm text-gray-600 mb-2">
                   Winner: <span className="font-bold">{selectedWinnerTicket.winner?.holder_name || selectedWinnerTicket.winner?.name}</span>
                 </p>
-                <p className="text-sm text-gray-600 mb-3">
-                  Ticket: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
-                </p>
-                <div className="bg-amber-50 rounded-lg p-3">
-                  <div className="grid grid-cols-9 gap-1">
-                    {selectedWinnerTicket.numbers?.map((row, rowIdx) => (
-                      row.map((num, colIdx) => {
-                        const isCalled = session.called_numbers?.includes(num);
-                        return (
-                          <div
-                            key={`${rowIdx}-${colIdx}`}
-                            className={`aspect-square flex items-center justify-center text-xs font-bold rounded ${
-                              num 
-                                ? isCalled 
-                                  ? 'bg-green-500 text-white ring-2 ring-green-600' 
-                                  : 'bg-amber-100 text-amber-900'
-                                : 'bg-gray-100'
-                            }`}
-                          >
-                            {num || ''}
+                
+                {/* Full Sheet Corner - Special Display */}
+                {selectedWinnerTicket.isFullSheetCorner ? (
+                  <>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Full Sheet: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
+                    </p>
+                    <div className="bg-amber-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-600 mb-3 text-center font-semibold">
+                        Corner Numbers (First & Last Ticket)
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Top corners from first ticket */}
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-500 mb-1">Top-Left (T1)</p>
+                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                            {selectedWinnerTicket.corner_numbers?.[0] || '?'}
                           </div>
-                        );
-                      })
-                    ))}
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2 text-center">Green = Called numbers</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-500 mb-1">Top-Right (T1)</p>
+                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                            {selectedWinnerTicket.corner_numbers?.[1] || '?'}
+                          </div>
+                        </div>
+                        {/* Bottom corners from last ticket */}
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-500 mb-1">Bottom-Left (T6)</p>
+                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                            {selectedWinnerTicket.corner_numbers?.[2] || '?'}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-500 mb-1">Bottom-Right (T6)</p>
+                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                            {selectedWinnerTicket.corner_numbers?.[3] || '?'}
+                          </div>
+                        </div>
+                      </div>
+                      {selectedWinnerTicket.sheet_tickets && (
+                        <p className="text-[10px] text-gray-500 mt-3 text-center">
+                          Tickets in sheet: {selectedWinnerTicket.sheet_tickets.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 text-center">All 4 corners of the full sheet marked!</p>
+                  </>
+                ) : (
+                  /* Regular single ticket display */
+                  <>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Ticket: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
+                    </p>
+                    <div className="bg-amber-50 rounded-lg p-3">
+                      <div className="grid grid-cols-9 gap-1">
+                        {selectedWinnerTicket.numbers?.map((row, rowIdx) => (
+                          row.map((num, colIdx) => {
+                            const isCalled = session.called_numbers?.includes(num);
+                            return (
+                              <div
+                                key={`${rowIdx}-${colIdx}`}
+                                className={`aspect-square flex items-center justify-center text-xs font-bold rounded ${
+                                  num 
+                                    ? isCalled 
+                                      ? 'bg-green-500 text-white ring-2 ring-green-600' 
+                                      : 'bg-amber-100 text-amber-900'
+                                    : 'bg-gray-100'
+                                }`}
+                              >
+                                {num || ''}
+                              </div>
+                            );
+                          })
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 text-center">Green = Called numbers</p>
+                  </>
+                )}
               </div>
             </div>
           )}
