@@ -438,7 +438,7 @@ export default function LiveGame() {
                     '2nd Full House': '2FH',
                     '3rd Full House': '3FH',
                     'Full House': 'FH',
-                    'Full Sheet Bonus': 'FSB'
+                    'Full Sheet Corner': 'FSC'
                   };
                   
                   // Calculate who is closest to winning each prize
