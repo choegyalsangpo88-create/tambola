@@ -629,13 +629,40 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 if check_full_sheet_corner(sorted_tickets, called_set):
                     winner_user_id = group_key if group_key and isinstance(group_key, str) and (group_key.startswith("user_") or "_" in group_key) else None
                     
+                    # Get corner numbers for display
+                    first_ticket = sorted_tickets[0]
+                    last_ticket = sorted_tickets[5]
+                    first_numbers = first_ticket.get("numbers", []) if isinstance(first_ticket, dict) else first_ticket
+                    last_numbers = last_ticket.get("numbers", []) if isinstance(last_ticket, dict) else last_ticket
+                    
+                    def get_corner_nums(row):
+                        nums = [(idx, num) for idx, num in enumerate(row) if num is not None and num != 0]
+                        if len(nums) < 2:
+                            return None, None
+                        nums.sort(key=lambda x: x[0])
+                        return nums[0][1], nums[-1][1]
+                    
+                    tl, tr = get_corner_nums(first_numbers[0])
+                    bl, br = get_corner_nums(last_numbers[2])
+                    corner_numbers = [tl, tr, bl, br]
+                    
+                    # Get ticket numbers for display
+                    ticket_numbers_list = [t.get("ticket_number") for t in sorted_tickets]
+                    first_ticket_number = sorted_tickets[0].get("ticket_number")
+                    last_ticket_number = sorted_tickets[5].get("ticket_number")
+                    
                     new_winners[full_sheet_corner_prize] = {
                         "user_id": winner_user_id or group_key,
                         "full_sheet_id": sheet_id,
+                        "ticket_id": sorted_tickets[0].get("ticket_id"),  # First ticket for reference
+                        "ticket_number": f"{first_ticket_number}-{last_ticket_number}",  # Show range
                         "holder_name": sheet_data["holder_name"] or group_key,
-                        "pattern": "Full Sheet Corner"
+                        "pattern": "Full Sheet Corner",
+                        "is_full_sheet": True,
+                        "corner_numbers": corner_numbers,
+                        "sheet_tickets": ticket_numbers_list
                     }
-                    logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Corner (Sheet: {sheet_id})")
+                    logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Corner (Sheet: {sheet_id}, Corners: {corner_numbers})")
                     break
             if full_sheet_corner_prize in new_winners:
                 break
