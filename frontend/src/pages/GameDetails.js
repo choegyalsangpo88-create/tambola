@@ -10,7 +10,7 @@ const API = `${BACKEND_URL}/api`;
 
 // ===== PAYMENT CONFIGURATION (Single source of truth) =====
 const UPI_ID = 'choegyalsangpo@ibl';
-const UPI_NAME = 'SixSevenTambola';
+const UPI_PAYEE_NAME = 'Choegyal Sangpo';
 const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
