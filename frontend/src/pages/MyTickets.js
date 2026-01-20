@@ -244,7 +244,7 @@ export default function MyTickets() {
                             {getStatusIcon(gameStatus)}
                             {gameStatus.toUpperCase()}
                           </span>
-                          {booking.has_full_sheet_bonus && (
+                          {booking.full_sheet_booked && (
                             <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
                               FULL SHEET
                             </span>
