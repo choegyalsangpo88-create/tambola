@@ -270,32 +270,47 @@ export default function LiveGame() {
           <h1 className="text-3xl font-bold text-white mb-2">Game Ended!</h1>
           <p className="text-gray-400 mb-6">Congratulations to all winners!</p>
           
-          <div className="space-y-3 mb-6">
-            {Object.entries(allWinners).map(([prize, winner]) => (
-              <div 
-                key={prize} 
-                className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 cursor-pointer hover:border-amber-400 transition-all"
-                onClick={() => {
-                  // Find the winning ticket from allBookedTickets
-                  const winningTicket = allBookedTickets.find(t => 
-                    t.ticket_id === winner.ticket_id || t.ticket_number === winner.ticket_number
-                  );
-                  if (winningTicket) {
-                    setSelectedWinnerTicket({ ...winningTicket, prize, winner });
-                  }
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-amber-400 font-bold">{prize}</span>
-                  <Trophy className="w-5 h-5 text-amber-500" />
+          <div className="space-y-2 mb-6">
+            {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
+              const winner = allWinners[prize];
+              const winnerFirstName = winner?.holder_name?.split(' ')[0] || winner?.name?.split(' ')[0] || '';
+              const isFullSheetCorner = winner?.is_full_sheet || prize.toLowerCase().includes('full sheet corner');
+              return (
+                <div 
+                  key={prize} 
+                  className={`px-4 py-3 rounded-lg cursor-pointer transition-all ${winner ? 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' : 'bg-white/5 hover:bg-white/10'}`}
+                  onClick={() => {
+                    if (winner) {
+                      if (isFullSheetCorner) {
+                        setSelectedWinnerTicket({ 
+                          prize, 
+                          winner,
+                          isFullSheetCorner: true,
+                          corner_numbers: winner.corner_numbers,
+                          sheet_tickets: winner.sheet_tickets,
+                          ticket_number: winner.ticket_number
+                        });
+                      } else if (winner.ticket_id) {
+                        const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
+                        if (winningTicket) setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                      }
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm font-bold ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
+                    <span className="text-sm font-bold text-amber-400">₹{amount}</span>
+                  </div>
+                  {winner && (
+                    <p className="text-xs text-green-300 mt-1 text-left">
+                      🎉 {winnerFirstName || 'Winner'}
+                      {winner.ticket_number && <span className="text-amber-300 ml-1">({winner.ticket_number})</span>}
+                    </p>
+                  )}
+                  {winner && <p className="text-gray-400 text-[10px] mt-1 text-left">Click to view winning ticket</p>}
                 </div>
-                <p className="text-white text-sm mt-1">
-                  🏆 {winner.holder_name || winner.name || 'Winner'}
-                  {winner.ticket_number && <span className="text-amber-300 ml-2">({winner.ticket_number})</span>}
-                </p>
-                <p className="text-gray-400 text-xs mt-1">Click to view winning ticket</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           {/* Modal for viewing winning ticket */}
