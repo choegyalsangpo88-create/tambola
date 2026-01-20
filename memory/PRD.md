@@ -167,7 +167,7 @@ Rules enforced:
 - Pending → Approved workflow
 - WhatsApp confirmation
 
-### 6. UPI + WhatsApp Booking Checkout Flow ✅ (NEW - 2026-01-19)
+### 6. UPI + WhatsApp Booking Checkout Flow ✅ (2026-01-19)
 **Two-Step Payment Process:**
 1. **Step 1: UPI Payment**
    - "Pay ₹<amount> via UPI" button opens `upi://pay` deep link
@@ -200,6 +200,36 @@ Rules enforced:
 - NO automatic redirects - all actions require explicit user clicks
 - Both buttons work independently
 - Deep links work on mobile; fallback info for desktop users
+
+### 7. Full Sheet Corner Dividend ✅ (2026-01-20)
+**Definition:**
+A full sheet consists of 6 tickets (1-2-3-4-5-6). The Full Sheet Corner is defined as four numbers:
+- Top-left corner of the FIRST ticket (ticket 1, row 0)
+- Top-right corner of the FIRST ticket (ticket 1, row 0)
+- Bottom-left corner of the LAST ticket (ticket 6, row 2)
+- Bottom-right corner of the LAST ticket (ticket 6, row 2)
+
+**Rules:**
+- Only applicable if ALL 6 tickets of a sheet are booked by ONE player
+- Prize is won when all 4 corner numbers are called
+- Detected automatically by `winner_detection.py`
+
+### 8. Ticket Design ✅ (2026-01-20)
+**Full Sheet Design (ChatGPT-style):**
+- Mustard yellow background
+- 6 tickets stacked vertically
+- Each ticket has yellow border for individual selection
+- "LOTTO TICKET T001" header on each ticket
+- 3x9 number grid with black borders
+- Page number on first ticket (left side)
+
+**Selection Options:**
+- Click single ticket → select individual ticket
+- Click "Select All 6" → select entire sheet
+- Individual ticket count shown (e.g., "2/6 selected")
+
+### Removed Features
+- **Full Sheet Bonus**: Removed in favor of Full Sheet Corner (2026-01-20)
 
 ### 6. User Games (Create Your Own)
 - Host private games with share codes
