@@ -2444,7 +2444,7 @@ async def create_user_game(
         if actual_ticket_count >= game_data.max_tickets:
             break
     
-    # Default dividends for user games (includes Full Sheet Bonus)
+    # Default dividends for user games
     dividends = {
         "Early Five": 0,
         "Top Line": 0,
