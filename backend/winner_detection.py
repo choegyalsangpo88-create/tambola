@@ -737,6 +737,54 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
         elif full_sheet_prize in new_winners:
             logger.info(f"Full Sheet Bonus already in new_winners: {new_winners.get(full_sheet_prize)}")
     
+    # Check Full Sheet Corner (only for users who booked all 6 tickets of a sheet)
+    full_sheet_corner_variations = ["Full Sheet Corner", "FullSheet Corner", "full_sheet_corner", "Sheet Corner"]
+    
+    # Find actual prize name for full sheet corner
+    full_sheet_corner_prize = None
+    for variation in full_sheet_corner_variations:
+        if variation in prizes_to_check:
+            full_sheet_corner_prize = variation
+            break
+        for p in prizes_to_check:
+            if normalize_prize_name(p) == normalize_prize_name(variation):
+                full_sheet_corner_prize = p
+                break
+        if full_sheet_corner_prize:
+            break
+    
+    logger.info(f"Full Sheet Corner prize name: {full_sheet_corner_prize}")
+    
+    if full_sheet_corner_prize and full_sheet_corner_prize not in existing_winners and full_sheet_corner_prize not in new_winners:
+        for group_key, sheets in user_sheets.items():
+            for sheet_id, sheet_data in sheets.items():
+                if not sheet_id:
+                    continue
+                
+                ticket_count = len(sheet_data["tickets"])
+                
+                # Must have exactly 6 tickets (full sheet)
+                if ticket_count != 6:
+                    continue
+                
+                # Sort tickets by position to ensure correct order (1-6)
+                sorted_tickets = sorted(sheet_data["tickets"], key=lambda t: t.get("ticket_position_in_sheet", 0))
+                
+                # Check Full Sheet Corner
+                if check_full_sheet_corner(sorted_tickets, called_set):
+                    winner_user_id = group_key if group_key and isinstance(group_key, str) and (group_key.startswith("user_") or "_" in group_key) else None
+                    
+                    new_winners[full_sheet_corner_prize] = {
+                        "user_id": winner_user_id or group_key,
+                        "full_sheet_id": sheet_id,
+                        "holder_name": sheet_data["holder_name"] or group_key,
+                        "pattern": "Full Sheet Corner"
+                    }
+                    logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Corner (Sheet: {sheet_id})")
+                    break
+            if full_sheet_corner_prize in new_winners:
+                break
+    
     # SEQUENTIAL FULL HOUSE with MULTIPLE WINNERS SHARING same prize
     # If multiple users complete Full House on the SAME CALL, they share that prize
     house_prize_variations = [
