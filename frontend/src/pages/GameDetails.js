@@ -311,18 +311,28 @@ export default function GameDetails() {
 
   // ===== BUTTON 1: PAY VIA UPI =====
   // Opens UPI app ONLY - no WhatsApp, no navigation
-  const handlePayViaUPI = () => {
+  const handlePayViaUPI = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const amount = getTotalAmount();
     const note = `SixSevenTambola-${txnRef}`;
     const upiLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
     
-    // Open UPI app - ONLY this action, nothing else
-    window.location.href = upiLink;
+    // Create a temporary link and click it - better UPI handling
+    const link = document.createElement('a');
+    link.href = upiLink;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // ===== BUTTON 2: SEND WHATSAPP CONFIRMATION =====
   // Opens WhatsApp ONLY on click - exact message format
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     const ticketNumbers = getSelectedTicketNumbers();
     const amount = getTotalAmount();
     const gameName = game?.name || 'Tambola Game';
