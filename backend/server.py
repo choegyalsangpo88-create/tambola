@@ -4017,7 +4017,7 @@ async def auto_call_user_game_numbers():
 
 async def check_user_game_winners(user_game_id: str, called_numbers: List[int]):
     """Check for winners in user-created games with proper Full House tracking"""
-    from winner_detection import check_all_winners, check_full_house, check_four_corners, check_full_sheet_bonus
+    from winner_detection import check_all_winners, check_full_house, check_four_corners
     
     try:
         game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
