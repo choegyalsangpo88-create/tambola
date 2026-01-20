@@ -1391,12 +1391,8 @@ async def create_game(game_data: CreateGameRequest):
     
     game_id = f"game_{uuid.uuid4().hex[:8]}"
     
-    # Auto-add Full Sheet Bonus to prizes if not present
     prizes = dict(game_data.prizes)
-    if "Full Sheet Bonus" not in prizes and "full_sheet_bonus" not in prizes:
-        # Add default Full Sheet Bonus (can be 0 if admin doesn't want to award it)
-        prizes["Full Sheet Bonus"] = prizes.get("Full Sheet Bonus", 0)
-        logger.info(f"Auto-added Full Sheet Bonus to game prizes")
+    # Full Sheet Bonus removed - no longer auto-added
     
     prize_pool = sum(prizes.values())
     
