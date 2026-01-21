@@ -636,94 +636,108 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                     "holder_name": holder_name
                 })
     
-    # Check Full Sheet Corner (only for users who booked all 6 tickets of a sheet)
-    # IMPORTANT: FSC uses STORED corner numbers, NOT dynamic calculation
-    # FSC is completely ISOLATED from Four Corners (ticket-level rule)
-    full_sheet_corner_variations = ["Full Sheet Corner", "FullSheet Corner", "full_sheet_corner", "Sheet Corner"]
+    # ============ FULL SHEET PRIZES (ISOLATED FROM TICKET-LEVEL PRIZES) ============
+    # These prizes are ONLY for users who booked a COMPLETE full sheet (all 6 tickets)
     
-    # Find actual prize name for full sheet corner
-    full_sheet_corner_prize = None
-    for variation in full_sheet_corner_variations:
-        if variation in prizes_to_check:
-            full_sheet_corner_prize = variation
-            break
-        for p in prizes_to_check:
-            if normalize_prize_name(p) == normalize_prize_name(variation):
-                full_sheet_corner_prize = p
-                break
-        if full_sheet_corner_prize:
-            break
+    # Find prize names for full sheet prizes
+    def find_prize_name(variations):
+        for variation in variations:
+            if variation in prizes_to_check:
+                return variation
+            for p in prizes_to_check:
+                if normalize_prize_name(p) == normalize_prize_name(variation):
+                    return p
+        return None
     
-    logger.info(f"Full Sheet Corner prize name: {full_sheet_corner_prize}")
+    fsc_prize = find_prize_name(["Full Sheet Corner", "FullSheet Corner", "full_sheet_corner", "Sheet Corner", "FSC"])
+    fsb_prize = find_prize_name(["Full Sheet Bonus", "FullSheet Bonus", "full_sheet_bonus", "Sheet Bonus", "FSB"])
     
-    if full_sheet_corner_prize and full_sheet_corner_prize not in existing_winners and full_sheet_corner_prize not in new_winners:
-        logger.info(f"=== FSC CHECK START === Checking {len(user_sheets)} users/groups")
-        
-        for group_key, sheets in user_sheets.items():
-            logger.info(f"FSC: User/Group '{group_key}' has {len(sheets)} sheets")
+    logger.info(f"=== FULL SHEET PRIZES CHECK ===")
+    logger.info(f"FSC Prize: {fsc_prize}, FSB Prize: {fsb_prize}")
+    logger.info(f"Checking {len(user_sheets)} users/groups with full sheets")
+    
+    # Check each user's complete sheets
+    for group_key, sheets in user_sheets.items():
+        for sheet_id, sheet_data in sheets.items():
+            if not sheet_id:
+                continue
             
-            for sheet_id, sheet_data in sheets.items():
-                if not sheet_id:
-                    continue
+            tickets = sheet_data["tickets"]
+            ticket_count = len(tickets)
+            
+            # CRITICAL: Must have EXACTLY 6 tickets (complete full sheet)
+            if ticket_count != 6:
+                logger.info(f"Sheet {sheet_id}: SKIP - only {ticket_count}/6 tickets")
+                continue
+            
+            # Sort tickets by position
+            sorted_tickets = sorted(
+                tickets,
+                key=lambda t: t.get("ticket_position_in_sheet", 0) or int(''.join(filter(str.isdigit, t.get("ticket_number", "0"))) or 0)
+            )
+            
+            ticket_nums = [t.get("ticket_number") for t in sorted_tickets]
+            first_tn = sorted_tickets[0].get("ticket_number")
+            last_tn = sorted_tickets[5].get("ticket_number")
+            holder = sheet_data["holder_name"] or group_key
+            
+            logger.info(f"Sheet {sheet_id}: 6/6 tickets, holder={holder}, tickets={ticket_nums}")
+            
+            # Get stored corner numbers
+            stored_corners = None
+            for t in sorted_tickets:
+                if t.get("sheet_corner_numbers"):
+                    stored_corners = t["sheet_corner_numbers"]
+                    break
+            
+            # --- CHECK FULL SHEET CORNER (FSC) ---
+            if fsc_prize and fsc_prize not in existing_winners and fsc_prize not in new_winners:
+                fsc_result = check_full_sheet_corner(sorted_tickets, called_set, stored_corners)
                 
-                ticket_count = len(sheet_data["tickets"])
-                
-                # RULE: Must have EXACTLY 6 tickets (complete full sheet)
-                if ticket_count != 6:
-                    logger.info(f"FSC: Sheet {sheet_id} SKIP - has {ticket_count}/6 tickets")
-                    continue
-                
-                # Get the STORED corner numbers from any ticket in this sheet
-                # (All tickets in a sheet have the same sheet_corner_numbers)
-                stored_corners = None
-                for ticket in sheet_data["tickets"]:
-                    if ticket.get("sheet_corner_numbers"):
-                        stored_corners = ticket["sheet_corner_numbers"]
-                        break
-                
-                if not stored_corners:
-                    logger.info(f"FSC: Sheet {sheet_id} SKIP - no stored corner numbers found")
-                    continue
-                
-                logger.info(f"FSC: Sheet {sheet_id} checking with stored corners: {stored_corners}")
-                
-                # Use the NEW function that checks stored corner numbers
-                if check_full_sheet_corner_with_stored_numbers(stored_corners, called_set):
-                    # Get ticket info for display
-                    sorted_tickets = sorted(
-                        sheet_data["tickets"], 
-                        key=lambda t: t.get("ticket_position_in_sheet", 0) or int(''.join(filter(str.isdigit, t.get("ticket_number", "0"))) or 0)
-                    )
-                    
-                    ticket_numbers_list = [t.get("ticket_number") for t in sorted_tickets]
-                    first_ticket_number = sorted_tickets[0].get("ticket_number")
-                    last_ticket_number = sorted_tickets[5].get("ticket_number")
-                    
-                    winner_user_id = group_key if group_key and isinstance(group_key, str) else None
-                    
-                    new_winners[full_sheet_corner_prize] = {
-                        "user_id": winner_user_id or group_key,
+                if fsc_result["won"]:
+                    new_winners[fsc_prize] = {
+                        "user_id": group_key,
                         "full_sheet_id": sheet_id,
                         "ticket_id": sorted_tickets[0].get("ticket_id"),
-                        "ticket_number": f"{first_ticket_number}–{last_ticket_number}",
-                        "holder_name": sheet_data["holder_name"] or group_key,
+                        "ticket_number": f"{first_tn}–{last_tn}",
+                        "holder_name": holder,
                         "pattern": "Full Sheet Corner",
                         "is_full_sheet": True,
-                        "corner_numbers": stored_corners,
-                        "sheet_tickets": ticket_numbers_list
+                        "corner_numbers": fsc_result.get("corner_numbers", stored_corners),
+                        "sheet_tickets": ticket_nums
                     }
-                    logger.info(f"🏆 FSC WINNER: {sheet_data['holder_name'] or group_key}")
+                    logger.info(f"🏆 FSC WINNER: {holder}")
                     logger.info(f"   Full Sheet: {sheet_id}")
-                    logger.info(f"   Tickets: {first_ticket_number}–{last_ticket_number}")
-                    logger.info(f"   Corner Numbers: {stored_corners}")
-                    break
-                else:
-                    logger.info(f"FSC: Sheet {sheet_id} - corners not all called yet")
+                    logger.info(f"   Tickets: {first_tn}–{last_tn}")
+                    logger.info(f"   Corner Numbers: {fsc_result.get('corner_numbers')}")
             
-            if full_sheet_corner_prize in new_winners:
-                break
+            # --- CHECK FULL SHEET BONUS (FSB) ---
+            if fsb_prize and fsb_prize not in existing_winners and fsb_prize not in new_winners:
+                fsb_result = check_full_sheet_bonus(sorted_tickets, called_set)
+                
+                if fsb_result["won"]:
+                    new_winners[fsb_prize] = {
+                        "user_id": group_key,
+                        "full_sheet_id": sheet_id,
+                        "ticket_id": sorted_tickets[0].get("ticket_id"),
+                        "ticket_number": f"{first_tn}–{last_tn}",
+                        "holder_name": holder,
+                        "pattern": "Full Sheet Bonus",
+                        "is_full_sheet": True,
+                        "total_marked": fsb_result.get("total_marked"),
+                        "sheet_tickets": ticket_nums
+                    }
+                    logger.info(f"🏆 FSB WINNER: {holder}")
+                    logger.info(f"   Full Sheet: {sheet_id}")
+                    logger.info(f"   Tickets: {first_tn}–{last_tn}")
+                    logger.info(f"   Total Marked: {fsb_result.get('total_marked')}")
         
-        logger.info(f"=== FSC CHECK END ===")
+        # Break if both prizes are won
+        if (not fsc_prize or fsc_prize in existing_winners or fsc_prize in new_winners) and \
+           (not fsb_prize or fsb_prize in existing_winners or fsb_prize in new_winners):
+            break
+    
+    logger.info(f"=== FULL SHEET PRIZES CHECK END ===")
     
     # SEQUENTIAL FULL HOUSE with MULTIPLE WINNERS SHARING same prize
     # If multiple users complete Full House on the SAME CALL, they share that prize
