@@ -1390,74 +1390,257 @@ Good luck 🍀
               </div>
             </div>
 
-            <h3 className="text-sm font-semibold text-white">Recent Bookings</h3>
-            <div className="space-y-2">
-              {bookings.slice(0, 20).map((booking) => (
-                <div key={booking.booking_id} className="bg-zinc-900 rounded-lg p-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-white text-sm">{booking.user?.name || 'Unknown'}</span>
-                    <span className="text-zinc-500 text-xs ml-2">{booking.game?.name}</span>
+            {/* Payments grouped by Game */}
+            <h3 className="text-sm font-semibold text-white">Payments by Game</h3>
+            <div className="space-y-4">
+              {games.map((game) => {
+                const gameBookings = bookings.filter(b => b.game_id === game.game_id);
+                if (gameBookings.length === 0) return null;
+                
+                const confirmedBookings = gameBookings.filter(b => b.status === 'confirmed');
+                const gameRevenue = confirmedBookings.reduce((s, b) => s + (b.total_amount || 0), 0);
+                
+                return (
+                  <div key={game.game_id} className="bg-zinc-900 rounded-xl overflow-hidden">
+                    {/* Game Header */}
+                    <div className="bg-zinc-800 px-4 py-3 flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-semibold text-white">{game.name}</h4>
+                        <p className="text-xs text-zinc-500">{game.date} • {game.time}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                          game.status === 'live' ? 'bg-red-500/20 text-red-400' :
+                          game.status === 'upcoming' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-zinc-700 text-zinc-400'
+                        }`}>
+                          {game.status.toUpperCase()}
+                        </span>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-emerald-400">₹{gameRevenue.toLocaleString()}</p>
+                          <p className="text-[10px] text-zinc-500">{confirmedBookings.length} confirmed</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Bookings List */}
+                    <div className="divide-y divide-zinc-800">
+                      {gameBookings.map((booking) => (
+                        <div key={booking.booking_id} className="px-4 py-2.5 flex items-center justify-between hover:bg-zinc-800/50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
+                              <span className="text-xs text-white font-medium">
+                                {(booking.user?.name || 'U')[0].toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-white text-sm">{booking.user?.name || 'Unknown'}</span>
+                              <p className="text-[10px] text-zinc-500">
+                                {booking.ticket_ids?.length || 0} tickets • {new Date(booking.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-amber-400 text-sm font-medium">₹{booking.total_amount}</span>
+                            {booking.status === 'pending' ? (
+                              <Button onClick={() => handleConfirmPayment(booking.booking_id)} size="sm" className="h-6 text-[10px] bg-emerald-600">
+                                <Check className="w-3 h-3 mr-0.5" /> Confirm
+                              </Button>
+                            ) : (
+                              <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-400">PAID</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-amber-400 text-sm font-medium">₹{booking.total_amount}</span>
-                    {booking.status === 'pending' ? (
-                      <Button onClick={() => handleConfirmPayment(booking.booking_id)} size="sm" className="h-6 text-[10px] bg-emerald-600">
-                        <Check className="w-3 h-3 mr-0.5" /> Confirm
-                      </Button>
-                    ) : (
-                      <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-400">PAID</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </TabsContent>
 
-          {/* Agents Tab */}
-          <TabsContent value="agents" className="space-y-6">
-            {/* Header with Add Agent button */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Regional Agents</h2>
-              <Button 
-                onClick={() => { setEditingAgent(null); setAgentForm({ name: '', username: '', password: '', whatsapp_number: '', region: 'india', country_codes: ['+91'] }); setShowAgentModal(true); }}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Agent
-              </Button>
-            </div>
-
-            {/* Info Banner */}
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+          {/* Players Tab */}
+          <TabsContent value="players" className="space-y-4">
+            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
               <div className="flex items-start gap-3">
-                <Users className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <Users className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold text-blue-400">Multi-Region Agent System</h4>
-                  <p className="text-xs text-blue-400/80 mt-1">
-                    Agents are assigned to players based on their phone number country code. Players are redirected to the agent&apos;s WhatsApp for manual payment verification.
+                  <h4 className="text-sm font-semibold text-green-400">Player Management</h4>
+                  <p className="text-xs text-green-400/80 mt-1">
+                    View all players who have booked tickets. Send game notifications, alerts, and booking confirmations via WhatsApp.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Agents Table */}
+            {/* Player Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-zinc-900 rounded-xl p-4">
+                <p className="text-xs text-zinc-500">Total Players</p>
+                <p className="text-2xl font-bold text-white">
+                  {(() => {
+                    const uniquePlayers = new Set();
+                    bookings.forEach(b => { if (b.user?.phone) uniquePlayers.add(b.user.phone); });
+                    return uniquePlayers.size;
+                  })()}
+                </p>
+              </div>
+              <div className="bg-zinc-900 rounded-xl p-4">
+                <p className="text-xs text-zinc-500">Active Bookings</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  {bookings.filter(b => b.status === 'confirmed').length}
+                </p>
+              </div>
+              <div className="bg-zinc-900 rounded-xl p-4">
+                <p className="text-xs text-zinc-500">Pending Confirmations</p>
+                <p className="text-2xl font-bold text-amber-400">
+                  {bookings.filter(b => b.status === 'pending').length}
+                </p>
+              </div>
+            </div>
+
+            <h3 className="text-sm font-semibold text-white">All Players</h3>
             <div className="bg-zinc-900 rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-zinc-800">
                     <tr className="text-xs text-zinc-500 uppercase">
-                      <th className="px-4 py-3 text-left">Agent</th>
-                      <th className="px-4 py-3 text-left">Region</th>
-                      <th className="px-4 py-3 text-left">Country Codes</th>
-                      <th className="px-4 py-3 text-left">WhatsApp</th>
-                      <th className="px-4 py-3 text-left">Bookings</th>
-                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Player</th>
+                      <th className="px-4 py-3 text-left">Phone</th>
+                      <th className="px-4 py-3 text-left">Games</th>
+                      <th className="px-4 py-3 text-left">Total Spent</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800">
-                    {agents.length === 0 ? (
-                      <tr>
-                        <td colSpan="7" className="px-4 py-8 text-center text-zinc-500">
+                    {(() => {
+                      const playerMap = new Map();
+                      bookings.filter(b => b.status === 'confirmed').forEach(b => {
+                        const phone = b.user?.phone || 'unknown';
+                        if (!playerMap.has(phone)) {
+                          playerMap.set(phone, {
+                            name: b.user?.name || 'Unknown',
+                            phone: phone,
+                            email: b.user?.email,
+                            games: [],
+                            totalSpent: 0,
+                            bookings: []
+                          });
+                        }
+                        const player = playerMap.get(phone);
+                        player.totalSpent += (b.total_amount || 0);
+                        player.bookings.push(b);
+                        const gameName = b.game?.name || games.find(g => g.game_id === b.game_id)?.name || 'Unknown Game';
+                        if (!player.games.includes(gameName)) player.games.push(gameName);
+                      });
+                      
+                      return Array.from(playerMap.values()).map((player, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-800/50">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                                <span className="text-xs text-white font-bold">{player.name[0].toUpperCase()}</span>
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">{player.name}</p>
+                                {player.email && <p className="text-[10px] text-zinc-500">{player.email}</p>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-zinc-400">{player.phone}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {player.games.slice(0, 2).map((g, i) => (
+                                <span key={i} className="px-1.5 py-0.5 text-[10px] bg-zinc-700 text-zinc-300 rounded">{g}</span>
+                              ))}
+                              {player.games.length > 2 && (
+                                <span className="px-1.5 py-0.5 text-[10px] bg-zinc-700 text-zinc-300 rounded">+{player.games.length - 2}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-emerald-400 font-medium">₹{player.totalSpent.toLocaleString()}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Game Notification */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300"
+                                title="Send Game Notification"
+                                onClick={() => {
+                                  const upcomingGame = games.find(g => g.status === 'upcoming');
+                                  if (!upcomingGame) {
+                                    toast.error('No upcoming games to notify about');
+                                    return;
+                                  }
+                                  handleNotifyNewGame(upcomingGame, { name: player.name, phone: player.phone });
+                                }}
+                              >
+                                <Bell className="w-4 h-4" />
+                              </Button>
+                              {/* Game Alert */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300"
+                                title="Send Game Alert"
+                                onClick={() => {
+                                  let phoneNumber = player.phone.replace(/\D/g, '');
+                                  if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) phoneNumber = '91' + phoneNumber;
+                                  const message = `⏰ Game Alert!
+
+Hi ${player.name},
+This is a reminder about your upcoming Tambola game!
+
+Don't forget to join on time.
+Good luck 🍀
+
+— SixSeven Tambola`;
+                                  window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+                                  toast.success('WhatsApp alert opened');
+                                }}
+                              >
+                                <Clock className="w-4 h-4" />
+                              </Button>
+                              {/* Booking Confirmation */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-green-400 hover:text-green-300"
+                                title="Resend Booking Confirmation"
+                                onClick={() => {
+                                  const latestBooking = player.bookings[player.bookings.length - 1];
+                                  let phoneNumber = player.phone.replace(/\D/g, '');
+                                  if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) phoneNumber = '91' + phoneNumber;
+                                  const gameName = latestBooking.game?.name || games.find(g => g.game_id === latestBooking.game_id)?.name || 'Tambola Game';
+                                  const message = `✅ Booking Confirmed!
+
+Hi ${player.name},
+Your booking for ${gameName} is confirmed.
+
+🎟️ Tickets: ${latestBooking.ticket_ids?.length || 0}
+💰 Amount: ₹${latestBooking.total_amount}
+
+Join the game on time!
+Good luck 🍀
+
+— SixSeven Tambola`;
+                                  window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+                                  toast.success('WhatsApp confirmation opened');
+                                }}
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
                           <Users className="w-10 h-10 mx-auto mb-2 text-zinc-600" />
                           No agents configured yet
                         </td>
