@@ -1121,6 +1121,15 @@ Good luck 🍀
                                   <Play className="w-3 h-3 mr-1" /> Start
                                 </Button>
                                 <Button 
+                                  onClick={() => handleNotifyNewGame(game)} 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-7 text-xs border-green-500/50 text-green-400 hover:bg-green-500/10"
+                                  data-testid={`notify-game-${game.game_id}`}
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" /> Notify
+                                </Button>
+                                <Button 
                                   onClick={() => openEditModal(game)} 
                                   variant="outline" 
                                   size="sm" 
