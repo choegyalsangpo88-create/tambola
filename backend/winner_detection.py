@@ -457,7 +457,8 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 "numbers": ticket_numbers,
                 "ticket_id": ticket_id,
                 "ticket_number": ticket_number,
-                "ticket_position_in_sheet": ticket.get("ticket_position_in_sheet")
+                "ticket_position_in_sheet": ticket.get("ticket_position_in_sheet"),
+                "sheet_corner_numbers": ticket.get("sheet_corner_numbers")  # CRITICAL: Include stored corners
             })
             logger.debug(f"Added ticket {ticket_id} to user_sheets[{group_key}][{full_sheet_id}] - now has {len(user_sheets[group_key][full_sheet_id]['tickets'])} tickets")
         
