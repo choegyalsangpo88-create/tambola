@@ -788,18 +788,112 @@ export default function LiveGame() {
               </div>
             </div>
             
-            <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-3' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {myTickets.map((ticket) => (
-                <LottoTicket
-                  key={ticket.ticket_id}
-                  ticketNumber={ticket.ticket_number}
-                  numbers={ticket.numbers}
-                  calledNumbers={Array.from(markedNumbers)}
-                  showRemaining={false}
-                  size={ticketZoom === 1 ? 'small' : ticketZoom === 2 ? 'normal' : 'large'}
-                />
-              ))}
-            </div>
+            {/* Group tickets: Full sheets together, individual tickets separate */}
+            {(() => {
+              // Group tickets by full_sheet_id
+              const sheetGroups = {};
+              const individualTickets = [];
+              
+              myTickets.forEach(ticket => {
+                const sheetId = ticket.full_sheet_id;
+                if (sheetId) {
+                  if (!sheetGroups[sheetId]) {
+                    sheetGroups[sheetId] = [];
+                  }
+                  sheetGroups[sheetId].push(ticket);
+                } else {
+                  individualTickets.push(ticket);
+                }
+              });
+              
+              // Filter complete sheets (6 tickets) from partial bookings
+              const fullSheets = [];
+              Object.entries(sheetGroups).forEach(([sheetId, tickets]) => {
+                if (tickets.length === 6) {
+                  // Sort by ticket number
+                  tickets.sort((a, b) => {
+                    const numA = parseInt(a.ticket_number?.replace(/\D/g, '') || '0');
+                    const numB = parseInt(b.ticket_number?.replace(/\D/g, '') || '0');
+                    return numA - numB;
+                  });
+                  fullSheets.push({ sheetId, tickets });
+                } else {
+                  // Partial sheet - treat as individual tickets
+                  individualTickets.push(...tickets);
+                }
+              });
+              
+              return (
+                <div className="space-y-3">
+                  {/* Full Sheets - displayed as grouped yellow blocks */}
+                  {fullSheets.map(({ sheetId, tickets }) => (
+                    <div key={sheetId} className="rounded-lg overflow-hidden" style={{ backgroundColor: '#E6B800', padding: '4px' }}>
+                      <div className="flex items-center justify-between mb-1 px-2">
+                        <span className="text-xs font-bold text-black">{sheetId}</span>
+                        <span className="text-[10px] text-black/70">
+                          {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {tickets.map((ticket) => (
+                          <div 
+                            key={ticket.ticket_id}
+                            className="bg-white rounded"
+                            style={{ border: '2px solid #D4A017', margin: '2px' }}
+                          >
+                            {/* Ticket Header */}
+                            <div className="py-0.5 px-2 border-b border-gray-300 bg-gray-50">
+                              <p className="text-[10px] font-bold text-black text-center">
+                                LOTTO TICKET {ticket.ticket_number}
+                              </p>
+                            </div>
+                            {/* Number Grid */}
+                            <div className="grid grid-cols-9">
+                              {ticket.numbers?.map((row, rowIdx) => (
+                                row.map((num, colIdx) => {
+                                  const isMarked = num && markedNumbers.has(num);
+                                  return (
+                                    <div
+                                      key={`${rowIdx}-${colIdx}`}
+                                      className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
+                                      style={{
+                                        height: ticketZoom === 1 ? '18px' : ticketZoom === 2 ? '22px' : '26px',
+                                        fontSize: ticketZoom === 1 ? '9px' : ticketZoom === 2 ? '11px' : '13px',
+                                        fontWeight: 'bold',
+                                        backgroundColor: isMarked ? '#22c55e' : 'white',
+                                        color: isMarked ? 'white' : '#000'
+                                      }}
+                                    >
+                                      {num || ''}
+                                    </div>
+                                  );
+                                })
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Individual Tickets */}
+                  {individualTickets.length > 0 && (
+                    <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-3' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      {individualTickets.map((ticket) => (
+                        <LottoTicket
+                          key={ticket.ticket_id}
+                          ticketNumber={ticket.ticket_number}
+                          numbers={ticket.numbers}
+                          calledNumbers={Array.from(markedNumbers)}
+                          showRemaining={false}
+                          size={ticketZoom === 1 ? 'small' : ticketZoom === 2 ? 'normal' : 'large'}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
