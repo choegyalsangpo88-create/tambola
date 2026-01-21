@@ -1439,20 +1439,20 @@ Thank you for joining ${gameName}!
 
           {/* WhatsApp Tab */}
           <TabsContent value="whatsapp" className="space-y-4">
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
+            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <MessageSquare className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold text-amber-400">WhatsApp Business Policy</h4>
-                  <p className="text-xs text-amber-400/80 mt-1">
-                    Only Meta-approved message templates can be sent. Free-text messages are not allowed.
-                    All messages are logged for compliance.
+                  <h4 className="text-sm font-semibold text-green-400">WhatsApp Messages</h4>
+                  <p className="text-xs text-green-400/80 mt-1">
+                    Messages open via WhatsApp deep links. You must manually tap Send in WhatsApp.
+                    Works on both desktop (WhatsApp Web) and mobile (WhatsApp App).
                   </p>
                 </div>
               </div>
             </div>
 
-            <h3 className="text-sm font-semibold text-white">Available Templates</h3>
+            <h3 className="text-sm font-semibold text-white">Message Templates</h3>
             <div className="grid grid-cols-2 gap-3">
               {WHATSAPP_TEMPLATES.map((template) => (
                 <div key={template.id} className="bg-zinc-900 rounded-xl p-4">
