@@ -136,37 +136,93 @@ def check_four_corners(ticket_numbers, called_numbers):
 
 # ============ SPECIAL PATTERNS ============
 
-def check_full_sheet_corner(tickets, called_numbers):
+def check_full_sheet_corner_with_stored_numbers(stored_corner_numbers, called_numbers):
     """
-    FULL SHEET CORNER: Mark four corner numbers across the full sheet (6 tickets)
+    FULL SHEET CORNER (FSC) - Uses PRE-STORED corner numbers
     
-    A full sheet consists of 6 tickets (1-2-3-4-5-6)
-    The Full Sheet Corner is defined as four numbers:
-    - Top-left corner of the FIRST ticket (ticket 1, row 0)
-    - Top-right corner of the FIRST ticket (ticket 1, row 0)
-    - Bottom-left corner of the LAST ticket (ticket 6, row 2)
-    - Bottom-right corner of the LAST ticket (ticket 6, row 2)
+    This function checks if the Full Sheet Corner prize should be declared
+    using the corner numbers that were calculated and stored when the sheet was created.
     
-    This prize is applicable only if all 6 tickets are booked by one player.
-    The prize is won only when all four of these numbers are called.
+    IMPORTANT: This is completely ISOLATED from Four Corners (ticket-level rule).
+    FSC must NEVER reuse or reference the Four Corners logic.
     
     Args:
-        tickets: List of 6 ticket dicts/arrays from the same full sheet
-        called_numbers: Set of called numbers
+        stored_corner_numbers: List of 4 numbers [TL, TR, BL, BR] stored on the ticket
+            - TL: Top-left of Ticket 1 (first ticket in sheet)
+            - TR: Top-right of Ticket 1
+            - BL: Bottom-left of Ticket 6 (last ticket in sheet)
+            - BR: Bottom-right of Ticket 6
+        called_numbers: Set/list of called numbers
     
     Returns:
-        True if all four corner numbers are called
+        True if ALL four stored corner numbers are in called_numbers
     """
-    called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
-    
-    # Rule 1: Must have exactly 6 tickets
-    if len(tickets) != 6:
-        logger.info(f"Full Sheet Corner FAIL: {len(tickets)} tickets (need exactly 6)")
+    if not stored_corner_numbers or len(stored_corner_numbers) != 4:
+        logger.info(f"FSC FAIL: Invalid stored corner numbers: {stored_corner_numbers}")
         return False
     
-    # Get first ticket (ticket 1) and last ticket (ticket 6)
+    # Verify all corners are valid numbers
+    if any(corner is None for corner in stored_corner_numbers):
+        logger.info(f"FSC FAIL: Null corner in stored numbers: {stored_corner_numbers}")
+        return False
+    
+    called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
+    
+    # Check if ALL four stored corner numbers are called
+    all_called = all(corner in called_set for corner in stored_corner_numbers)
+    
+    if all_called:
+        logger.info(f"FSC PASS: All corners marked - {stored_corner_numbers}")
+    else:
+        marked = [c for c in stored_corner_numbers if c in called_set]
+        not_marked = [c for c in stored_corner_numbers if c not in called_set]
+        logger.info(f"FSC: {len(marked)}/4 - Marked: {marked}, Not marked: {not_marked}")
+    
+    return all_called
+
+
+# DEPRECATED - Keep for backward compatibility but should not be used
+def check_full_sheet_corner(tickets, called_numbers):
+    """
+    DEPRECATED: Use check_full_sheet_corner_with_stored_numbers instead.
+    
+    This function dynamically calculates corners which can lead to issues.
+    The new approach uses pre-stored corner numbers from ticket creation.
+    """
+    logger.warning("DEPRECATED: check_full_sheet_corner called - use stored corners instead")
+    
+    called_set = set(called_numbers) if not isinstance(called_numbers, set) else called_numbers
+    
+    if len(tickets) != 6:
+        return False
+    
+    # Try to get stored corner numbers from first ticket
     first_ticket = tickets[0]
+    if isinstance(first_ticket, dict) and first_ticket.get("sheet_corner_numbers"):
+        return check_full_sheet_corner_with_stored_numbers(
+            first_ticket["sheet_corner_numbers"], 
+            called_set
+        )
+    
+    # Fallback to dynamic calculation (should not happen in new games)
+    first_ticket_nums = first_ticket.get("numbers", first_ticket) if isinstance(first_ticket, dict) else first_ticket
     last_ticket = tickets[5]
+    last_ticket_nums = last_ticket.get("numbers", last_ticket) if isinstance(last_ticket, dict) else last_ticket
+    
+    def get_row_corners(row):
+        nums = [(idx, num) for idx, num in enumerate(row) if num is not None and num != 0]
+        if len(nums) < 2:
+            return None, None
+        nums.sort(key=lambda x: x[0])
+        return nums[0][1], nums[-1][1]
+    
+    tl, tr = get_row_corners(first_ticket_nums[0])
+    bl, br = get_row_corners(last_ticket_nums[2])
+    
+    if None in [tl, tr, bl, br]:
+        return False
+    
+    return all(c in called_set for c in [tl, tr, bl, br])
     
     # Extract numbers array
     if isinstance(first_ticket, dict):
