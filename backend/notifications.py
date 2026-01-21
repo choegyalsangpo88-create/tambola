@@ -1,72 +1,28 @@
 # Winner Notification Helper
-# Twilio WhatsApp Integration Active
+# WhatsApp messages are now sent via deep links (no Twilio API)
 
-from twilio.rest import Client
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-def get_twilio_client():
-    """Get Twilio client instance"""
-    account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
-    auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
-    
-    if not account_sid or not auth_token:
-        logger.warning("Twilio credentials not configured")
-        return None
-    
-    return Client(account_sid, auth_token)
-
 
 def send_whatsapp_message(to_number, message):
-    """Send WhatsApp message using Twilio"""
-    try:
-        client = get_twilio_client()
-        if not client:
-            logger.info(f"📱 [MOCKED WhatsApp] To: {to_number}")
-            logger.info(f"   Message: {message}")
-            return True
-        
-        # Format phone numbers for WhatsApp
-        from_whatsapp = f"whatsapp:{os.environ.get('TWILIO_WHATSAPP_NUMBER')}"
-        to_whatsapp = f"whatsapp:{to_number}" if not to_number.startswith('whatsapp:') else to_number
-        
-        msg = client.messages.create(
-            body=message,
-            from_=from_whatsapp,
-            to=to_whatsapp
-        )
-        
-        logger.info(f"✅ WhatsApp sent to {to_number} - SID: {msg.sid}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"Failed to send WhatsApp: {str(e)}")
-        return False
+    """
+    DEPRECATED: WhatsApp messages are now sent via deep links from the frontend.
+    This function is kept for backward compatibility but only logs the message.
+    """
+    logger.info(f"📱 [WhatsApp via Deep Link] To: {to_number}")
+    logger.info(f"   Message preview: {message[:100]}...")
+    return True
 
 
 def send_winner_whatsapp(phone_number, user_name, prize_type, prize_amount, game_name):
-    """Send winner notification via WhatsApp"""
-    message = f"""🎉 *Congratulations {user_name}!*
-
-You won *{prize_type}* worth *₹{prize_amount:,.0f}* in *{game_name}*!
-
-🏆 *Prize Details:*
-• Prize: {prize_type}
-• Amount: ₹{prize_amount:,.0f}
-• Game: {game_name}
-
-📱 *To Claim Your Prize:*
-Reply to this message with your:
-1. Full Name
-2. Bank Account Number
-3. IFSC Code
-4. UPI ID (optional)
-
-Congratulations again! 🎊"""
-    
-    return send_whatsapp_message(phone_number, message)
+    """
+    DEPRECATED: Winner notifications are now sent via deep links from the admin panel.
+    """
+    logger.info(f"🏆 [Winner Notification] {user_name} won {prize_type} (₹{prize_amount}) in {game_name}")
+    return True
 
 
 def send_winner_email(user_email, user_name, prize_type, prize_amount, game_name):
@@ -119,33 +75,16 @@ def send_winner_email(user_email, user_name, prize_type, prize_amount, game_name
 
 
 def send_winner_sms(phone_number, user_name, prize_type, prize_amount):
-    """Send congratulations SMS/WhatsApp to winner using Twilio"""
-    try:
-        # Use WhatsApp instead of SMS (more reliable and cheaper)
-        game_name = "Tambola"  # Default game name for SMS
-        return send_winner_whatsapp(phone_number, user_name, prize_type, prize_amount, game_name)
-        
-    except Exception as e:
-        logger.error(f"Failed to send SMS: {str(e)}")
-        return False
+    """
+    DEPRECATED: SMS/WhatsApp notifications are now sent via deep links.
+    """
+    logger.info(f"📱 [Winner SMS/WhatsApp] {user_name} - {prize_type} (₹{prize_amount})")
+    return True
 
 
 def send_game_invite_whatsapp(phone_number, game_name, host_name, join_link, date, time):
-    """Send game invite via WhatsApp"""
-    message = f"""🎲 *Tambola Game Invitation!*
-
-You're invited to play *{game_name}*!
-
-🎯 *Game Details:*
-• Host: {host_name}
-• Date: {date}
-• Time: {time}
-
-👉 *Click to Join:*
-{join_link}
-
-Just enter your name and get your ticket - no signup needed!
-
-See you there! 🎉"""
-    
-    return send_whatsapp_message(phone_number, message)
+    """
+    DEPRECATED: Game invites are now sent via deep links from the frontend.
+    """
+    logger.info(f"📱 [Game Invite] To: {phone_number} for {game_name}")
+    return True
