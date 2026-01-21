@@ -87,6 +87,9 @@ export default function AdminPanel() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showTicketsModal, setShowTicketsModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [notifyPhone, setNotifyPhone] = useState('');
+  const [notifyName, setNotifyName] = useState('');
   const [selectedGame, setSelectedGame] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [gameTickets, setGameTickets] = useState([]);
