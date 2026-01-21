@@ -892,7 +892,7 @@ Good luck 🍀
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs defaultValue="games" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6 bg-zinc-900 p-1 rounded-lg">
+          <TabsList className="grid w-full grid-cols-6 mb-6 bg-zinc-900 p-1 rounded-lg">
             <TabsTrigger value="games" className="text-xs">Games</TabsTrigger>
             <TabsTrigger value="requests" className="text-xs relative">
               Requests
@@ -903,8 +903,7 @@ Good luck 🍀
               )}
             </TabsTrigger>
             <TabsTrigger value="payments" className="text-xs">Payments</TabsTrigger>
-            <TabsTrigger value="agents" className="text-xs">Agents</TabsTrigger>
-            <TabsTrigger value="whatsapp" className="text-xs">WhatsApp</TabsTrigger>
+            <TabsTrigger value="players" className="text-xs">Players</TabsTrigger>
             <TabsTrigger value="logs" className="text-xs">Logs</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
           </TabsList>
