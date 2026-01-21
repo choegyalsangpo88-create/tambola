@@ -2041,10 +2041,7 @@ Good luck 🍀
       </Dialog>
 
       {/* Notify New Game Modal */}
-      <Dialog open={showNotifyModal} onOpenChange={(open) => { 
-        setShowNotifyModal(open); 
-        if (!open) { setNotifyPhone(''); setNotifyName(''); }
-      }}>
+      <Dialog open={showNotifyModal} onOpenChange={setShowNotifyModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
@@ -2064,85 +2061,47 @@ Good luck 🍀
               <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
                 <p className="text-xs text-green-400">
                   <CheckCircle2 className="w-3 h-3 inline mr-1" />
-                  Opens WhatsApp with game announcement. You must tap Send.
+                  Opens WhatsApp where you can select recipients. Message is pre-filled.
                 </p>
               </div>
               
-              {/* Manual Entry */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-white">Send to a player</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    placeholder="Player name"
-                    value={notifyName}
-                    onChange={(e) => setNotifyName(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                  <Input
-                    placeholder="Phone (e.g. 9876543210)"
-                    value={notifyPhone}
-                    onChange={(e) => setNotifyPhone(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <Button 
-                  onClick={() => {
-                    if (!notifyPhone.trim()) {
-                      toast.error('Please enter a phone number');
-                      return;
-                    }
-                    handleNotifyNewGame(selectedGame, { 
-                      name: notifyName || 'Player', 
-                      phone: notifyPhone 
-                    });
-                    setNotifyPhone('');
-                    setNotifyName('');
-                    setShowNotifyModal(false);
-                  }}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  disabled={!notifyPhone.trim()}
-                >
-                  <Send className="w-4 h-4 mr-2" /> Open WhatsApp
-                </Button>
-              </div>
+              {/* Direct WhatsApp Open - No recipient needed */}
+              <Button 
+                onClick={() => {
+                  const gameName = selectedGame.name || 'Tambola Game';
+                  const gameDate = selectedGame.date || 'TBD';
+                  const gameTime = selectedGame.time || 'TBD';
+                  const ticketPrice = selectedGame.price || 100;
+                  const bookingLink = `${window.location.origin}/game/${selectedGame.game_id}`;
+                  
+                  const message = `🎉 New Tambola Game Available!
+
+A new Tambola game is now open for booking 🎟️
+
+🎮 Game: ${gameName}
+🗓 Date: ${gameDate}
+🕒 Time: ${gameTime}
+💰 Ticket Price: ₹${ticketPrice}
+
+Book your tickets now 👇
+${bookingLink}
+
+Good luck 🍀
+— SixSeven Tambola`;
+                  
+                  // Open WhatsApp without recipient - user selects in WhatsApp
+                  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                  toast.success('WhatsApp opened. Select recipients and send.');
+                  setShowNotifyModal(false);
+                }}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                <Send className="w-4 h-4 mr-2" /> Open WhatsApp & Select Recipients
+              </Button>
               
-              {/* Quick Send to Previous Players */}
-              {bookings.filter(b => b.status === 'confirmed' && b.user?.phone).length > 0 && (
-                <div className="space-y-3 pt-3 border-t border-zinc-700">
-                  <h4 className="text-sm font-semibold text-white">Or notify previous players</h4>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {(() => {
-                      const uniquePlayers = new Map();
-                      bookings
-                        .filter(b => b.status === 'confirmed' && b.user?.phone)
-                        .forEach(b => {
-                          if (!uniquePlayers.has(b.user.phone)) {
-                            uniquePlayers.set(b.user.phone, {
-                              name: b.user.name || 'Player',
-                              phone: b.user.phone
-                            });
-                          }
-                        });
-                      return Array.from(uniquePlayers.values()).slice(0, 10).map((player, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            handleNotifyNewGame(selectedGame, player);
-                            setShowNotifyModal(false);
-                          }}
-                          className="w-full p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-left transition-all flex items-center justify-between"
-                        >
-                          <div>
-                            <span className="text-sm text-white">{player.name}</span>
-                            <p className="text-xs text-zinc-500">{player.phone}</p>
-                          </div>
-                          <Send className="w-4 h-4 text-green-400" />
-                        </button>
-                      ));
-                    })()}
-                  </div>
-                </div>
-              )}
+              <p className="text-[10px] text-zinc-500 text-center">
+                WhatsApp will open with the message. You can forward it to multiple contacts.
+              </p>
             </div>
           )}
         </DialogContent>
