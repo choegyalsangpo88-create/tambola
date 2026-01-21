@@ -1802,11 +1802,69 @@ Good luck 🍀
 
           {/* Logs Tab */}
           <TabsContent value="logs" className="space-y-4">
+            {/* Booking Activity Log */}
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Action Logs</h3>
+              <h3 className="text-sm font-semibold text-white">Booking Activity</h3>
+              <span className="text-xs text-zinc-500">{bookings.length} total bookings</span>
+            </div>
+            <div className="bg-zinc-900 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto max-h-[400px]">
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-800 sticky top-0">
+                    <tr className="text-xs text-zinc-500 uppercase">
+                      <th className="px-4 py-3 text-left">Time</th>
+                      <th className="px-4 py-3 text-left">Player</th>
+                      <th className="px-4 py-3 text-left">Game</th>
+                      <th className="px-4 py-3 text-left">Tickets</th>
+                      <th className="px-4 py-3 text-left">Amount</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800">
+                    {bookings.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((booking) => {
+                      const gameName = booking.game?.name || games.find(g => g.game_id === booking.game_id)?.name || 'Unknown';
+                      return (
+                        <tr key={booking.booking_id} className="hover:bg-zinc-800/50">
+                          <td className="px-4 py-2.5">
+                            <p className="text-xs text-white">{new Date(booking.created_at).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-zinc-500">{new Date(booking.created_at).toLocaleTimeString()}</p>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <p className="text-white text-sm">{booking.user?.name || 'Unknown'}</p>
+                            <p className="text-[10px] text-zinc-500">{booking.user?.phone}</p>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="text-zinc-300">{gameName}</span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="text-zinc-400">{booking.ticket_ids?.length || 0}</span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="text-amber-400 font-medium">₹{booking.total_amount}</span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
+                              booking.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400' :
+                              booking.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
+                              'bg-red-500/20 text-red-400'
+                            }`}>
+                              {booking.status.toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Admin Action Logs */}
+            <div className="flex items-center justify-between mt-6">
+              <h3 className="text-sm font-semibold text-white">Admin Action Logs</h3>
               <span className="text-xs text-zinc-500">{actionLogs.length} actions logged</span>
             </div>
-            <div className="bg-zinc-900 rounded-xl p-4 max-h-[500px] overflow-y-auto">
+            <div className="bg-zinc-900 rounded-xl p-4 max-h-[300px] overflow-y-auto">
               {actionLogs.length === 0 ? (
                 <div className="text-center py-8">
                   <History className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
