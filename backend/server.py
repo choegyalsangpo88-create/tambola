@@ -1434,6 +1434,25 @@ async def create_game(game_data: CreateGameRequest):
         full_sheet = generate_full_sheet()
         sheet_id = f"FS{sheet_num:03d}"
         
+        # Calculate Full Sheet Corner numbers ONCE when sheet is created
+        # Corner numbers are: TL and TR of Ticket 1, BL and BR of Ticket 6
+        first_ticket_numbers = full_sheet[0]  # Ticket 1
+        last_ticket_numbers = full_sheet[5]   # Ticket 6
+        
+        def get_row_corners(row):
+            """Get leftmost and rightmost numbers in a row"""
+            nums_with_pos = [(idx, num) for idx, num in enumerate(row) if num is not None]
+            if len(nums_with_pos) < 2:
+                return None, None
+            nums_with_pos.sort(key=lambda x: x[0])
+            return nums_with_pos[0][1], nums_with_pos[-1][1]
+        
+        top_left, top_right = get_row_corners(first_ticket_numbers[0])  # First row of Ticket 1
+        bottom_left, bottom_right = get_row_corners(last_ticket_numbers[2])  # Last row of Ticket 6
+        
+        # Store corner numbers for this full sheet
+        sheet_corner_numbers = [top_left, top_right, bottom_left, bottom_right]
+        
         for ticket_num_in_sheet, ticket_numbers in enumerate(full_sheet, 1):
             ticket = {
                 "ticket_id": f"{game_id}_T{ticket_counter:03d}",
@@ -1443,7 +1462,8 @@ async def create_game(game_data: CreateGameRequest):
                 "ticket_position_in_sheet": ticket_num_in_sheet,
                 "numbers": ticket_numbers,
                 "is_booked": False,
-                "booking_status": "available"
+                "booking_status": "available",
+                "sheet_corner_numbers": sheet_corner_numbers  # Store FSC corners on each ticket
             }
             tickets.append(ticket)
             ticket_counter += 1
