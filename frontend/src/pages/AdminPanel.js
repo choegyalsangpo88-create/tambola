@@ -454,10 +454,52 @@ export default function AdminPanel() {
   };
 
   const handleApproveRequest = async (requestId) => {
+    // Find the booking request to get details for WhatsApp
+    const request = pendingRequests.find(r => r.request_id === requestId);
+    
     try {
       await adminAxios.put(`${API}/admin/booking-requests/${requestId}/approve`);
       await logAction('BOOKING_APPROVED', { request_id: requestId });
-      toast.success('Booking approved!');
+      toast.success('Payment approved. WhatsApp message opened.');
+      
+      // Open WhatsApp with confirmation message
+      if (request) {
+        const playerName = request.user_name || 'Player';
+        const amount = request.total_amount || 0;
+        const ticketCount = request.ticket_ids?.length || 0;
+        const gameName = request.game?.name || 'Tambola Game';
+        const bookingId = requestId;
+        
+        // Format phone number with country code
+        let phoneNumber = request.user_phone || '';
+        phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = phoneNumber.substring(1);
+        }
+        if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) {
+          phoneNumber = '91' + phoneNumber;
+        }
+        
+        // Create confirmation message
+        const message = `✅ Payment Confirmed!
+
+Hi ${playerName},
+Your payment of ₹${amount} has been confirmed.
+
+🎟️ Tickets: ${ticketCount}
+🧾 Booking ID: ${bookingId}
+🎮 Game: ${gameName}
+
+Please join the game on time.
+Good luck 🍀
+
+— SixSeven Tambola`;
+        
+        // Open WhatsApp in new tab
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      }
+      
       fetchBookingRequests();
       fetchBookings();
       fetchGames();
