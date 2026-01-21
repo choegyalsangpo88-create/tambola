@@ -1808,12 +1808,15 @@ Thank you for joining ${gameName}!
       <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader>
-            <DialogTitle className="text-white">Send WhatsApp Message</DialogTitle>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-green-400" />
+              Send WhatsApp Message
+            </DialogTitle>
           </DialogHeader>
           <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
             <p className="text-xs text-green-400">
               <CheckCircle2 className="w-3 h-3 inline mr-1" />
-              Only Meta-approved templates. Messages are logged.
+              Opens WhatsApp with pre-filled message. You must tap Send.
             </p>
           </div>
           <p className="text-sm text-zinc-400 mb-4">
@@ -1824,10 +1827,13 @@ Thank you for joining ${gameName}!
               <button
                 key={template.id}
                 onClick={() => handleSendWhatsAppTemplate(template.id, selectedBooking)}
-                className="w-full p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-left transition-all"
+                className="w-full p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-left transition-all flex items-center justify-between"
               >
-                <span className="text-sm text-white font-medium">{template.name}</span>
-                <p className="text-xs text-zinc-500 mt-0.5">{template.description}</p>
+                <div>
+                  <span className="text-sm text-white font-medium">{template.name}</span>
+                  <p className="text-xs text-zinc-500 mt-0.5">{template.description}</p>
+                </div>
+                <Send className="w-4 h-4 text-green-400" />
               </button>
             ))}
           </div>
