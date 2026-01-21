@@ -606,6 +606,102 @@ Thank you for joining ${gameName}!
     setShowWhatsAppModal(false);
   };
 
+  // Handle "Notify New Game" - opens WhatsApp with game promotion message
+  const handleNotifyNewGame = async (game, recipient = null) => {
+    const gameName = game.name || 'Tambola Game';
+    const gameDate = game.date || 'TBD';
+    const gameTime = game.time || 'TBD';
+    const ticketPrice = game.price || 100;
+    const bookingLink = `${window.location.origin}/game/${game.game_id}`;
+    
+    // If no recipient specified, open a modal to select or enter recipient
+    if (!recipient) {
+      setSelectedGame(game);
+      setShowNotifyModal(true);
+      return;
+    }
+    
+    const playerName = recipient.name || 'Player';
+    
+    // Format phone number with country code
+    let phoneNumber = recipient.phone || '';
+    phoneNumber = phoneNumber.replace(/\D/g, '');
+    if (phoneNumber.startsWith('0')) {
+      phoneNumber = phoneNumber.substring(1);
+    }
+    if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) {
+      phoneNumber = '91' + phoneNumber;
+    }
+    
+    // Create promotional message
+    const message = `🎉 New Tambola Game Available!
+
+Hi ${playerName},
+A new Tambola game is now open for booking 🎟️
+
+🎮 Game: ${gameName}
+🗓 Date: ${gameDate}
+🕒 Time: ${gameTime}
+💰 Ticket Price: ₹${ticketPrice}
+
+Book your tickets now 👇
+${bookingLink}
+
+Good luck 🍀
+— SixSeven Tambola`;
+    
+    // Log the action
+    await logAction('NEW_GAME_NOTIFICATION_OPENED', { 
+      game_id: game.game_id,
+      recipient: phoneNumber
+    });
+    
+    // Open WhatsApp in new tab
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    toast.success('WhatsApp notification opened. Please tap Send.');
+  };
+
+  // Handle bulk notify - notify all confirmed players from previous games
+  const handleBulkNotifyNewGame = async (game) => {
+    // Get all unique players from confirmed bookings
+    const uniquePlayers = new Map();
+    bookings
+      .filter(b => b.status === 'confirmed' && b.user?.phone)
+      .forEach(b => {
+        if (!uniquePlayers.has(b.user.phone)) {
+          uniquePlayers.set(b.user.phone, {
+            name: b.user.name || 'Player',
+            phone: b.user.phone
+          });
+        }
+      });
+    
+    if (uniquePlayers.size === 0) {
+      toast.error('No players with phone numbers found');
+      return;
+    }
+    
+    // Show confirmation
+    const playerCount = uniquePlayers.size;
+    if (!window.confirm(`This will open ${playerCount} WhatsApp windows. Continue?`)) {
+      return;
+    }
+    
+    // Open WhatsApp for each player (with small delay to prevent blocking)
+    const players = Array.from(uniquePlayers.values());
+    for (let i = 0; i < Math.min(players.length, 10); i++) { // Limit to 10 to prevent spam
+      setTimeout(() => {
+        handleNotifyNewGame(game, players[i]);
+      }, i * 500);
+    }
+    
+    if (players.length > 10) {
+      toast.info(`Opened first 10 of ${players.length} players. Open more manually.`);
+    }
+  };
+
   const handleCancelTicket = async (ticketId) => {
     if (!window.confirm('Cancel this ticket?')) return;
     try {
