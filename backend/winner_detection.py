@@ -598,6 +598,8 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                 })
     
     # Check Full Sheet Corner (only for users who booked all 6 tickets of a sheet)
+    # IMPORTANT: FSC uses STORED corner numbers, NOT dynamic calculation
+    # FSC is completely ISOLATED from Four Corners (ticket-level rule)
     full_sheet_corner_variations = ["Full Sheet Corner", "FullSheet Corner", "full_sheet_corner", "Sheet Corner"]
     
     # Find actual prize name for full sheet corner
@@ -616,78 +618,73 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
     logger.info(f"Full Sheet Corner prize name: {full_sheet_corner_prize}")
     
     if full_sheet_corner_prize and full_sheet_corner_prize not in existing_winners and full_sheet_corner_prize not in new_winners:
-        logger.info(f"Checking Full Sheet Corner for {len(user_sheets)} users/groups")
+        logger.info(f"=== FSC CHECK START === Checking {len(user_sheets)} users/groups")
+        
         for group_key, sheets in user_sheets.items():
-            logger.info(f"User/Group {group_key} has {len(sheets)} sheets")
+            logger.info(f"FSC: User/Group '{group_key}' has {len(sheets)} sheets")
+            
             for sheet_id, sheet_data in sheets.items():
                 if not sheet_id:
                     continue
                 
                 ticket_count = len(sheet_data["tickets"])
-                logger.info(f"Sheet {sheet_id} has {ticket_count} tickets for user {group_key}")
                 
-                # Must have exactly 6 tickets (full sheet)
+                # RULE: Must have EXACTLY 6 tickets (complete full sheet)
                 if ticket_count != 6:
-                    logger.info(f"Sheet {sheet_id} skipped - has {ticket_count} tickets, need 6")
+                    logger.info(f"FSC: Sheet {sheet_id} SKIP - has {ticket_count}/6 tickets")
                     continue
                 
-                # Sort tickets by position OR by ticket number as fallback
-                def sort_key(t):
-                    pos = t.get("ticket_position_in_sheet")
-                    if pos is not None and pos > 0:
-                        return pos
-                    # Fallback: extract number from ticket_number
-                    tn = t.get("ticket_number", "")
-                    num_str = ''.join(filter(str.isdigit, tn))
-                    return int(num_str) if num_str else 0
+                # Get the STORED corner numbers from any ticket in this sheet
+                # (All tickets in a sheet have the same sheet_corner_numbers)
+                stored_corners = None
+                for ticket in sheet_data["tickets"]:
+                    if ticket.get("sheet_corner_numbers"):
+                        stored_corners = ticket["sheet_corner_numbers"]
+                        break
                 
-                sorted_tickets = sorted(sheet_data["tickets"], key=sort_key)
-                ticket_nums = [t.get("ticket_number") for t in sorted_tickets]
-                logger.info(f"Sheet {sheet_id} sorted ticket order: {ticket_nums}")
+                if not stored_corners:
+                    logger.info(f"FSC: Sheet {sheet_id} SKIP - no stored corner numbers found")
+                    continue
                 
-                # Check Full Sheet Corner
-                if check_full_sheet_corner(sorted_tickets, called_set):
-                    winner_user_id = group_key if group_key and isinstance(group_key, str) and (group_key.startswith("user_") or "_" in group_key) else None
+                logger.info(f"FSC: Sheet {sheet_id} checking with stored corners: {stored_corners}")
+                
+                # Use the NEW function that checks stored corner numbers
+                if check_full_sheet_corner_with_stored_numbers(stored_corners, called_set):
+                    # Get ticket info for display
+                    sorted_tickets = sorted(
+                        sheet_data["tickets"], 
+                        key=lambda t: t.get("ticket_position_in_sheet", 0) or int(''.join(filter(str.isdigit, t.get("ticket_number", "0"))) or 0)
+                    )
                     
-                    # Get corner numbers for display
-                    first_ticket = sorted_tickets[0]
-                    last_ticket = sorted_tickets[5]
-                    first_numbers = first_ticket.get("numbers", []) if isinstance(first_ticket, dict) else first_ticket
-                    last_numbers = last_ticket.get("numbers", []) if isinstance(last_ticket, dict) else last_ticket
-                    
-                    def get_corner_nums(row):
-                        nums = [(idx, num) for idx, num in enumerate(row) if num is not None and num != 0]
-                        if len(nums) < 2:
-                            return None, None
-                        nums.sort(key=lambda x: x[0])
-                        return nums[0][1], nums[-1][1]
-                    
-                    tl, tr = get_corner_nums(first_numbers[0])
-                    bl, br = get_corner_nums(last_numbers[2])
-                    corner_numbers = [tl, tr, bl, br]
-                    
-                    # Get ticket numbers for display
                     ticket_numbers_list = [t.get("ticket_number") for t in sorted_tickets]
                     first_ticket_number = sorted_tickets[0].get("ticket_number")
                     last_ticket_number = sorted_tickets[5].get("ticket_number")
                     
+                    winner_user_id = group_key if group_key and isinstance(group_key, str) else None
+                    
                     new_winners[full_sheet_corner_prize] = {
                         "user_id": winner_user_id or group_key,
                         "full_sheet_id": sheet_id,
-                        "ticket_id": sorted_tickets[0].get("ticket_id"),  # First ticket for reference
-                        "ticket_number": f"{first_ticket_number}-{last_ticket_number}",  # Show range
+                        "ticket_id": sorted_tickets[0].get("ticket_id"),
+                        "ticket_number": f"{first_ticket_number}–{last_ticket_number}",
                         "holder_name": sheet_data["holder_name"] or group_key,
                         "pattern": "Full Sheet Corner",
                         "is_full_sheet": True,
-                        "corner_numbers": corner_numbers,
+                        "corner_numbers": stored_corners,
                         "sheet_tickets": ticket_numbers_list
                     }
-                    logger.info(f"🎉 Winner: {sheet_data['holder_name'] or group_key} - Full Sheet Corner (Sheet: {sheet_id}, Corners: {corner_numbers})")
+                    logger.info(f"🏆 FSC WINNER: {sheet_data['holder_name'] or group_key}")
+                    logger.info(f"   Full Sheet: {sheet_id}")
+                    logger.info(f"   Tickets: {first_ticket_number}–{last_ticket_number}")
+                    logger.info(f"   Corner Numbers: {stored_corners}")
                     break
                 else:
-                    logger.info(f"Sheet {sheet_id} - Full Sheet Corner check FAILED")
+                    logger.info(f"FSC: Sheet {sheet_id} - corners not all called yet")
+            
             if full_sheet_corner_prize in new_winners:
                 break
+        
+        logger.info(f"=== FSC CHECK END ===")
     
     # SEQUENTIAL FULL HOUSE with MULTIPLE WINNERS SHARING same prize
     # If multiple users complete Full House on the SAME CALL, they share that prize
