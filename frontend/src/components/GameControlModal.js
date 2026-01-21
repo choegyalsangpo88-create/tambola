@@ -602,8 +602,8 @@ export default function GameControlModal({ isOpen, onClose, gameId, onUpdate }) 
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-green-400">WhatsApp Business Policy</p>
-                    <p className="text-xs text-green-400/70">Messages use pre-approved Twilio templates only. No custom text. No bulk resend.</p>
+                    <p className="text-sm font-medium text-green-400">WhatsApp Messages</p>
+                    <p className="text-xs text-green-400/70">Messages open via WhatsApp deep links. Admin must manually tap Send.</p>
                   </div>
                 </div>
               </div>
