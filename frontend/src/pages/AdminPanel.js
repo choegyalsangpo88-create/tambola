@@ -1958,6 +1958,114 @@ Good luck 🍀
         </DialogContent>
       </Dialog>
 
+      {/* Notify New Game Modal */}
+      <Dialog open={showNotifyModal} onOpenChange={(open) => { 
+        setShowNotifyModal(open); 
+        if (!open) { setNotifyPhone(''); setNotifyName(''); }
+      }}>
+        <DialogContent className="bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-green-400" />
+              Notify New Game
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedGame && (
+            <div className="space-y-4">
+              {/* Game Info */}
+              <div className="bg-zinc-800 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-white">{selectedGame.name}</h4>
+                <p className="text-xs text-zinc-400">{selectedGame.date} at {selectedGame.time} • ₹{selectedGame.price}/ticket</p>
+              </div>
+              
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                <p className="text-xs text-green-400">
+                  <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                  Opens WhatsApp with game announcement. You must tap Send.
+                </p>
+              </div>
+              
+              {/* Manual Entry */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-white">Send to a player</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Player name"
+                    value={notifyName}
+                    onChange={(e) => setNotifyName(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                  <Input
+                    placeholder="Phone (e.g. 9876543210)"
+                    value={notifyPhone}
+                    onChange={(e) => setNotifyPhone(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <Button 
+                  onClick={() => {
+                    if (!notifyPhone.trim()) {
+                      toast.error('Please enter a phone number');
+                      return;
+                    }
+                    handleNotifyNewGame(selectedGame, { 
+                      name: notifyName || 'Player', 
+                      phone: notifyPhone 
+                    });
+                    setNotifyPhone('');
+                    setNotifyName('');
+                    setShowNotifyModal(false);
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  disabled={!notifyPhone.trim()}
+                >
+                  <Send className="w-4 h-4 mr-2" /> Open WhatsApp
+                </Button>
+              </div>
+              
+              {/* Quick Send to Previous Players */}
+              {bookings.filter(b => b.status === 'confirmed' && b.user?.phone).length > 0 && (
+                <div className="space-y-3 pt-3 border-t border-zinc-700">
+                  <h4 className="text-sm font-semibold text-white">Or notify previous players</h4>
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {(() => {
+                      const uniquePlayers = new Map();
+                      bookings
+                        .filter(b => b.status === 'confirmed' && b.user?.phone)
+                        .forEach(b => {
+                          if (!uniquePlayers.has(b.user.phone)) {
+                            uniquePlayers.set(b.user.phone, {
+                              name: b.user.name || 'Player',
+                              phone: b.user.phone
+                            });
+                          }
+                        });
+                      return Array.from(uniquePlayers.values()).slice(0, 10).map((player, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            handleNotifyNewGame(selectedGame, player);
+                            setShowNotifyModal(false);
+                          }}
+                          className="w-full p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-left transition-all flex items-center justify-between"
+                        >
+                          <div>
+                            <span className="text-sm text-white">{player.name}</span>
+                            <p className="text-xs text-zinc-500">{player.phone}</p>
+                          </div>
+                          <Send className="w-4 h-4 text-green-400" />
+                        </button>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Game Details Modal */}
       <Dialog open={showGameDetailsModal} onOpenChange={setShowGameDetailsModal}>
         <DialogContent className="max-w-2xl bg-zinc-900 border-zinc-800">
