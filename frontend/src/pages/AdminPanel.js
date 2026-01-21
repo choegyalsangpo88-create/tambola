@@ -532,26 +532,78 @@ Good luck 🍀
   };
 
   const handleSendWhatsAppTemplate = async (templateId, recipient) => {
-    try {
-      await adminAxios.post(`${API}/admin/whatsapp/send-template`, {
-        template_id: templateId,
-        recipient_phone: recipient.phone,
-        recipient_name: recipient.name,
-        booking_id: recipient.booking_id,
-        game_name: recipient.game_name
-      });
-      
-      await logAction('WHATSAPP_TEMPLATE_SENT', { 
-        template_id: templateId, 
-        recipient: recipient.phone,
-        booking_id: recipient.booking_id 
-      });
-      
-      toast.success('WhatsApp message sent');
-      setShowWhatsAppModal(false);
-    } catch (error) {
-      toast.error('Failed to send WhatsApp message');
+    // Create message based on template type
+    let message = '';
+    const playerName = recipient.name || 'Player';
+    const gameName = recipient.game_name || 'Tambola Game';
+    
+    switch (templateId) {
+      case 'booking_confirmed':
+        message = `✅ Booking Confirmed!
+
+Hi ${playerName},
+Your booking for ${gameName} has been confirmed.
+
+🎟️ Booking ID: ${recipient.booking_id}
+
+Please join the game on time.
+Good luck 🍀
+
+— SixSeven Tambola`;
+        break;
+      case 'game_reminder':
+        message = `⏰ Game Reminder!
+
+Hi ${playerName},
+${gameName} is starting soon!
+
+Don't forget to join the game.
+Good luck 🍀
+
+— SixSeven Tambola`;
+        break;
+      case 'payment_received':
+        message = `💰 Payment Received!
+
+Hi ${playerName},
+We've received your payment for ${gameName}.
+
+Your tickets are confirmed.
+Good luck 🍀
+
+— SixSeven Tambola`;
+        break;
+      default:
+        message = `Hi ${playerName},
+
+Thank you for joining ${gameName}!
+
+— SixSeven Tambola`;
     }
+    
+    // Format phone number with country code
+    let phoneNumber = recipient.phone || '';
+    phoneNumber = phoneNumber.replace(/\D/g, '');
+    if (phoneNumber.startsWith('0')) {
+      phoneNumber = phoneNumber.substring(1);
+    }
+    if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) {
+      phoneNumber = '91' + phoneNumber;
+    }
+    
+    // Log the action
+    await logAction('WHATSAPP_MESSAGE_OPENED', { 
+      template_id: templateId, 
+      recipient: phoneNumber,
+      booking_id: recipient.booking_id 
+    });
+    
+    // Open WhatsApp in new tab
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    toast.success('WhatsApp message opened. Please tap Send.');
+    setShowWhatsAppModal(false);
   };
 
   const handleCancelTicket = async (ticketId) => {
