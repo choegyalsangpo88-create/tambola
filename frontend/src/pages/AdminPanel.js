@@ -42,14 +42,13 @@ adminAxios.interceptors.response.use(
 const DEFAULT_DIVIDENDS = {
   'Quick Five': { enabled: true, amount: 500 },
   'Four Corners': { enabled: true, amount: 300 },
-  'Full Sheet Corner': { enabled: true, amount: 1000 },
-  'Full Sheet Bonus': { enabled: true, amount: 500 },
   'Top Line': { enabled: true, amount: 200 },
   'Middle Line': { enabled: true, amount: 200 },
   'Bottom Line': { enabled: true, amount: 200 },
   '1st Full House': { enabled: true, amount: 2000 },
   '2nd Full House': { enabled: true, amount: 1000 },
-  '3rd Full House': { enabled: true, amount: 5000 }
+  '3rd Full House': { enabled: true, amount: 5000 },
+  'Full Sheet Lucky Draw': { enabled: true, amount: 1000 }
 };
 
 // WhatsApp Template Types (Meta-approved)
