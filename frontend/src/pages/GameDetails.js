@@ -15,7 +15,7 @@ const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
 // Single Lotto Ticket Component (clickable for individual selection)
-function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked }) {
+function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked, isInFullSheet = false }) {
   const bookedByName = ticket.booked_by_name || ticket.holder_name;
 
   return (
@@ -26,10 +26,10 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
           : ''
       }`}
       style={{ 
-        border: isSelected ? '3px solid #f59e0b' : '2px solid #D4A017',
-        margin: '3px',
-        borderRadius: '4px',
-        boxShadow: isSelected ? '0 0 10px rgba(245, 158, 11, 0.5)' : 'none'
+        border: isSelected ? '2px solid #f59e0b' : '1px solid #D4A017',
+        margin: '2px',
+        borderRadius: '2px',
+        boxShadow: isSelected ? '0 0 8px rgba(245, 158, 11, 0.4)' : 'none'
       }}
       onClick={(e) => {
         e.preventDefault();
@@ -41,32 +41,32 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
       data-testid={`ticket-${ticket.ticket_number}`}
     >
       {/* Header with ticket number and user name */}
-      <div className="relative py-1 border-b border-black bg-gray-50">
+      <div className="relative py-0.5 border-b border-gray-400 bg-gray-50">
         {/* Page number on first ticket only - left side */}
         {isFirst && pageNumber && (
           <span 
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-black"
+            className="absolute left-1 top-1/2 -translate-y-1/2 text-[9px] font-bold text-black"
             style={{ fontFamily: 'Arial, sans-serif' }}
           >
             {pageNumber}
           </span>
         )}
         {/* Ticket header with user name on right */}
-        <div className="flex items-center justify-between px-2">
+        <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1">
             <p 
-              className="text-xs font-bold text-black uppercase tracking-wide"
+              className="text-[10px] font-bold text-black uppercase tracking-wide"
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               LOTTO TICKET {ticket.ticket_number}
             </p>
             {isSelected && (
-              <span className="text-amber-500 text-sm font-bold">✓</span>
+              <span className="text-amber-500 text-xs font-bold">✓</span>
             )}
           </div>
           {bookedByName && (
             <span 
-              className="text-xs font-bold text-black"
+              className="text-[10px] font-bold text-black"
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               {bookedByName.length > 10 ? bookedByName.slice(0, 10) + '.' : bookedByName}
@@ -83,9 +83,9 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
               key={`${rowIndex}-${colIndex}`}
               className="flex items-center justify-center border-r border-b border-gray-300 last:border-r-0"
               style={{
-                height: '24px',
+                height: '20px',
                 fontFamily: 'Arial, sans-serif',
-                fontSize: '13px',
+                fontSize: '11px',
                 fontWeight: 'bold',
                 color: '#000'
               }}
