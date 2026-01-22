@@ -16,12 +16,7 @@ const WHATSAPP_DISPLAY = '+91 8837489781';
 
 // Single Lotto Ticket Component (clickable for individual selection)
 function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked }) {
-  const bookedByName = ticket.booked_by_name;
-  const shortName = bookedByName ? (
-    bookedByName.split(' ').length > 1 
-      ? bookedByName.split(' ')[0][0] + '. ' + bookedByName.split(' ')[1].slice(0, 6)
-      : bookedByName.slice(0, 8)
-  ) : null;
+  const bookedByName = ticket.booked_by_name || ticket.holder_name;
 
   return (
     <div 
@@ -45,7 +40,7 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
       }}
       data-testid={`ticket-${ticket.ticket_number}`}
     >
-      {/* Header with ticket number and page number */}
+      {/* Header with ticket number and user name */}
       <div className="relative py-1 border-b border-black bg-gray-50">
         {/* Page number on first ticket only - left side */}
         {isFirst && pageNumber && (
@@ -56,19 +51,26 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
             {pageNumber}
           </span>
         )}
-        {/* Centered ticket header */}
-        <div className="flex items-center justify-center gap-2">
-          <p 
-            className="text-center text-xs font-bold text-black uppercase tracking-wide"
-            style={{ fontFamily: 'Arial, sans-serif' }}
-          >
-            LOTTO TICKET {ticket.ticket_number}
-          </p>
-          {isSelected && (
-            <span className="text-amber-500 text-sm font-bold">✓</span>
-          )}
-          {shortName && (
-            <span className="text-[9px] text-purple-600">• {shortName}</span>
+        {/* Ticket header with user name on right */}
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-1">
+            <p 
+              className="text-xs font-bold text-black uppercase tracking-wide"
+              style={{ fontFamily: 'Arial, sans-serif' }}
+            >
+              LOTTO TICKET {ticket.ticket_number}
+            </p>
+            {isSelected && (
+              <span className="text-amber-500 text-sm font-bold">✓</span>
+            )}
+          </div>
+          {bookedByName && (
+            <span 
+              className="text-xs font-bold text-black"
+              style={{ fontFamily: 'Arial, sans-serif' }}
+            >
+              {bookedByName.length > 10 ? bookedByName.slice(0, 10) + '.' : bookedByName}
+            </span>
           )}
         </div>
       </div>
