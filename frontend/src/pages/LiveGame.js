@@ -31,10 +31,15 @@ export default function LiveGame() {
   const [ticketZoom, setTicketZoom] = useState(2);
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null);
+  const [showLuckyDraw, setShowLuckyDraw] = useState(false);
+  const [luckyDrawData, setLuckyDrawData] = useState(null);
+  const [luckyDrawAnimating, setLuckyDrawAnimating] = useState(false);
+  const [luckyDrawWinner, setLuckyDrawWinner] = useState(null);
   const pollInterval = useRef(null);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
   const previousWinnersRef = useRef({});
+  const luckyDrawShownRef = useRef(false);
 
   // Unlock audio on iOS/mobile using Howler.js - MUST be triggered by user gesture
   const unlockAudio = useCallback(async () => {
