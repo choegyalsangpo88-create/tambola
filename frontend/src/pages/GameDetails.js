@@ -26,10 +26,10 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
           : ''
       }`}
       style={{ 
-        border: isSelected ? '2px solid #f59e0b' : '1px solid #D4A017',
-        margin: '2px',
-        borderRadius: '2px',
-        boxShadow: isSelected ? '0 0 8px rgba(245, 158, 11, 0.4)' : 'none'
+        border: isSelected ? '2px solid #f59e0b' : '1px solid #999',
+        margin: '1px',
+        borderRadius: '0px',
+        boxShadow: isSelected ? '0 0 6px rgba(245, 158, 11, 0.5)' : 'none'
       }}
       onClick={(e) => {
         e.preventDefault();
@@ -41,35 +41,34 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
       data-testid={`ticket-${ticket.ticket_number}`}
     >
       {/* Header with ticket number and user name */}
-      <div className="relative py-0.5 border-b border-gray-400 bg-gray-50">
-        {/* Page number on first ticket only - left side */}
-        {isFirst && pageNumber && (
-          <span 
-            className="absolute left-1 top-1/2 -translate-y-1/2 text-[9px] font-bold text-black"
-            style={{ fontFamily: 'Arial, sans-serif' }}
-          >
-            {pageNumber}
-          </span>
-        )}
+      <div className="py-0.5 border-b border-gray-400 bg-gray-100">
         {/* Ticket header with user name on right */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1">
+            {isFirst && pageNumber && (
+              <span 
+                className="text-[8px] font-bold text-gray-600 mr-1"
+                style={{ fontFamily: 'Arial, sans-serif' }}
+              >
+                {pageNumber}
+              </span>
+            )}
             <p 
-              className="text-[10px] font-bold text-black uppercase tracking-wide"
+              className="text-[9px] font-bold text-black uppercase"
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               LOTTO TICKET {ticket.ticket_number}
             </p>
             {isSelected && (
-              <span className="text-amber-500 text-xs font-bold">✓</span>
+              <span className="text-amber-500 text-[10px] font-bold">✓</span>
             )}
           </div>
           {bookedByName && (
             <span 
-              className="text-[10px] font-bold text-black"
+              className="text-[9px] font-bold text-black"
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
-              {bookedByName.length > 10 ? bookedByName.slice(0, 10) + '.' : bookedByName}
+              {bookedByName.length > 8 ? bookedByName.slice(0, 8) + '..' : bookedByName}
             </span>
           )}
         </div>
@@ -83,9 +82,9 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
               key={`${rowIndex}-${colIndex}`}
               className="flex items-center justify-center border-r border-b border-gray-300 last:border-r-0"
               style={{
-                height: '20px',
+                height: '18px',
                 fontFamily: 'Arial, sans-serif',
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: 'bold',
                 color: '#000'
               }}
