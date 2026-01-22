@@ -380,10 +380,10 @@ class TestLuckyDrawFeature:
         # Verify session structure
         assert "called_numbers" in session, "Missing called_numbers in session"
         assert "winners" in session, "Missing winners in session"
-        assert "status" in session, "Missing status in session"
+        assert "game_id" in session, "Missing game_id in session"
         
         print(f"✅ Game session has correct structure")
-        print(f"   Status: {session.get('status')}")
+        print(f"   Game ID: {session.get('game_id')}")
         print(f"   Called numbers: {len(session.get('called_numbers', []))}")
         
         # Cleanup
