@@ -1711,13 +1711,21 @@ Good luck 🍀
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800">
-                    {bookings.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((booking) => {
+                    {bookings.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).map((booking) => {
                       const gameName = booking.game?.name || games.find(g => g.game_id === booking.game_id)?.name || 'Unknown';
+                      const bookingDate = booking.created_at ? new Date(booking.created_at) : null;
+                      const isValidDate = bookingDate && !isNaN(bookingDate.getTime());
                       return (
                         <tr key={booking.booking_id} className="hover:bg-zinc-800/50">
                           <td className="px-4 py-2.5">
-                            <p className="text-xs text-white">{new Date(booking.created_at).toLocaleDateString()}</p>
-                            <p className="text-[10px] text-zinc-500">{new Date(booking.created_at).toLocaleTimeString()}</p>
+                            {isValidDate ? (
+                              <>
+                                <p className="text-xs text-white">{bookingDate.toLocaleDateString()}</p>
+                                <p className="text-[10px] text-zinc-500">{bookingDate.toLocaleTimeString()}</p>
+                              </>
+                            ) : (
+                              <p className="text-xs text-zinc-500">-</p>
+                            )}
                           </td>
                           <td className="px-4 py-2.5">
                             <p className="text-white text-sm">{booking.user?.name || 'Unknown'}</p>
