@@ -228,8 +228,35 @@ A full sheet consists of 6 tickets (1-2-3-4-5-6). The Full Sheet Corner is defin
 - Click "Select All 6" → select entire sheet
 - Individual ticket count shown (e.g., "2/6 selected")
 
+### 9. Full Sheet Lucky Draw ✅ (2026-01-22)
+**Definition:**
+When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.) are claimed, a Lucky Draw is automatically triggered to reward Full Sheet bookers.
+
+**How It Works:**
+1. Game auto-detects when all non-Lucky Draw prizes are won
+2. Lucky Draw is triggered immediately (not waiting for 90 calls)
+3. Random selection from all eligible Full Sheets (complete 6-ticket bookings)
+4. Casino reel animation displays on frontend
+5. Game ends automatically after Lucky Draw winner is announced
+
+**Frontend Animation:**
+- Casino-style spinning reel showing all eligible Full Sheet IDs
+- 5-second animation before winner reveal
+- Confetti celebration when winner is shown
+- Winner details: Full Sheet ID, Holder Name, Ticket Range, Prize Amount
+
+**Backend Logic (`check_winners_for_session`):**
+- Excludes Lucky Draw from dividend count when checking if game should end
+- Triggers Lucky Draw when: `all_regular_prizes_won && lucky_draw_prize_exists && !already_won`
+- Sets `is_lucky_draw: true` flag on winner data for frontend detection
+
+**API Endpoint:**
+- `GET /api/games/{game_id}/lucky-draw` - Returns eligible sheets, winner data, and game status
+
 ### Removed Features
-- **Full Sheet Bonus**: Removed in favor of Full Sheet Corner (2026-01-20)
+- **Full Sheet Bonus (FSB)**: Removed due to persistent bugs (2026-01-22)
+- **Full Sheet Corner (FSC)**: Removed due to persistent bugs (2026-01-22)
+- **Twilio Integration**: Removed, replaced with WhatsApp deep links (2026-01-22)
 
 ### 6. User Games (Create Your Own)
 - Host private games with share codes
