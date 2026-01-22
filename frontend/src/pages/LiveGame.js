@@ -845,18 +845,57 @@ export default function LiveGame() {
             <div className="flex-1 space-y-0.5 overflow-y-auto pr-1" style={{ maxHeight: '150px' }}>
               {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
                 const winner = session.winners?.[prize];
-                // Get first name only for cleaner display
                 const winnerFirstName = winner?.holder_name?.split(' ')[0] || winner?.name?.split(' ')[0] || '';
-                const isFullSheetCorner = winner?.is_full_sheet || prize.toLowerCase().includes('full sheet corner');
+                const isLuckyDraw = winner?.is_lucky_draw || prize.toLowerCase().includes('lucky draw');
+                const isFullSheet = winner?.is_full_sheet || isLuckyDraw;
+                
                 return (
                   <div 
                     key={prize} 
-                    className={`px-1.5 py-1.5 rounded cursor-pointer transition-all ${winner ? 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' : 'bg-white/5 hover:bg-white/10'}`}
+                    className={`px-1.5 py-1.5 rounded cursor-pointer transition-all ${
+                      winner 
+                        ? isLuckyDraw 
+                          ? 'bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30' 
+                          : 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' 
+                        : 'bg-white/5 hover:bg-white/10'
+                    }`}
                     onClick={() => {
                       if (winner) {
-                        // Check if this is a Full Sheet prize (FSC or FSB)
-                        const isFullSheetPrize = winner.is_full_sheet || 
-                          prize.toLowerCase().includes('full sheet');
+                        if (isFullSheet || isLuckyDraw) {
+                          setSelectedWinnerTicket({ 
+                            prize, 
+                            winner,
+                            isFullSheet: true,
+                            isLuckyDraw: isLuckyDraw,
+                            ticket_number: winner.ticket_number || winner.full_sheet_id,
+                            ticket_range: winner.ticket_range,
+                            sheet_tickets: winner.sheet_tickets
+                          });
+                        } else if (winner.ticket_id) {
+                          const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
+                          if (winningTicket) setSelectedWinnerTicket({ ...winningTicket, prize, winner });
+                        }
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[9px] ${winner ? isLuckyDraw ? 'text-amber-400' : 'text-green-400 line-through' : 'text-gray-300'}`}>
+                        {isLuckyDraw && '🎰 '}{prize}
+                      </span>
+                      <span className="text-[9px] font-bold text-amber-400">₹{amount}</span>
+                    </div>
+                    {winner && (
+                      <p className={`text-[8px] mt-0.5 truncate ${isLuckyDraw ? 'text-amber-300' : 'text-green-300'}`}>
+                        {isLuckyDraw ? '🎰' : '🎉'} {winnerFirstName || 'Winner'}
+                        {(winner.ticket_number || winner.full_sheet_id) && (
+                          <span className="text-amber-300">({winner.ticket_number || winner.full_sheet_id})</span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
                         
                         if (isFullSheetPrize) {
                           // For Full Sheet prizes, show special modal
