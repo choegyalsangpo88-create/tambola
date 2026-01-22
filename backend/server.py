@@ -2433,6 +2433,60 @@ async def end_game(game_id: str):
         "lucky_draw": lucky_draw_result
     }
 
+
+@api_router.get("/games/{game_id}/lucky-draw")
+async def get_lucky_draw_data(game_id: str):
+    """Get Full Sheet Lucky Draw data for animation"""
+    
+    game = await db.games.find_one({"game_id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Get all eligible full sheets
+    pipeline = [
+        {"$match": {"game_id": game_id, "is_booked": True}},
+        {"$group": {
+            "_id": "$full_sheet_id",
+            "count": {"$sum": 1},
+            "holder_name": {"$first": "$holder_name"},
+            "tickets": {"$push": "$ticket_number"}
+        }},
+        {"$match": {"count": 6, "_id": {"$ne": None}}}
+    ]
+    
+    eligible_sheets = await db.tickets.aggregate(pipeline).to_list(None)
+    
+    # Format for animation
+    sheets_for_animation = []
+    for sheet in eligible_sheets:
+        tickets = sorted(sheet["tickets"], key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+        sheets_for_animation.append({
+            "full_sheet_id": sheet["_id"],
+            "holder_name": sheet["holder_name"] or "Unknown",
+            "ticket_range": f"{tickets[0]}–{tickets[-1]}" if tickets else ""
+        })
+    
+    # Sort by sheet ID
+    sheets_for_animation.sort(key=lambda x: int(x["full_sheet_id"].replace("FS", "") or 0))
+    
+    # Get winner from game or session
+    lucky_draw_result = game.get("lucky_draw_result")
+    
+    if not lucky_draw_result:
+        session = await db.game_sessions.find_one({"game_id": game_id})
+        if session and session.get("winners"):
+            for prize, winner in session["winners"].items():
+                if winner.get("is_lucky_draw"):
+                    lucky_draw_result = winner
+                    break
+    
+    return {
+        "eligible_sheets": sheets_for_animation,
+        "eligible_count": len(sheets_for_animation),
+        "winner": lucky_draw_result,
+        "game_status": game.get("status")
+    }
+
 # ============ PROFILE ROUTES ============
 
 @api_router.put("/profile")
