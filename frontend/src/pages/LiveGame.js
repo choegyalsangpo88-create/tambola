@@ -512,24 +512,6 @@ export default function LiveGame() {
                 
                 {/* Regular single ticket display */}
                 {!selectedWinnerTicket.isFullSheet && !selectedWinnerTicket.isLuckyDraw && (
-                          Full Sheet Bonus - Counter Based
-                        </p>
-                        <div className="text-center">
-                          <p className="text-3xl font-bold text-green-600">{selectedWinnerTicket.total_marked || '6+'}</p>
-                          <p className="text-xs text-gray-500">Numbers Marked Across Sheet</p>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-3 text-center">All 6 tickets have at least 1 mark each!</p>
-                      </div>
-                    )}
-                    
-                    {selectedWinnerTicket.sheet_tickets && (
-                      <p className="text-[10px] text-gray-500 text-center">
-                        Tickets: {selectedWinnerTicket.sheet_tickets.join(', ')}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  /* Regular single ticket display */
                   <>
                     <p className="text-sm text-gray-600 mb-3">
                       Ticket: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
