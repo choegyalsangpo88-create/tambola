@@ -903,42 +903,6 @@ export default function LiveGame() {
                 );
               })}
             </div>
-                        
-                        if (isFullSheetPrize) {
-                          // For Full Sheet prizes, show special modal
-                          setSelectedWinnerTicket({ 
-                            prize, 
-                            winner,
-                            isFullSheetCorner: prize.toLowerCase().includes('corner'),
-                            isFullSheetBonus: prize.toLowerCase().includes('bonus'),
-                            isFullSheet: true,
-                            corner_numbers: winner.corner_numbers,
-                            total_marked: winner.total_marked,
-                            sheet_tickets: winner.sheet_tickets,
-                            ticket_number: winner.ticket_number,
-                            ticket_range: winner.ticket_range
-                          });
-                        } else if (winner.ticket_id) {
-                          const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
-                          if (winningTicket) setSelectedWinnerTicket({ ...winningTicket, prize, winner });
-                        }
-                      }
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[9px] ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
-                      <span className="text-[9px] font-bold text-amber-400">₹{amount}</span>
-                    </div>
-                    {winner && (
-                      <p className="text-[8px] text-green-300 mt-0.5 truncate">
-                        🎉 {winnerFirstName || 'Winner'}
-                        {winner.ticket_number && <span className="text-amber-300">({winner.ticket_number})</span>}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
 
