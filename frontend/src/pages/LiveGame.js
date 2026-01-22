@@ -300,6 +300,105 @@ export default function LiveGame() {
   const totalPrizes = Object.keys(game.prizes || {}).length;
   const wonPrizes = Object.keys(allWinners).length;
 
+  // Lucky Draw Animation Overlay
+  if (showLuckyDraw && luckyDrawData) {
+    const eligibleSheets = luckyDrawData.eligible_sheets || [];
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a0a2e] to-[#0a0a0c] flex flex-col items-center justify-center p-4 overflow-hidden">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-amber-400 mb-2">🎰 Full Sheet Lucky Draw</h1>
+          <p className="text-gray-400">{eligibleSheets.length} Full Sheets Eligible</p>
+        </div>
+        
+        {/* Casino Reel */}
+        <div className="relative w-80 h-64 bg-black/50 rounded-2xl border-4 border-amber-500 overflow-hidden shadow-2xl">
+          {/* Center highlight */}
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 bg-amber-500/20 border-y-2 border-amber-500 z-10"></div>
+          
+          {/* Spinning Reel */}
+          <div 
+            className={`absolute inset-x-0 transition-transform ${luckyDrawAnimating ? 'animate-spin-slow' : ''}`}
+            style={{
+              transform: luckyDrawAnimating 
+                ? undefined 
+                : `translateY(-${eligibleSheets.findIndex(s => s.full_sheet_id === luckyDrawWinner?.full_sheet_id) * 64 - 96}px)`
+            }}
+          >
+            {/* Repeat sheets for smooth animation */}
+            {[...eligibleSheets, ...eligibleSheets, ...eligibleSheets].map((sheet, idx) => (
+              <div 
+                key={idx}
+                className={`h-16 flex items-center justify-center px-4 ${
+                  !luckyDrawAnimating && luckyDrawWinner?.full_sheet_id === sheet.full_sheet_id
+                    ? 'bg-amber-500 text-black'
+                    : 'bg-transparent text-white'
+                }`}
+              >
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{sheet.full_sheet_id}</p>
+                  <p className="text-xs opacity-70">{sheet.holder_name} • {sheet.ticket_range}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Gradient overlays for depth */}
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black to-transparent z-5"></div>
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black to-transparent z-5"></div>
+        </div>
+        
+        {/* Winner Announcement */}
+        {!luckyDrawAnimating && luckyDrawWinner && (
+          <div className="mt-8 text-center animate-bounce-in">
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-2xl">
+              <p className="text-white text-sm mb-2">🏆 WINNER 🏆</p>
+              <h2 className="text-3xl font-bold text-white mb-1">{luckyDrawWinner.holder_name}</h2>
+              <p className="text-amber-200 text-xl font-bold">{luckyDrawWinner.full_sheet_id}</p>
+              <p className="text-amber-100 text-sm">{luckyDrawWinner.ticket_range}</p>
+              {luckyDrawWinner.prize_amount && (
+                <p className="text-2xl font-bold text-white mt-2">₹{luckyDrawWinner.prize_amount}</p>
+              )}
+            </div>
+            
+            <Button
+              onClick={() => setShowLuckyDraw(false)}
+              className="mt-6 bg-white text-black hover:bg-gray-200"
+            >
+              View All Results
+            </Button>
+          </div>
+        )}
+        
+        {/* Animating state */}
+        {luckyDrawAnimating && (
+          <div className="mt-8 text-center">
+            <p className="text-amber-400 text-lg animate-pulse">Selecting winner...</p>
+          </div>
+        )}
+        
+        {/* CSS for animation */}
+        <style>{`
+          @keyframes spin-slow {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-${eligibleSheets.length * 64}px); }
+          }
+          .animate-spin-slow {
+            animation: spin-slow 0.5s linear infinite;
+          }
+          @keyframes bounce-in {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          .animate-bounce-in {
+            animation: bounce-in 0.5s ease-out forwards;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   // Game Ended Screen
   if (isGameCompleted) {
     return (
