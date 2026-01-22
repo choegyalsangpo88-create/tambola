@@ -173,7 +173,14 @@ export default function LiveGame() {
             const winner = session.winners[prize];
             const winnerName = winner.holder_name || winner.name || 'Player';
             const ticketNum = winner.ticket_number || '';
-            celebrateWinner(prize, winnerName, ticketNum);
+            
+            // Check if this is Lucky Draw winner - trigger the animation
+            if (winner.is_lucky_draw && !luckyDrawShownRef.current) {
+              luckyDrawShownRef.current = true;
+              fetchLuckyDrawData();
+            } else {
+              celebrateWinner(prize, winnerName, ticketNum);
+            }
           }
         });
         previousWinnersRef.current = session.winners;
