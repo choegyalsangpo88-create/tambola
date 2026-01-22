@@ -342,7 +342,7 @@ export default function LiveGame() {
                 All Dividends Claimed!
               </h1>
               <p className="text-xl text-white mb-2">
-                Now it's time for the
+                Now it&apos;s time for the
               </p>
               <h2 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-6">
                 FULL SHEET LUCKY DRAW
