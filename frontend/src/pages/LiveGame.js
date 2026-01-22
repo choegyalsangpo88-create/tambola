@@ -33,6 +33,7 @@ export default function LiveGame() {
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null);
   const [showLuckyDraw, setShowLuckyDraw] = useState(false);
   const [luckyDrawData, setLuckyDrawData] = useState(null);
+  const [luckyDrawPhase, setLuckyDrawPhase] = useState('intro'); // 'intro', 'spinning', 'winner'
   const [luckyDrawAnimating, setLuckyDrawAnimating] = useState(false);
   const [luckyDrawWinner, setLuckyDrawWinner] = useState(null);
   const pollInterval = useRef(null);
