@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timezone, timedelta
 
 class AutoArchiveTest:
-    def __init__(self, base_url="https://tambola-live-7.preview.emergentagent.com"):
+    def __init__(self, base_url="https://lucky-draw-129.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0

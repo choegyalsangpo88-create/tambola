@@ -1,197 +1,2329 @@
 <analysis>**original_problem_statement:**
-The user wants to build a full-stack Tambola (Housie) game application. The platform is designed for Indian Tambola players and includes user authentication, a game dashboard, live game functionality, and a comprehensive admin panel for game management. Recent major requirements implemented include a complete overhaul of the admin panel and the introduction of a multi-region, role-based agent system for managing bookings and payments manually via WhatsApp.
+The user wants to build a full-stack Tambola (Housie) game application. The application includes user authentication, a game dashboard, live gameplay, and a comprehensive admin panel.
 
 PRODUCT REQUIREMENTS:
-- **Core Game:** User authentication (Google/Phone), game dashboard, live game screen, winner announcements.
-- **Admin Panel:** A comprehensive super-admin panel to create/manage games, manage agents, view all bookings, and see system-wide statistics.
-- **Agent System:**
-    - Two roles: Super Admin (full access) and Agent (limited access).
-    - Agents manage their assigned bookings via a separate, limited Agent Panel.
-    - The workflow is manual: a user books, gets redirected to an agent's WhatsApp, pays the agent manually, and the agent marks the booking as Paid.
-- **Booking Lifecycle:**  ->  or .
-- **Full Sheet Bonus (FSB) Logic:** A recurring issue. The latest rule is: A player wins FSB if they have a full sheet of 6 tickets and each of the 6 tickets has at least one number called.
-- **UI/UX:** The user has requested a premium look and feel, persistent login, and various UI fixes for displaying tickets and game history.
+- **Core Game:** User authentication, game dashboard, live game screen, winner announcements.
+- **Admin Panel:** A super-admin panel to create/manage games, manage agents, and view all bookings and statistics. The Agents section has been removed. A Players section has been added for viewing player information and sending notifications.
+- **Booking Lifecycle:**  ->  or . The admin approval flow now triggers a WhatsApp deep link for manual confirmation.
+- **Dividends:** All complex, detection-based full sheet prizes like Full Sheet Corner (FSC) and Full Sheet Bonus (FSB) have been **removed** due to persistent bugs. They have been replaced by a Full Sheet Lucky Draw prize that is awarded randomly at the end of the game.
+- **UI/UX:** The user has provided very specific designs for tickets, including a full 6-ticket sheet with a mustard-yellow background. There is a persistent issue with the styling of single tickets not matching the tickets within a full sheet.
+- **Booking Flow:** A two-step manual booking flow is in place, using a payment panel directly on the game details page with a 10-minute timer and UPI deep links.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack Tambola web application (67tambola) with a React frontend, FastAPI backend, and MongoDB. The application features user authentication, a core game engine, an admin/agent panel, and live game functionality.
-
-The previous session focused heavily on fixing two critical, long-standing bugs:
-1.  **Ticket Generation:** The algorithm was completely rewritten and is now 100% reliable.
-2.  **Full Sheet Bonus (FSB) Detection:** The logic was simplified and made more robust, including a fallback to infer sheet IDs for older tickets. It works correctly in the preview environment but fails on the user's production site due to undeployed code.
-
-Several other user-requested features and fixes were also completed, including a major UI rebrand, persistent login, and fixing not authenticated errors on multiple pages for mobile users.
+A full-stack Tambola web application with a React frontend, FastAPI backend, and MongoDB. The app features user authentication, game creation, and live gameplay. The complex and buggy Full Sheet Corner and Full Sheet Bonus dividends have been completely removed and replaced with a new Full Sheet Lucky Draw system that runs automatically when a game ends. The Admin Panel has been significantly reworked to remove unused features (Agents, Twilio) and add new functionality (Players tab, WhatsApp deep links for confirmations/notifications, payments grouped by game).
 
 **Last working item**:
-- **Last item agent was working:** The user requested three new features for the Admin Panel, prompted by a screenshot:
-    1.  **Payment History Revamp:** Show payment history grouped by game, with ticket details expandable on click.
-    2.  **New Players Section:** A new tab to save and view contact details (WhatsApp number, email) of all users who have ever booked a ticket.
-    3.  **WhatsApp Confirmation on Approval:** When an admin/agent approves a ticket payment, trigger a pre-filled WhatsApp message for the agent to send to the user.
-- **Status:** NOT STARTED
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** both
-- **User Testing Done:** N
+-   **Last item agent was working:** The agent implemented the Full Sheet Lucky Draw feature, which replaced the problematic Full Sheet Corner and Full Sheet Bonus prizes. This involved removing the old backend logic and frontend displays, and adding new backend logic to run the draw when a game ends, a new API endpoint to fetch the winner, and a new casino-style reel animation on the frontend to display the winner.
+-   **Status:** TESTING PENDING
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** both
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Implement New Admin Panel Features (P0)**
-  - **Description:** Implement the three features from the  section above (Payment History, Players Section, WhatsApp Confirmation).
-  - **Attempted fixes:** The agent located the relevant  file but has not started implementation.
-  - **Next debug checklist:**
-    - Modify  to add a Players tab and restructure the Payments tab UI.
-    - Create a new backend endpoint to fetch all unique players/users from the  or  collection.
-    - Modify the existing payment approval endpoint in  to return a pre-filled  link.
-  - **Why fix this issue and what will be achieved with the fix?** It will enhance the admin's ability to manage payments and user contacts, as requested by the user.
-  - **Status:** NOT STARTED
-  - **Is recurring issue?** N
-  - **Should Test frontend/backend/both after fix?** Both
-- **Issue 2: Full Sheet Bonus (FSB) Not Detecting on Production (P0)**
-  - **Description:** The user reports FSB is still not working on their live site (), despite multiple fixes. The agent confirmed the logic works perfectly in the preview environment and the issue is that the production site has outdated code.
-  - **Attempted fixes:** The FSB logic in  was rewritten to use a simpler rule (1+ mark per ticket) and to infer  if missing. A diagnostic endpoint () was created to help debug this on production.
-  - **Next debug checklist:**
-    - The agent MUST NOT attempt to fix the code again.
-    - The agent MUST instruct the user to deploy the latest changes to their production environment.
-    - After deployment, the agent should guide the user to use the diagnostic endpoint to confirm the fix.
-  - **Why fix this issue and what will be achieved with the fix?** This is a critical gameplay feature and a major source of user frustration.
-  - **Status:** BLOCKED
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Backend
-  - **Blocked on other issue:** Blocked on user deploying the code to production.
-- **Issue 3: Google Login Fails on Custom Domain (P1)**
-  - **Description:** Google Login works on preview URLs but fails with a Network error on the user's custom domain, which is a known CORS issue.
-  - **Attempted fixes:** CORS configuration was updated in .
-  - **Status:** USER VERIFICATION PENDING
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on other issue:** Blocked on user deploying the code to production.
+-   **Issue 1: Single Ticket Styling Mismatch (P1)**
+    -   **Description:** The user reports that single tickets on the  page have a different, thicker appearance compared to the tickets displayed within a full sheet, despite multiple attempts to unify the styling.
+    -   **Attempted fixes:** The agent modified the CSS for the  component within  multiple times, adjusting border, margin, padding, and font sizes to make it more compact. The last attempt changed the border to a thin gray line to ensure consistency.
+    -   **Next debug checklist:**
+        1.  In , confirm that tickets not part of a complete 6-ticket sheet are still rendered inside the  component wrapper.
+        2.  Verify the final CSS styles for  are being applied correctly in the browser's developer tools. The issue might be a conflicting CSS rule or a caching problem on the user's end.
+        3.  Take a definitive screenshot in the local preview that shows both a full sheet and individually booked tickets on the same page to confirm the styling is identical, then share it with the user.
+    -   **Why fix this issue and what will be achieved with the fix?** To provide a consistent and professional UI for ticket selection.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend
 
 **In progress Task List**:
-- **Task 1: Implement New Admin Panel Features (P0)**
-  - **Description:** Same as Issue 1 in the list above.
-  - **Where to resume:** Analyze  and  to plan the implementation of the three requested features.
-  - **What will be achieved with this?** Fulfills the user's latest feature request for better admin tooling.
-  - **Status:** NOT STARTED
-  - **Should Test frontend/backend/both after fix?** Both
+-   **Task 1: Test Full Sheet Lucky Draw Feature (P0)**
+    -   **Where to resume:** The code for the feature has been written but is completely untested. An end-to-end test is required.
+    -   **What will be achieved with this?** Validation of the new, primary incentive for users to book full sheets, and confirmation that the buggy FSC/FSB features are fully replaced.
+    -   **Status:** TESTING PENDING
+    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Testing Steps:**
+        1.  As admin, create a new game, ensuring the Full Sheet Lucky Draw prize is enabled.
+        2.  As a user, book at least two separate full sheets to ensure the draw has multiple participants.
+        3.  As admin, start the game and manually end it.
+        4.  On the  page, verify that the casino-style reel animation appears, runs, and stops on a winning full sheet ID.
+        5.  Verify the final Game Over screen correctly lists the Full Sheet Lucky Draw winner with the correct full sheet ID, ticket range, and prize amount.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-  - Implement an in-game chat feature. (P2)
-- **Future Tasks:**
-  - **Backend Refactoring (P2):** The monolithic  file needs to be broken down into a modular structure using FastAPI routers (e.g., , , ).
-  - Add a global leaderboard and player rankings.
-  - Develop a game replay feature for past games.
-  - Implement a dashboard for admins with analytics on booking trends, revenue, and WhatsApp delivery rates.
+-   **Upcoming Tasks:**
+    -   **Flesh out Admin Players Tab (P1):** The new Players tab in  is currently a placeholder. It needs to be implemented to:
+        -   Fetch and display a list of all registered players.
+        -   Provide functionality to send New Game, Game Alert, and Booking Confirmation messages via WhatsApp deep links.
+    -   **Flesh out Admin Logs Tab (P1):** The Logs tab needs to be implemented to show a detailed history of all user bookings with timestamps and game details.
+    -   **Live Game Full Sheet Display (P1, User Verification):** The user needs to verify if full sheets now appear as a single grouped block in the My Tickets section of .
+-   **Future Tasks:**
+    -   In-game chat feature.
+    -   Backend Refactoring: Break down the monolithic .
+    -   Add a global leaderboard and player rankings.
+    -   Develop a game replay feature.
 
 **Completed work in this session**
-- **Critical Bug Fix: Ticket Generator (DONE)**
-  - Completely rewrote the ticket generation logic in  to be 100% reliable. Verified with thousands of automated tests.
-- **Critical Bug Fix: Full Sheet Bonus (FSB) Detection (DONE in preview)**
-  - Rewrote FSB logic in  with a simpler, user-approved rule (≥1 mark per ticket).
-  - Added a robust fallback to infer  from ticket numbers (e.g., T001-T006 -> FS001), fixing issues with older tickets.
-  - Created a diagnostic endpoint  to help debug on production.
-- **Authentication & UI Fixes (DONE)**
-  - **Persistent Login:** Implemented stay logged in functionality by checking  in  and .
-  - **Mobile Auth:** Fixed not authenticated errors on mobile across , , and  by adding  headers.
-  - **Profile Page:** Fixed the profile page, which was stuck on a loading screen.
-  - **My Tickets Page:** Rewrote the page to sort games correctly (upcoming first) and allow viewing of tickets.
-  - **Live Game Tickets:** Fixed an issue where a user's tickets were not displayed during a live game.
-- **Branding and Admin UX (DONE)**
-  - **Rebranding:** Changed the app name to 67tambola with a new premium font () and gold-gradient styling on the , , and .
-  - **Game Creation:** Added a confirmation popup and backend validation in  and  to prevent creating duplicate games.
-  - **Game History:** Created a new  page to show results of completed games, as requested by the user.
+-   **Full Sheet Prizes Rework:**
+    -   Systematically removed all backend logic () and frontend UI () for the buggy Full Sheet Corner (FSC) and Full Sheet Bonus (FSB) prizes.
+    -   **Implemented Full Sheet Lucky Draw:** Created the new system, including backend logic to automatically select a winner when a game ends and a frontend casino-reel animation for the winner announcement.
+-   **Code Cleanup:**
+    -   Removed all code and dependencies related to the unused **Twilio** and **Facebook Business** integrations from the entire application.
+-   **Admin Panel Overhaul ():**
+    -   Removed the Agents tab completely.
+    -   Renamed the WhatsApp tab to Players and cleared its old content.
+    -   Updated the Payments tab to group bookings by game.
+    -   Enhanced the booking approval flow to open a pre-filled WhatsApp confirmation message via a deep link.
+    -   Added a Notify New Game feature that allows the admin to send a promotional message to players via a WhatsApp deep link.
+-   **UI/UX Fixes:**
+    -   Added the user's name to tickets on the  (ticket selection) page.
+    -   Removed the 3/15 marked text from the ticket footer in .
+    -   Attempted to fix the styling of single tickets to match tickets within a full sheet.
 
 **Earlier issues found/mentioned but not fixed**
-- **Mobile Audio Reliability**: An ongoing issue from a previous fork, unverified on target iOS devices. The focus has been on more critical bugs.
+-   **Google Login Fails on Custom Domain:** A recurring CORS issue mentioned in the initial handoff, unverified.
+-   **Mobile Audio Reliability:** An ongoing issue from a previous fork, unverified on target iOS devices.
 
 **Known issue recurrence from previous fork**
-- **Google Login Failure**: This remains a persistent issue, isolated to the custom domain. A CORS fix has been implemented but awaits user deployment.
-- **Full Sheet Bonus (FSB) Detection**: This is the most recurring issue. While the code is now correct and robust in the preview environment, the user continues to report it as failing on their live site, which has not been updated.
+-   **Deployment-Related Bugs:** The single ticket styling issue is a prime example. The feature appears correct in the agent's environment but is reported as broken by the user, indicating a potential problem with caching, environment differences, or mobile-specific rendering.
+-   **Recurrence count:** High.
+-   **Status:** NOT RESOLVED.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, Shadcn UI
-- **Backend:** FastAPI, Pydantic, Motor (for MongoDB)
-- **Authentication:** JWT-based session management using  for mobile-first persistent login.
-- **FSB Logic:** The system now infers  from the ticket number (e.g., - becomes ) if the field is missing, making the logic backward-compatible.
-- **Ticket Generation:** A deterministic, constraint-based algorithm is now used to guarantee the creation of valid Tambola tickets and full sheets.
+-   **Feature Replacement:** Shifted from complex, buggy, rule-based prizes (FSC, FSB) to a simple, reliable, event-driven prize (Full Sheet Lucky Draw on game end).
+-   **Frontend Animation:** Implemented a casino-style reel animation using CSS and React state management in  to announce the lucky draw winner.
+-   **WhatsApp Deep Linking:** Standardized admin-initiated communication (booking approvals, new game announcements) to use  deep links, removing reliance on APIs like Twilio.
 
 **key DB schema**
-- **tickets**: . The  is critical for FSB detection and is now inferred if missing.
-- **games**: .
-- **bookings**: .
+-   **games**: Added a new field  which is populated when a game's status becomes .
 
 **changes in tech stack**
-- None.
+-   The  Python library has been removed from .
 
 **All files of reference**
-- : **CRITICAL FILE.** Contains the latest FSB logic.
-- : Contains the fixed, stable ticket generation algorithm.
-- : Contains new endpoints () and validation logic.
-- : Target file for the next set of feature requests.
-- : Recently rewritten to fix user-reported bugs.
-- : Newly created page for game results.
-- : Contains the persistent login logic.
+-   : **CRITICAL** - Contains the new, untested Lucky Draw animation and winner display.
+-   : **CRITICAL** - Contains the new backend logic for triggering the Lucky Draw in the  function and the new  endpoint.
+-   : **CRITICAL** - Has been significantly refactored with new tabs and functionality that needs to be fully implemented.
+-   : Contains the CSS for , which is the source of the persistent ticket styling issue.
+-   : This file has been heavily simplified after the removal of FSC/FSB logic.
 
 **Areas that need refactoring**:
-- **CRITICAL:**  is a large monolith. It should be broken down into smaller, manageable files under a  directory. This is significant technical debt.
+-   The  file is now over 2000 lines and extremely difficult to manage. The logic for each tab (Games, Requests, Payments, Players, Logs, Settings) should be extracted into its own dedicated component.
+-   The  collection in the database may have an unused  field from the abandoned FSC fix. This should be cleaned up with a migration script.
+-   The backend  remains a monolith and is a candidate for breaking down into FastAPI routers.
 
 **key api endpoints**
-- : **NEW.** A diagnostic endpoint created to help the user debug FSB issues on their production server.
+-   : This existing endpoint was modified to trigger the Full Sheet Lucky Draw logic.
+-   : **NEW** endpoint created to fetch the lucky draw result for the frontend animation.
 
 **Critical Info for New Agent**
-- **DO NOT 'FIX' THE FSB LOGIC AGAIN.** The Full Sheet Bonus detection is working correctly in the preview environment. The user's problem is that their production site has not been updated with the latest code. Your primary task is to guide the user to **deploy the changes**. Use the  endpoint to prove the fix works post-deployment.
-- Your immediate priority is the user's latest request: build the Payment History, Players, and WhatsApp Confirmation features in the Admin Panel.
-- The pattern for fixing mobile authentication issues has been to add  headers to  calls, sourcing the token from . Follow this pattern for any new authenticated endpoints.
-- The backend  file is a monolith and fragile. Be careful when adding new endpoints.
+-   **TEST THE LUCKY DRAW:** The absolute highest priority is to perform a full end-to-end test of the new Full Sheet Lucky Draw feature. The user is frustrated with failed prize features, so this one must work perfectly. Do not proceed to other tasks until this is verified.
+-   **ADDRESS THE ADMIN PANEL SKELETON:** The user requested significant changes to the Admin Panel. The UI tabs (Players, Logs) have been created, but they are empty placeholders. The next major task after verifying the lucky draw is to implement the functionality for these tabs.
+-   **BE WARY OF THE TICKET STYLING BUG:** The user has repeatedly complained about the inconsistent styling of single tickets. This is a recurring ghost bug that seems to be related to deployment or caching. When you next attempt a fix, be very explicit in your changes and provide clear screenshot evidence from your local environment, then ask the user to clear their cache and verify.
 
 **documents and test reports created in this job**
-- 
--  (updated with recent fixes)
--  (created by testing agent)
+-   None. The  file was not updated during this session.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests new features: improved payment history, a new Players contact list section, and a pre-filled WhatsApp confirmation message on payment approval. **Status:** NOT STARTED.
-2.  **User:** Asks for profile page fix and persistent login. **Status:** COMPLETED.
-3.  **User:** Asks to rebrand app to 67tambola with a premium look. **Status:** COMPLETED.
-4.  **User:** Provides a production game URL () and asks why FSB is not working. **Status:** BLOCKED. Agent explained the code needs to be deployed to production.
-5.  **User:** Asks to check a live game dddss for FSB failure. **Status:** BLOCKED. Agent couldn't find the game and reiterated the need to deploy changes to production.
-6.  **User:** Reports FSB is still not working with a screenshot showing one ticket in a sheet has 0 marks. **Status:** COMPLETED. Agent implemented a final, robust fix to infer sheet IDs even if they are missing from the ticket data.
-7.  **User:** Re-states that FSB is not working. **Status:** COMPLETED. Agent simplified the FSB rule to be more lenient (1+ mark per ticket) as per user's request.
-8.  **User:** Reports FSB not detecting and asks for a new rule. **Status:** COMPLETED. Agent proposed simpler rules and awaited user's choice.
-9.  **User:** Asks for confirmation popup and duplicate prevention when creating games. **Status:** COMPLETED.
-10. **User:** Reports live game tickets not showing, asks to sort My Tickets, and requests a Game History page with a design from a screenshot. **Status:** COMPLETED.
+1.  **User:** Frustrated with FSC/FSB failures, asks for alternative ways to reward full sheet bookers. **Status: ADDRESSED**.
+2.  **User:** Chooses Full Sheet Lucky Draw and provides detailed requirements for its implementation. **Status: COMPLETED (code written, pending test)**.
+3.  **User:** Reports single tickets still have the wrong styling. **Status: IN PROGRESS**.
+4.  **User:** Points out FSB is missing from the admin panel's dividend list. **Status: COMPLETED**.
+5.  **User:** Complains again that single tickets have the wrong size and border. **Status: IN PROGRESS**.
+6.  **User:** Complains again that FSC is still declaring incorrectly and on single tickets. **Status: ADDRESSED (by removing the feature)**.
+7.  **User:** Gives a last chance to fix FSC, complaining it shows a ticket ID instead of a sheet ID. **Status: ADDRESSED (by removing the feature)**.
+8.  **User:** Provides detailed requirements for a major Admin Panel rework: group payments, remove agents, add a Players tab, improve logs, and simplify notifications. **Status: COMPLETED (UI shell created, logic pending)**.
+9.  **User:** Asks for a New Game Available notification feature for the Admin Panel. **Status: COMPLETED**.
+10. **User:** Asks to remove all Twilio/FB code and change the admin approval flow. **Status: COMPLETED**.
 
 **Project Health Check:**
-- **Broken:**
-  - None in the current preview environment.
-- **Mocked:**
-  - None.
-- **Potentially Fixed (Pending User Verification & Deployment):**
-  - **Full Sheet Bonus (FSB) Detection:** The code is fixed and works in preview, but the user's production environment is out of date.
-  - **Google OAuth on Custom Domain:** CORS fix is implemented but not deployed.
-  - **Live Game Ticket Display:** Fixed by adding auth headers, not yet deployed.
-  - **Persistent Login:** Implemented, not yet deployed.
-  - **Profile Page Loading:** Fixed, not yet deployed.
+-   **Broken:**
+    -   The styling of single tickets on the  page does not match user expectations.
+-   **Mocked:**
+    -   The Players and Logs tabs in the Admin Panel are UI shells without backend data or functionality.
+-   **Potentially Fixed (Pending User Verification):**
+    -   The new Full Sheet Lucky Draw feature is implemented but has not been tested end-to-end.
 
 **3rd Party Integrations**
-- **Emergent-managed Google Auth**: For user login.
-- **Twilio (SMS/WhatsApp)**: For OTP and admin-initiated notifications. Uses a user-provided API key.
-- **Google Fonts**:  was added for new branding.
+-   **Railway:** Hosts the FastAPI backend service.
+-   **Emergent Native Deployment:** Hosts the React frontend static site.
+-   **MongoDB Atlas:** Hosts the cloud production database.
+-   **Emergent-managed Google Auth:** For user login.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. Used to validate the ticket generator fix.
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** 
-- **Known regressions:** None. The major ticket generation regression was fixed.
+-   **Testing agent used after significant changes:** NO (The major Lucky Draw feature was added without subagent testing).
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
-- **Super Admin Panel URL:** 
-- **Admin Username:** 
-- **Admin Password:** 
-- **Agent Panel URL:** 
-- **Test Agent Credentials:** username=, password=
+-   **Super Admin Panel URL:** 
+-   **Admin Username:** 
+-   **Admin Password:** 
+-   **Agent Panel URL:** 
+-   **Test Agent Credentials:** username=, password=
 
 **What agent forgot to execute**
-- The backend refactoring of the monolithic  file remains a significant piece of technical debt that has not been addressed despite being identified in the previous handover.</analysis>
+-   The agent did not perform any end-to-end testing for the critical Full Sheet Lucky Draw feature after implementing it.
+-   The agent created the UI for the Players and Logs tabs in the Admin Panel but did not implement the underlying functionality (data fetching, etc.) required to make them work.
+-   The agent repeatedly failed to update the  file when calling the  tool.
+-   The agent did not create any persistent ============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
+rootdir: /app
+plugins: anyio-4.12.0
+collected 131 items
+
+auth_test.py .                                                           [  0%]
+tests/test_admin_panel.py FFFEEEFEEEEEEEEEE                              [ 13%]
+tests/test_agent_system.py EEEEEEEEE.....................                [ 36%]
+tests/test_booking_checkout.py ..............                            [ 47%]
+tests/test_bookings_whatsapp_logs.py ..............                      [ 58%]
+tests/test_game_control.py ........F......                               [ 69%]
+tests/test_ticket_generator.py ......................FF                  [ 87%]
+tests/test_winners_tab.py ........F..F.F..                               [100%]
+
+==================================== ERRORS ====================================
+___________ ERROR at setup of TestGameCRUD.test_create_game_success ____________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameCRUD object at 0xf9555853e150>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token for authenticated requests"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_____ ERROR at setup of TestGameCRUD.test_create_game_with_custom_tickets ______
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameCRUD object at 0xf9555853e7d0>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token for authenticated requests"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_______ ERROR at setup of TestGameCRUD.test_create_game_invalid_tickets ________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameCRUD object at 0xf9555853eb90>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token for authenticated requests"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+______________ ERROR at setup of TestGameCRUD.test_get_game_by_id ______________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameCRUD object at 0xf9555853f390>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token for authenticated requests"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_______________ ERROR at setup of TestGameCRUD.test_update_game ________________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameCRUD object at 0xf9555852fbd0>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token for authenticated requests"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_____________ ERROR at setup of TestGameLifecycle.test_start_game ______________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameLifecycle object at 0xf9555852e290>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+______________ ERROR at setup of TestGameLifecycle.test_end_game _______________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameLifecycle object at 0xf9555852e390>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+________ ERROR at setup of TestGameLifecycle.test_cannot_edit_live_game ________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameLifecycle object at 0xf9555852f490>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_____ ERROR at setup of TestAdminGameManagement.test_delete_upcoming_game ______
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestAdminGameManagement object at 0xf9555852c210>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_ ERROR at setup of TestAdminGameManagement.test_delete_live_game_requires_force _
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestAdminGameManagement object at 0xf9555852d2d0>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+____ ERROR at setup of TestAdminGameManagement.test_get_game_tickets_admin _____
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestAdminGameManagement object at 0xf9555853d410>
+
+    @pytest.fixture
+    def admin_token(self):
+        """Get admin token"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       return response.json()["token"]
+               ^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+______________ ERROR at setup of TestGameSession.test_call_number ______________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameSession object at 0xf9555852f6d0>
+
+    @pytest.fixture
+    def live_game(self):
+        """Create and start a game for testing"""
+        game_name = f"Session Test {uuid.uuid4().hex[:8]}"
+        tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+        create_resp = requests.post(
+            f"{BASE_URL}/api/games",
+            json={
+                "name": game_name,
+                "date": tomorrow,
+                "time": "20:00",
+                "price": 50,
+                "total_tickets": 60,
+                "prizes": {"Full House": 1000}
+            }
+        )
+>       game_id = create_resp.json()["game_id"]
+                  ^^^^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:482: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+______________ ERROR at setup of TestGameSession.test_get_session ______________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestGameSession object at 0xf9555852cb10>
+
+    @pytest.fixture
+    def live_game(self):
+        """Create and start a game for testing"""
+        game_name = f"Session Test {uuid.uuid4().hex[:8]}"
+        tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+        create_resp = requests.post(
+            f"{BASE_URL}/api/games",
+            json={
+                "name": game_name,
+                "date": tomorrow,
+                "time": "20:00",
+                "price": 50,
+                "total_tickets": 60,
+                "prizes": {"Full House": 1000}
+            }
+        )
+>       game_id = create_resp.json()["game_id"]
+                  ^^^^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:482: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_____ ERROR at setup of TestAdminAgentManagement.test_admin_login_success ______
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf95558549250>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+_ ERROR at setup of TestAdminAgentManagement.test_admin_login_invalid_credentials _
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf9555854a110>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+_________ ERROR at setup of TestAdminAgentManagement.test_create_agent _________
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf9555854a790>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+_ ERROR at setup of TestAdminAgentManagement.test_create_agent_duplicate_username _
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf955585484d0>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+_________ ERROR at setup of TestAdminAgentManagement.test_list_agents __________
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf95558549690>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+__ ERROR at setup of TestAdminAgentManagement.test_list_agents_requires_auth ___
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf9555854a750>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+_________ ERROR at setup of TestAdminAgentManagement.test_update_agent _________
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf9555854ac90>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+____ ERROR at setup of TestAdminAgentManagement.test_update_agent_not_found ____
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf9555854af10>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+_______ ERROR at setup of TestAdminAgentManagement.test_deactivate_agent _______
+
+self = <tests.test_agent_system.TestAdminAgentManagement object at 0xf9555854bb10>
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Setup admin session for tests"""
+        self.session = requests.Session()
+        self.session.headers.update({"Content-Type": "application/json"})
+    
+        # Login as admin
+        response = self.session.post(f"{BASE_URL}/api/admin/login", json={
+            "username": ADMIN_USERNAME,
+            "password": ADMIN_PASSWORD
+        })
+>       assert response.status_code == 200, f"Admin login failed: {response.text}"
+E       AssertionError: Admin login failed: Web server returned an unknown error
+E         
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_agent_system.py:47: AssertionError
+=================================== FAILURES ===================================
+_______________ TestAdminAuthentication.test_admin_login_success _______________
+
+self = <tests.test_admin_panel.TestAdminAuthentication object at 0xf9555853d290>
+
+    def test_admin_login_success(self):
+        """Test admin login with valid credentials"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       assert response.status_code == 200
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_admin_panel.py:27: AssertionError
+_________ TestAdminAuthentication.test_admin_login_invalid_credentials _________
+
+self = <tests.test_admin_panel.TestAdminAuthentication object at 0xf9555853d610>
+
+    def test_admin_login_invalid_credentials(self):
+        """Test admin login with invalid credentials"""
+        response = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": "wronguser", "password": "wrongpass"}
+        )
+>       assert response.status_code == 401
+E       assert 520 == 401
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_admin_panel.py:40: AssertionError
+___________ TestAdminAuthentication.test_admin_verify_valid_session ____________
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+>           return complexjson.loads(self.text, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:976: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0xf95559b16b10>
+s = 'Web server returned an unknown error\n', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+During handling of the above exception, another exception occurred:
+
+self = <tests.test_admin_panel.TestAdminAuthentication object at 0xf9555853d6d0>
+
+    def test_admin_verify_valid_session(self):
+        """Test admin session verification"""
+        # First login
+        login_resp = requests.post(
+            f"{BASE_URL}/api/admin/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD}
+        )
+>       token = login_resp.json()["token"]
+                ^^^^^^^^^^^^^^^^^
+
+tests/test_admin_panel.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Response [520]>, kwargs = {}
+
+    def json(self, **kwargs):
+        r"""Decodes the JSON response body (if any) as a Python object.
+    
+        This may return a dictionary, list, etc. depending on what is in the response.
+    
+        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+        :raises requests.exceptions.JSONDecodeError: If the response body does not
+            contain valid json.
+        """
+    
+        if not self.encoding and self.content and len(self.content) > 3:
+            # No encoding set. JSON RFC 4627 section 3 states we should expect
+            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+            # a best guess).
+            encoding = guess_json_utf(self.content)
+            if encoding is not None:
+                try:
+                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+                except UnicodeDecodeError:
+                    # Wrong UTF codec detected; usually because it's not UTF-8
+                    # but some other 8-bit codec.  This is an RFC violation,
+                    # and the server didn't bother to tell us what codec *was*
+                    # used.
+                    pass
+                except JSONDecodeError as e:
+                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+    
+        try:
+            return complexjson.loads(self.text, **kwargs)
+        except JSONDecodeError as e:
+            # Catch JSON-related errors and raise as requests.JSONDecodeError
+            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+>           raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
+_______________________ TestGameCRUD.test_get_all_games ________________________
+
+self = <tests.test_admin_panel.TestGameCRUD object at 0xf9555853fb90>
+
+    def test_get_all_games(self):
+        """Test fetching all games"""
+        response = requests.get(f"{BASE_URL}/api/games")
+>       assert response.status_code == 200
+E       assert 520 == 200
+E        +  where 520 = <Response [520]>.status_code
+
+tests/test_admin_panel.py:163: AssertionError
+___________ TestWhatsAppGameReminder.test_game_reminder_no_bookings ____________
+
+self = <tests.test_game_control.TestWhatsAppGameReminder object at 0xf955584a3d90>
+admin_session = <requests.sessions.Session object at 0xf9555882f550>
+
+    def test_game_reminder_no_bookings(self, admin_session):
+        """Test game reminder with no confirmed bookings returns error"""
+        # Create a game with no bookings
+        tomorrow = (datetime.now() + timedelta(hours=20)).strftime("%Y-%m-%d")
+        game_data = {
+            "name": f"Reminder Test Game {datetime.now().strftime('%H%M%S')}",
+            "date": tomorrow,
+            "time": "20:00",
+            "price": 50,
+            "total_tickets": 6,
+            "prizes": {"Full House": 1000}
+        }
+        response = requests.post(f"{API}/games", json=game_data)
+        assert response.status_code == 200
+        game = response.json()
+    
+        try:
+            # Try to send reminder - should fail because no bookings
+            reminder_response = admin_session.post(
+                f"{API}/admin/games/{game['game_id']}/whatsapp/game-reminder"
+            )
+            assert reminder_response.status_code == 400
+>           assert "No confirmed bookings" in reminder_response.json().get("detail", "")
+E           AssertionError: assert 'No confirmed bookings' in 'Game reminder can only be sent within 24 hours of game time. Currently 34 hours away.'
+E            +  where 'Game reminder can only be sent within 24 hours of game time. Currently 34 hours away.' = <built-in method get of dict object at 0xf955584ec080>('detail', '')
+E            +    where <built-in method get of dict object at 0xf955584ec080> = {'detail': 'Game reminder can only be sent within 24 hours of game time. Currently 34 hours away.'}.get
+E            +      where {'detail': 'Game reminder can only be sent within 24 hours of game time. Currently 34 hours away.'} = json()
+E            +        where json = <Response [400]>.json
+
+tests/test_game_control.py:253: AssertionError
+__________ TestWhatsAppNumberUpdate.test_auth_headers_function_exists __________
+
+self = <tests.test_ticket_generator.TestWhatsAppNumberUpdate object at 0xf955587d3c50>
+
+    def test_auth_headers_function_exists(self):
+        """Verify getAuthHeaders function exists in GameDetails.js"""
+        with open('/app/frontend/src/pages/GameDetails.js', 'r') as f:
+            content = f.read()
+    
+>       assert 'getAuthHeaders' in content, "getAuthHeaders function not found in GameDetails.js"
+E       AssertionError: getAuthHeaders function not found in GameDetails.js
+E       assert 'getAuthHeaders' in "import { useState, useEffect } from 'react';\nimport { useParams, useNavigate } from 'react-router-dom';\nimport axio...mation\n              </Button>\n            </div>\n          </div>\n        </div>\n      )}\n    </div>\n  );\n}\n"
+
+tests/test_ticket_generator.py:341: AssertionError
+_________ TestWhatsAppNumberUpdate.test_api_calls_include_auth_headers _________
+
+self = <tests.test_ticket_generator.TestWhatsAppNumberUpdate object at 0xf955587d39d0>
+
+    def test_api_calls_include_auth_headers(self):
+        """Verify API calls include auth headers for mobile fallback"""
+        with open('/app/frontend/src/pages/GameDetails.js', 'r') as f:
+            content = f.read()
+    
+        # Check that getAuthHeaders() is used in API calls
+>       assert 'headers: getAuthHeaders()' in content, "API calls don't include getAuthHeaders()"
+E       AssertionError: API calls don't include getAuthHeaders()
+E       assert 'headers: getAuthHeaders()' in "import { useState, useEffect } from 'react';\nimport { useParams, useNavigate } from 'react-router-dom';\nimport axio...mation\n              </Button>\n            </div>\n          </div>\n        </div>\n      )}\n    </div>\n  );\n}\n"
+
+tests/test_ticket_generator.py:353: AssertionError
+_ TestWinnerAnnouncementEndpoint.test_winner_announcement_validates_game_status _
+
+self = <tests.test_winners_tab.TestWinnerAnnouncementEndpoint object at 0xf955588c5410>
+admin_headers = {'Authorization': 'Admin admin_71b35b907b57469aa3cdfde1a8cb8cfa'}
+
+    def test_winner_announcement_validates_game_status(self, admin_headers):
+        """Test winner announcement only works for live/completed games"""
+        # Try to send announcement for upcoming game
+        response = requests.post(
+            f"{BASE_URL}/api/admin/games/{UPCOMING_GAME_ID}/whatsapp/winner-announcement",
+            headers=admin_headers,
+            json={
+                "game_id": UPCOMING_GAME_ID,
+                "prize_type": "first_line",
+                "winner_user_id": "test_user",
+                "ticket_id": "test_ticket"
+            }
+        )
+        # Should fail because game is upcoming
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        data = response.json()
+>       assert "live or completed" in data.get("detail", "").lower(), f"Unexpected error: {data}"
+E       AssertionError: Unexpected error: {'detail': 'No winner declared for first_line'}
+E       assert 'live or completed' in 'no winner declared for first_line'
+E        +  where 'no winner declared for first_line' = <built-in method lower of str object at 0xf9555851d3b0>()
+E        +    where <built-in method lower of str object at 0xf9555851d3b0> = 'No winner declared for first_line'.lower
+E        +      where 'No winner declared for first_line' = <built-in method get of dict object at 0xf9555845e2c0>('detail', '')
+E        +        where <built-in method get of dict object at 0xf9555845e2c0> = {'detail': 'No winner declared for first_line'}.get
+
+tests/test_winners_tab.py:198: AssertionError
+_________ TestGameControlEndpoint.test_game_control_for_upcoming_game __________
+
+self = <tests.test_winners_tab.TestGameControlEndpoint object at 0xf9555871a3d0>
+admin_headers = {'Authorization': 'Admin admin_9113df207bd646da827a79c2af6b887b'}
+
+    def test_game_control_for_upcoming_game(self, admin_headers):
+        """Test game control endpoint for upcoming game"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/games/{UPCOMING_GAME_ID}/control",
+            headers=admin_headers
+        )
+        assert response.status_code == 200, f"Failed: {response.text}"
+        data = response.json()
+    
+        game = data.get("game", {})
+>       assert game.get("status") == "upcoming", f"Expected upcoming status, got {game.get('status')}"
+E       AssertionError: Expected upcoming status, got live
+E       assert 'live' == 'upcoming'
+E         
+E         - upcoming
+E         + live
+
+tests/test_winners_tab.py:265: AssertionError
+_________ TestWinnersTabUIData.test_winners_tab_data_for_upcoming_game _________
+
+self = <tests.test_winners_tab.TestWinnersTabUIData object at 0xf955588c7590>
+admin_headers = {'Authorization': 'Admin admin_135ad2d8d2de44b1b1f82bc36f331b1f'}
+
+    def test_winners_tab_data_for_upcoming_game(self, admin_headers):
+        """Test that upcoming game returns appropriate data for 'Winners Available After Game Starts' message"""
+        # Get game control data
+        control_response = requests.get(
+            f"{BASE_URL}/api/admin/games/{UPCOMING_GAME_ID}/control",
+            headers=admin_headers
+        )
+        assert control_response.status_code == 200
+        control_data = control_response.json()
+    
+        game = control_data.get("game", {})
+>       assert game.get("status") == "upcoming", "Game should be upcoming"
+E       AssertionError: Game should be upcoming
+E       assert 'live' == 'upcoming'
+E         
+E         - upcoming
+E         + live
+
+tests/test_winners_tab.py:320: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_admin_panel.py::TestAdminAuthentication::test_admin_login_success
+FAILED tests/test_admin_panel.py::TestAdminAuthentication::test_admin_login_invalid_credentials
+FAILED tests/test_admin_panel.py::TestAdminAuthentication::test_admin_verify_valid_session
+FAILED tests/test_admin_panel.py::TestGameCRUD::test_get_all_games - assert 5...
+FAILED tests/test_game_control.py::TestWhatsAppGameReminder::test_game_reminder_no_bookings
+FAILED tests/test_ticket_generator.py::TestWhatsAppNumberUpdate::test_auth_headers_function_exists
+FAILED tests/test_ticket_generator.py::TestWhatsAppNumberUpdate::test_api_calls_include_auth_headers
+FAILED tests/test_winners_tab.py::TestWinnerAnnouncementEndpoint::test_winner_announcement_validates_game_status
+FAILED tests/test_winners_tab.py::TestGameControlEndpoint::test_game_control_for_upcoming_game
+FAILED tests/test_winners_tab.py::TestWinnersTabUIData::test_winners_tab_data_for_upcoming_game
+ERROR tests/test_admin_panel.py::TestGameCRUD::test_create_game_success - req...
+ERROR tests/test_admin_panel.py::TestGameCRUD::test_create_game_with_custom_tickets
+ERROR tests/test_admin_panel.py::TestGameCRUD::test_create_game_invalid_tickets
+ERROR tests/test_admin_panel.py::TestGameCRUD::test_get_game_by_id - requests...
+ERROR tests/test_admin_panel.py::TestGameCRUD::test_update_game - requests.ex...
+ERROR tests/test_admin_panel.py::TestGameLifecycle::test_start_game - request...
+ERROR tests/test_admin_panel.py::TestGameLifecycle::test_end_game - requests....
+ERROR tests/test_admin_panel.py::TestGameLifecycle::test_cannot_edit_live_game
+ERROR tests/test_admin_panel.py::TestAdminGameManagement::test_delete_upcoming_game
+ERROR tests/test_admin_panel.py::TestAdminGameManagement::test_delete_live_game_requires_force
+ERROR tests/test_admin_panel.py::TestAdminGameManagement::test_get_game_tickets_admin
+ERROR tests/test_admin_panel.py::TestGameSession::test_call_number - requests...
+ERROR tests/test_admin_panel.py::TestGameSession::test_get_session - requests...
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_admin_login_success
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_admin_login_invalid_credentials
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_create_agent
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_create_agent_duplicate_username
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_list_agents
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_list_agents_requires_auth
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_update_agent
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_update_agent_not_found
+ERROR tests/test_agent_system.py::TestAdminAgentManagement::test_deactivate_agent
+================== 10 failed, 99 passed, 22 errors in 21.46s =================== files for backend logic, especially for the complex prize rules that were a major source of bugs.</analysis>
