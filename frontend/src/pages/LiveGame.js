@@ -717,15 +717,23 @@ export default function LiveGame() {
                     className={`px-1.5 py-1.5 rounded cursor-pointer transition-all ${winner ? 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' : 'bg-white/5 hover:bg-white/10'}`}
                     onClick={() => {
                       if (winner) {
-                        if (isFullSheetCorner) {
-                          // For Full Sheet Corner, show special modal with corner info
+                        // Check if this is a Full Sheet prize (FSC or FSB)
+                        const isFullSheetPrize = winner.is_full_sheet || 
+                          prize.toLowerCase().includes('full sheet');
+                        
+                        if (isFullSheetPrize) {
+                          // For Full Sheet prizes, show special modal
                           setSelectedWinnerTicket({ 
                             prize, 
                             winner,
-                            isFullSheetCorner: true,
+                            isFullSheetCorner: prize.toLowerCase().includes('corner'),
+                            isFullSheetBonus: prize.toLowerCase().includes('bonus'),
+                            isFullSheet: true,
                             corner_numbers: winner.corner_numbers,
+                            total_marked: winner.total_marked,
                             sheet_tickets: winner.sheet_tickets,
-                            ticket_number: winner.ticket_number
+                            ticket_number: winner.ticket_number,
+                            ticket_range: winner.ticket_range
                           });
                         } else if (winner.ticket_id) {
                           const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
