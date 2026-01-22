@@ -470,7 +470,7 @@ export default function LiveGame() {
               <div className="bg-white rounded-xl p-4 max-w-sm w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-bold text-gray-800">
-                    🏆 {selectedWinnerTicket.prize}
+                    {selectedWinnerTicket.isLuckyDraw ? '🎰' : '🏆'} {selectedWinnerTicket.prize}
                   </h3>
                   <button onClick={() => setSelectedWinnerTicket(null)} className="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
                 </div>
@@ -478,8 +478,23 @@ export default function LiveGame() {
                   Winner: <span className="font-bold">{selectedWinnerTicket.winner?.holder_name || selectedWinnerTicket.winner?.name}</span>
                 </p>
                 
-                {/* Full Sheet Prizes - Special Display */}
-                {selectedWinnerTicket.isFullSheet ? (
+                {/* Lucky Draw Display */}
+                {selectedWinnerTicket.isLuckyDraw && (
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 mb-3">
+                    <div className="text-center">
+                      <p className="text-4xl font-bold text-amber-600 mb-1">
+                        {selectedWinnerTicket.ticket_number || selectedWinnerTicket.winner?.full_sheet_id}
+                      </p>
+                      {selectedWinnerTicket.ticket_range && (
+                        <p className="text-sm text-gray-600">Tickets: {selectedWinnerTicket.ticket_range}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">🎰 Randomly selected from {selectedWinnerTicket.winner?.eligible_count || 'all'} eligible full sheets</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Full Sheet (non-lucky draw) Display */}
+                {selectedWinnerTicket.isFullSheet && !selectedWinnerTicket.isLuckyDraw && (
                   <>
                     <p className="text-sm text-gray-600 mb-3">
                       Full Sheet: <span className="font-bold text-amber-600">{selectedWinnerTicket.ticket_number}</span>
@@ -487,47 +502,16 @@ export default function LiveGame() {
                         <span className="text-xs text-gray-500 ml-2">({selectedWinnerTicket.ticket_range})</span>
                       )}
                     </p>
-                    
-                    {/* Full Sheet Corner - Show corner numbers */}
-                    {selectedWinnerTicket.isFullSheetCorner && selectedWinnerTicket.corner_numbers && (
-                      <div className="bg-amber-50 rounded-lg p-4 mb-3">
-                        <p className="text-xs text-gray-600 mb-3 text-center font-semibold">
-                          Corner Numbers (First & Last Ticket)
-                        </p>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="text-center">
-                            <p className="text-[10px] text-gray-500 mb-1">Top-Left (T1)</p>
-                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                              {selectedWinnerTicket.corner_numbers[0] || '?'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-[10px] text-gray-500 mb-1">Top-Right (T1)</p>
-                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                              {selectedWinnerTicket.corner_numbers[1] || '?'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-[10px] text-gray-500 mb-1">Bottom-Left (T6)</p>
-                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                              {selectedWinnerTicket.corner_numbers[2] || '?'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-[10px] text-gray-500 mb-1">Bottom-Right (T6)</p>
-                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                              {selectedWinnerTicket.corner_numbers[3] || '?'}
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-3 text-center">All 4 corners of the full sheet marked!</p>
-                      </div>
+                    {selectedWinnerTicket.sheet_tickets && (
+                      <p className="text-[10px] text-gray-500 text-center">
+                        Tickets: {selectedWinnerTicket.sheet_tickets.join(', ')}
+                      </p>
                     )}
-                    
-                    {/* Full Sheet Bonus - Show marked count */}
-                    {selectedWinnerTicket.isFullSheetBonus && (
-                      <div className="bg-green-50 rounded-lg p-4 mb-3">
-                        <p className="text-xs text-gray-600 mb-2 text-center font-semibold">
+                  </>
+                )}
+                
+                {/* Regular single ticket display */}
+                {!selectedWinnerTicket.isFullSheet && !selectedWinnerTicket.isLuckyDraw && (
                           Full Sheet Bonus - Counter Based
                         </p>
                         <div className="text-center">
