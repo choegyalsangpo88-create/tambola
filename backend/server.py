@@ -3995,8 +3995,85 @@ async def check_winners_for_session(game_id: str, called_numbers: List[int]):
                         logger.info(f"🎉 Winner found for {prize_type} in game {game_id}: {holder_name}")
                         break
         
-        # Check if all prizes are won - end game automatically
-        if len(current_winners) >= len(prizes) and len(prizes) > 0:
+        # Check if all prizes are won - but exclude Lucky Draw from the count
+        # Lucky Draw triggers when ALL OTHER dividends are claimed
+        lucky_draw_prize = None
+        for prize_name in prizes:
+            if "lucky draw" in prize_name.lower() or "full sheet lucky" in prize_name.lower():
+                lucky_draw_prize = prize_name
+                break
+        
+        # Calculate how many non-lucky-draw prizes exist
+        non_lucky_draw_prizes = [p for p in prizes.keys() if p != lucky_draw_prize]
+        won_non_lucky_draw = [w for w in current_winners.keys() if w != lucky_draw_prize]
+        
+        # Check if all non-lucky-draw prizes are won
+        all_regular_prizes_won = len(won_non_lucky_draw) >= len(non_lucky_draw_prizes) and len(non_lucky_draw_prizes) > 0
+        
+        if all_regular_prizes_won:
+            logger.info(f"All regular dividends claimed for game {game_id}! Triggering Lucky Draw...")
+            
+            # Run Lucky Draw if prize exists and not yet won
+            if lucky_draw_prize and lucky_draw_prize not in current_winners:
+                lucky_draw_amount = prizes.get(lucky_draw_prize, 0)
+                
+                # Get all eligible full sheets (complete 6-ticket bookings)
+                pipeline = [
+                    {"$match": {"game_id": game_id, "is_booked": True}},
+                    {"$group": {
+                        "_id": "$full_sheet_id",
+                        "count": {"$sum": 1},
+                        "holder_name": {"$first": "$holder_name"},
+                        "booked_by_user_id": {"$first": "$user_id"},
+                        "tickets": {"$push": "$ticket_number"}
+                    }},
+                    {"$match": {"count": 6, "_id": {"$ne": None}}}  # Only complete sheets
+                ]
+                
+                eligible_sheets = await db.tickets.aggregate(pipeline).to_list(None)
+                
+                if eligible_sheets:
+                    # Randomly select winner
+                    winner_sheet = random.choice(eligible_sheets)
+                    
+                    # Sort ticket numbers for display
+                    tickets = sorted(winner_sheet["tickets"], key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+                    first_ticket = tickets[0] if tickets else "T001"
+                    last_ticket = tickets[-1] if tickets else "T006"
+                    
+                    lucky_draw_result = {
+                        "full_sheet_id": winner_sheet["_id"],
+                        "holder_name": winner_sheet["holder_name"] or "Unknown",
+                        "user_id": winner_sheet["booked_by_user_id"],
+                        "ticket_number": winner_sheet["_id"],  # Display as FS003
+                        "ticket_range": f"{first_ticket}–{last_ticket}",
+                        "pattern": "Full Sheet Lucky Draw",
+                        "is_lucky_draw": True,
+                        "prize_amount": lucky_draw_amount,
+                        "eligible_count": len(eligible_sheets),
+                        "won_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    # Add lucky draw winner to current_winners
+                    current_winners[lucky_draw_prize] = lucky_draw_result
+                    
+                    await db.game_sessions.update_one(
+                        {"session_id": session["session_id"]},
+                        {"$set": {"winners": current_winners}}
+                    )
+                    
+                    # Also store in game for easy retrieval
+                    await db.games.update_one(
+                        {"game_id": game_id},
+                        {"$set": {"lucky_draw_result": lucky_draw_result}}
+                    )
+                    
+                    logger.info(f"🎰 LUCKY DRAW WINNER: {winner_sheet['holder_name']} - {winner_sheet['_id']}")
+                    logger.info(f"   Eligible sheets: {len(eligible_sheets)}")
+                else:
+                    logger.info(f"No eligible full sheets for Lucky Draw in game {game_id}")
+            
+            # End the game now that all prizes (including Lucky Draw) are done
             await db.games.update_one(
                 {"game_id": game_id},
                 {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
