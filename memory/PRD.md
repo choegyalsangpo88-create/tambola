@@ -7,46 +7,26 @@ A full-stack Tambola (Housie) game application designed for Indian players with 
 
 ### 1. User Authentication
 - **Google OAuth** via Emergent-managed Google Auth
-- **WhatsApp OTP** for phone number authentication (Twilio integration)
 - Session management with 7-day expiry
 
-### 2. Multi-Region Agent System ✅ (NEW)
-**Roles:**
-- **Super Admin**: Full access to all data and actions
-- **Agent**: Limited access only to own assigned bookings
+### 2. Admin Booking/Ticket Cancellation ✅ (2026-01-22)
+**Purpose:** Allow admin to cancel tickets or bookings before game starts for users who want to change tickets
 
 **Features:**
-- Auto-assign agents based on player phone country code
-  - +91 → India agent
-  - +33 → France agent
-  - +1 → Canada agent
-- Click-to-chat WhatsApp redirect (no API automation)
-- 10-minute booking expiry for pending payments
-
-**Agent Panel (`/agent`):**
-- Dashboard: Stats (pending/paid/total bookings, revenue)
-- My Bookings: View and manage assigned bookings
-- Profile: View agent details and assigned region
-
-**Admin Panel - Agents Tab:**
-- Create/Edit/Deactivate agents
-- Region assignment rules view
-- Booking stats per agent
+- Cancel individual ticket: `POST /api/admin/tickets/{ticket_id}/cancel`
+- Cancel entire booking: `POST /api/admin/bookings/{booking_id}/cancel`
+- **Only works for "upcoming" games** - cannot cancel for live/completed
+- Cancelled tickets released back to available pool
+- Cancel buttons (X icon) in Admin Payments tab
 
 **Booking Lifecycle:**
-- **Pending**: Can be marked as Paid or Cancelled, 10-min expiry
-- **Paid**: Locked, no modifications allowed
-- **Cancelled**: Stored for history, tickets released
-
-**Agent Actions:**
-- Mark Pending booking as Paid (after WhatsApp payment verification)
-- Cancel Pending booking (releases tickets back to pool)
-- Cannot modify Live/Completed game bookings
+- **Pending**: Can be confirmed, cancelled, 10-min expiry
+- **Confirmed/Paid**: Locked, admin can cancel before game starts
+- **Cancelled**: Tickets released back to pool
 
 **Validation Rules:**
-- Agents only see own assigned bookings
-- Cannot cancel Paid bookings
-- Cannot modify Live/Completed game bookings
+- Cannot cancel tickets/bookings for live or completed games
+- All actions logged in admin action logs
 - All actions validated server-side
 
 ### 3. Game Dashboard
