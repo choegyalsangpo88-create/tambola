@@ -698,13 +698,14 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                     new_winners[fsc_prize] = {
                         "user_id": group_key,
                         "full_sheet_id": sheet_id,
-                        "ticket_id": sorted_tickets[0].get("ticket_id"),
-                        "ticket_number": f"{first_tn}–{last_tn}",
+                        "ticket_id": sheet_id,  # Use sheet_id as the identifier
+                        "ticket_number": sheet_id,  # Display as FS004, not T001-T006
                         "holder_name": holder,
                         "pattern": "Full Sheet Corner",
                         "is_full_sheet": True,
                         "corner_numbers": fsc_result.get("corner_numbers", stored_corners),
-                        "sheet_tickets": ticket_nums
+                        "sheet_tickets": ticket_nums,
+                        "ticket_range": f"{first_tn}–{last_tn}"  # Keep range for reference
                     }
                     logger.info(f"🏆 FSC WINNER: {holder}")
                     logger.info(f"   Full Sheet: {sheet_id}")
@@ -719,13 +720,14 @@ async def auto_detect_winners(db, game_id, called_numbers, existing_winners, gam
                     new_winners[fsb_prize] = {
                         "user_id": group_key,
                         "full_sheet_id": sheet_id,
-                        "ticket_id": sorted_tickets[0].get("ticket_id"),
-                        "ticket_number": f"{first_tn}–{last_tn}",
+                        "ticket_id": sheet_id,  # Use sheet_id as the identifier
+                        "ticket_number": sheet_id,  # Display as FS004, not T001-T006
                         "holder_name": holder,
                         "pattern": "Full Sheet Bonus",
                         "is_full_sheet": True,
                         "total_marked": fsb_result.get("total_marked"),
-                        "sheet_tickets": ticket_nums
+                        "sheet_tickets": ticket_nums,
+                        "ticket_range": f"{first_tn}–{last_tn}"  # Keep range for reference
                     }
                     logger.info(f"🏆 FSB WINNER: {holder}")
                     logger.info(f"   Full Sheet: {sheet_id}")
