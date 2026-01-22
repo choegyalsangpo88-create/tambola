@@ -713,8 +713,29 @@ Good luck 🍀
       toast.success('Ticket cancelled');
       if (selectedGame) fetchGameTickets(selectedGame.game_id);
       fetchGames();
+      fetchBookings();
     } catch (error) {
-      toast.error('Failed to cancel');
+      const errorMsg = error.response?.data?.detail || 'Failed to cancel';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId, gameStatus) => {
+    if (gameStatus !== 'upcoming') {
+      toast.error('Can only cancel bookings for upcoming games');
+      return;
+    }
+    if (!window.confirm('Cancel this entire booking? All tickets will be released back to available pool.')) return;
+    try {
+      const response = await adminAxios.post(`${API}/admin/bookings/${bookingId}/cancel`);
+      await logAction('BOOKING_CANCELLED', { booking_id: bookingId, tickets_released: response.data.tickets_released });
+      toast.success(response.data.message || 'Booking cancelled');
+      fetchBookings();
+      fetchGames();
+      if (selectedGame) fetchGameTickets(selectedGame.game_id);
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Failed to cancel booking';
+      toast.error(errorMsg);
     }
   };
 
