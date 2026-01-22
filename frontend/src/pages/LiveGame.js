@@ -208,12 +208,46 @@ export default function LiveGame() {
         }
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         setGame(prev => ({ ...prev, status: 'completed' }));
-        toast.success('🎉 Game Completed! All prizes have been claimed.');
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        
+        // Check for Lucky Draw and show animation
+        if (!luckyDrawShownRef.current) {
+          luckyDrawShownRef.current = true;
+          fetchLuckyDrawData();
+        }
       }
       
       setSession(newSession);
     } catch (error) { console.error('Failed to fetch session:', error); }
+  };
+
+  // Fetch Lucky Draw data and trigger animation
+  const fetchLuckyDrawData = async () => {
+    try {
+      const response = await axios.get(`${API}/games/${gameId}/lucky-draw`);
+      const data = response.data;
+      
+      if (data.eligible_sheets && data.eligible_sheets.length > 0 && data.winner) {
+        setLuckyDrawData(data);
+        setShowLuckyDraw(true);
+        setLuckyDrawAnimating(true);
+        
+        // Start animation, then reveal winner
+        setTimeout(() => {
+          setLuckyDrawAnimating(false);
+          setLuckyDrawWinner(data.winner);
+          confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+          toast.success(`🎰 Lucky Draw Winner: ${data.winner.holder_name}!`);
+        }, 5000); // 5 seconds animation
+      } else {
+        // No lucky draw or no eligible sheets
+        toast.success('🎉 Game Completed! All prizes have been claimed.');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+    } catch (error) {
+      console.error('Failed to fetch lucky draw:', error);
+      toast.success('🎉 Game Completed!');
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
   };
 
   const fetchMyTickets = async () => {
