@@ -1796,7 +1796,7 @@ async def update_ticket_holder_name(ticket_id: str, data: EditTicketHolderReques
 
 @api_router.post("/admin/tickets/{ticket_id}/cancel")
 async def cancel_ticket(ticket_id: str, request: Request, _: bool = Depends(verify_admin)):
-    """Cancel a booked ticket and return it to available pool"""
+    """Cancel a booked ticket and return it to available pool - Only for upcoming games"""
     ticket = await db.tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -1806,6 +1806,17 @@ async def cancel_ticket(ticket_id: str, request: Request, _: bool = Depends(veri
     
     game_id = ticket["game_id"]
     
+    # Check game status - can only cancel tickets for upcoming games
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game.get("status") != "upcoming":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot cancel tickets for {game.get('status')} games. Tickets can only be cancelled before the game starts."
+        )
+    
     # Reset ticket to available
     await db.tickets.update_one(
         {"ticket_id": ticket_id},
@@ -1813,7 +1824,10 @@ async def cancel_ticket(ticket_id: str, request: Request, _: bool = Depends(veri
             "is_booked": False,
             "user_id": None,
             "booking_status": "available",
-            "holder_name": None
+            "holder_name": None,
+            "booked_by_name": None,
+            "booking_type": None,
+            "full_sheet_booked": False
         }}
     )
     
@@ -1823,13 +1837,97 @@ async def cancel_ticket(ticket_id: str, request: Request, _: bool = Depends(veri
         {"$inc": {"available_tickets": 1}}
     )
     
-    # Remove from booking if exists
-    await db.bookings.update_many(
-        {"ticket_ids": ticket_id},
-        {"$pull": {"ticket_ids": ticket_id}}
-    )
+    # Remove from booking if exists and update booking
+    booking = await db.bookings.find_one({"ticket_ids": ticket_id}, {"_id": 0})
+    if booking:
+        new_ticket_ids = [t for t in booking.get("ticket_ids", []) if t != ticket_id]
+        if len(new_ticket_ids) == 0:
+            # No tickets left - cancel the booking
+            await db.bookings.update_one(
+                {"booking_id": booking["booking_id"]},
+                {"$set": {
+                    "status": "cancelled",
+                    "cancelled_at": datetime.now(timezone.utc),
+                    "cancelled_by": "admin",
+                    "ticket_ids": []
+                }}
+            )
+        else:
+            # Update booking with remaining tickets
+            new_amount = game.get("price", 0) * len(new_ticket_ids)
+            await db.bookings.update_one(
+                {"booking_id": booking["booking_id"]},
+                {
+                    "$set": {
+                        "ticket_ids": new_ticket_ids,
+                        "total_amount": new_amount
+                    }
+                }
+            )
     
     return {"message": "Ticket cancelled and returned to available pool"}
+
+
+@api_router.post("/admin/bookings/{booking_id}/cancel")
+async def admin_cancel_booking(booking_id: str, request: Request, _: bool = Depends(verify_admin)):
+    """Admin cancels entire booking - releases all tickets back to available pool. Only for upcoming games."""
+    booking = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if booking.get("status") == "cancelled":
+        raise HTTPException(status_code=400, detail="Booking is already cancelled")
+    
+    game_id = booking["game_id"]
+    
+    # Check game status - can only cancel bookings for upcoming games
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game.get("status") != "upcoming":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot cancel bookings for {game.get('status')} games. Bookings can only be cancelled before the game starts."
+        )
+    
+    ticket_ids = booking.get("ticket_ids", [])
+    
+    # Release all tickets back to available
+    if ticket_ids:
+        await db.tickets.update_many(
+            {"ticket_id": {"$in": ticket_ids}},
+            {"$set": {
+                "is_booked": False,
+                "user_id": None,
+                "booking_status": "available",
+                "holder_name": None,
+                "booked_by_name": None,
+                "booking_type": None,
+                "full_sheet_booked": False
+            }}
+        )
+        
+        # Update game available tickets count
+        await db.games.update_one(
+            {"game_id": game_id},
+            {"$inc": {"available_tickets": len(ticket_ids)}}
+        )
+    
+    # Update booking status
+    await db.bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": {
+            "status": "cancelled",
+            "cancelled_at": datetime.now(timezone.utc),
+            "cancelled_by": "admin"
+        }}
+    )
+    
+    return {
+        "message": f"Booking cancelled. {len(ticket_ids)} tickets released back to available pool.",
+        "tickets_released": len(ticket_ids)
+    }
 
 # ============ BOOKING REQUEST (APPROVAL WORKFLOW) ============
 
