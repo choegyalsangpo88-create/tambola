@@ -327,51 +327,71 @@ export default function LiveGame() {
                   Winner: <span className="font-bold">{selectedWinnerTicket.winner?.holder_name || selectedWinnerTicket.winner?.name}</span>
                 </p>
                 
-                {/* Full Sheet Corner - Special Display */}
-                {selectedWinnerTicket.isFullSheetCorner ? (
+                {/* Full Sheet Prizes - Special Display */}
+                {selectedWinnerTicket.isFullSheet ? (
                   <>
                     <p className="text-sm text-gray-600 mb-3">
-                      Full Sheet: <span className="font-bold">{selectedWinnerTicket.ticket_number}</span>
-                    </p>
-                    <div className="bg-amber-50 rounded-lg p-4">
-                      <p className="text-xs text-gray-600 mb-3 text-center font-semibold">
-                        Corner Numbers (First & Last Ticket)
-                      </p>
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Top corners from first ticket */}
-                        <div className="text-center">
-                          <p className="text-[10px] text-gray-500 mb-1">Top-Left (T1)</p>
-                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                            {selectedWinnerTicket.corner_numbers?.[0] || '?'}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[10px] text-gray-500 mb-1">Top-Right (T1)</p>
-                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                            {selectedWinnerTicket.corner_numbers?.[1] || '?'}
-                          </div>
-                        </div>
-                        {/* Bottom corners from last ticket */}
-                        <div className="text-center">
-                          <p className="text-[10px] text-gray-500 mb-1">Bottom-Left (T6)</p>
-                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                            {selectedWinnerTicket.corner_numbers?.[2] || '?'}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[10px] text-gray-500 mb-1">Bottom-Right (T6)</p>
-                          <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                            {selectedWinnerTicket.corner_numbers?.[3] || '?'}
-                          </div>
-                        </div>
-                      </div>
-                      {selectedWinnerTicket.sheet_tickets && (
-                        <p className="text-[10px] text-gray-500 mt-3 text-center">
-                          Tickets in sheet: {selectedWinnerTicket.sheet_tickets.join(', ')}
-                        </p>
+                      Full Sheet: <span className="font-bold text-amber-600">{selectedWinnerTicket.ticket_number}</span>
+                      {selectedWinnerTicket.ticket_range && (
+                        <span className="text-xs text-gray-500 ml-2">({selectedWinnerTicket.ticket_range})</span>
                       )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2 text-center">All 4 corners of the full sheet marked!</p>
+                    </p>
+                    
+                    {/* Full Sheet Corner - Show corner numbers */}
+                    {selectedWinnerTicket.isFullSheetCorner && selectedWinnerTicket.corner_numbers && (
+                      <div className="bg-amber-50 rounded-lg p-4 mb-3">
+                        <p className="text-xs text-gray-600 mb-3 text-center font-semibold">
+                          Corner Numbers (First & Last Ticket)
+                        </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="text-center">
+                            <p className="text-[10px] text-gray-500 mb-1">Top-Left (T1)</p>
+                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                              {selectedWinnerTicket.corner_numbers[0] || '?'}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[10px] text-gray-500 mb-1">Top-Right (T1)</p>
+                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                              {selectedWinnerTicket.corner_numbers[1] || '?'}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[10px] text-gray-500 mb-1">Bottom-Left (T6)</p>
+                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                              {selectedWinnerTicket.corner_numbers[2] || '?'}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[10px] text-gray-500 mb-1">Bottom-Right (T6)</p>
+                            <div className="w-10 h-10 mx-auto rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                              {selectedWinnerTicket.corner_numbers[3] || '?'}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-3 text-center">All 4 corners of the full sheet marked!</p>
+                      </div>
+                    )}
+                    
+                    {/* Full Sheet Bonus - Show marked count */}
+                    {selectedWinnerTicket.isFullSheetBonus && (
+                      <div className="bg-green-50 rounded-lg p-4 mb-3">
+                        <p className="text-xs text-gray-600 mb-2 text-center font-semibold">
+                          Full Sheet Bonus - Counter Based
+                        </p>
+                        <div className="text-center">
+                          <p className="text-3xl font-bold text-green-600">{selectedWinnerTicket.total_marked || '6+'}</p>
+                          <p className="text-xs text-gray-500">Numbers Marked Across Sheet</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-3 text-center">All 6 tickets have at least 1 mark each!</p>
+                      </div>
+                    )}
+                    
+                    {selectedWinnerTicket.sheet_tickets && (
+                      <p className="text-[10px] text-gray-500 text-center">
+                        Tickets: {selectedWinnerTicket.sheet_tickets.join(', ')}
+                      </p>
+                    )}
                   </>
                 ) : (
                   /* Regular single ticket display */
