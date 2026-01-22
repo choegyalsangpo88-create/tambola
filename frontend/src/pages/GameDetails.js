@@ -806,7 +806,7 @@ export default function GameDetails() {
                 variant="outline"
                 className="w-full h-12 border-white/20 text-white"
               >
-                Done - I've Sent Payment Confirmation
+                Done - I&apos;ve Sent Payment Confirmation
               </Button>
             </div>
           </div>
