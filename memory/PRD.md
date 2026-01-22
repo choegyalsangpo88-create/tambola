@@ -266,9 +266,9 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 ## Dividend/Prize Types
 1. Quick Five - First to mark any 5 numbers
 2. Four Corners - All 4 corners marked
-3. Full Sheet Bonus - Book all 6 tickets of a full sheet
-4. Top Line, Middle Line, Bottom Line
-5. 1st, 2nd, 3rd Full House (sequential claiming)
+3. Top Line, Middle Line, Bottom Line
+4. 1st, 2nd, 3rd Full House (sequential claiming)
+5. **Full Sheet Lucky Draw** - Random draw from Full Sheet bookers when all other dividends are won
 
 ## Tech Stack
 - **Frontend:** React, Tailwind CSS, Shadcn/UI
