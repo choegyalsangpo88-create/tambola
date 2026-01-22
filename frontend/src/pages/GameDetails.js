@@ -15,6 +15,7 @@ const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
 // Single Lotto Ticket Component (clickable for individual selection)
+// Consistent styling whether in a full sheet or standalone
 function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked, isInFullSheet = false }) {
   const bookedByName = ticket.booked_by_name || ticket.holder_name;
 
@@ -26,7 +27,7 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
           : ''
       }`}
       style={{ 
-        border: isSelected ? '2px solid #f59e0b' : '1px solid #999',
+        border: isSelected ? '2px solid #f59e0b' : '1px solid #d4a800',
         margin: '1px',
         borderRadius: '0px',
         boxShadow: isSelected ? '0 0 6px rgba(245, 158, 11, 0.5)' : 'none'
@@ -41,7 +42,7 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
       data-testid={`ticket-${ticket.ticket_number}`}
     >
       {/* Header with ticket number and user name */}
-      <div className="py-0.5 border-b border-gray-400 bg-gray-100">
+      <div className="py-0.5 border-b border-gray-300 bg-gray-100">
         {/* Ticket header with user name on right */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1">
@@ -80,7 +81,7 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
           row.map((num, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
-              className="flex items-center justify-center border-r border-b border-gray-300 last:border-r-0"
+              className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
               style={{
                 height: '18px',
                 fontFamily: 'Arial, sans-serif',
