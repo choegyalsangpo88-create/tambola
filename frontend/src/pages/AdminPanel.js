@@ -1461,14 +1461,41 @@ Good luck 🍀
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <span className="text-amber-400 text-sm font-medium">₹{booking.total_amount}</span>
-                            {booking.status === 'pending' ? (
-                              <Button onClick={() => handleConfirmPayment(booking.booking_id)} size="sm" className="h-6 text-[10px] bg-emerald-600">
-                                <Check className="w-3 h-3 mr-0.5" /> Confirm
-                              </Button>
+                            {booking.status === 'cancelled' ? (
+                              <span className="px-2 py-0.5 text-[10px] rounded bg-red-500/20 text-red-400">CANCELLED</span>
+                            ) : booking.status === 'pending' ? (
+                              <>
+                                <Button onClick={() => handleConfirmPayment(booking.booking_id)} size="sm" className="h-6 text-[10px] bg-emerald-600">
+                                  <Check className="w-3 h-3 mr-0.5" /> Confirm
+                                </Button>
+                                {game.status === 'upcoming' && (
+                                  <Button 
+                                    onClick={() => handleCancelBooking(booking.booking_id, game.status)} 
+                                    size="sm" 
+                                    variant="ghost"
+                                    className="h-6 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </>
                             ) : (
-                              <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-400">PAID</span>
+                              <>
+                                <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-400">PAID</span>
+                                {game.status === 'upcoming' && (
+                                  <Button 
+                                    onClick={() => handleCancelBooking(booking.booking_id, game.status)} 
+                                    size="sm" 
+                                    variant="ghost"
+                                    className="h-6 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                    title="Cancel booking (release tickets)"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
