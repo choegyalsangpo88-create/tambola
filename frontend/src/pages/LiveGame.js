@@ -175,10 +175,13 @@ export default function LiveGame() {
             const winnerName = winner.holder_name || winner.name || 'Player';
             const ticketNum = winner.ticket_number || '';
             
-            // Check if this is Lucky Draw winner - trigger the animation
+            // Check if this is Lucky Draw winner - trigger the animation with delay
             if (winner.is_lucky_draw && !luckyDrawShownRef.current) {
               luckyDrawShownRef.current = true;
-              fetchLuckyDrawData();
+              // Wait 3 seconds for the last dividend celebration to finish
+              setTimeout(() => {
+                fetchLuckyDrawData();
+              }, 3000);
             } else {
               celebrateWinner(prize, winnerName, ticketNum);
             }
