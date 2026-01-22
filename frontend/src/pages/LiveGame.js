@@ -412,21 +412,30 @@ export default function LiveGame() {
             {game.prizes && Object.entries(game.prizes).map(([prize, amount]) => {
               const winner = allWinners[prize];
               const winnerFirstName = winner?.holder_name?.split(' ')[0] || winner?.name?.split(' ')[0] || '';
-              const isFullSheetCorner = winner?.is_full_sheet || prize.toLowerCase().includes('full sheet corner');
+              const isFullSheet = winner?.is_full_sheet || winner?.is_lucky_draw || prize.toLowerCase().includes('full sheet');
+              const isLuckyDraw = winner?.is_lucky_draw || prize.toLowerCase().includes('lucky draw');
+              
               return (
                 <div 
                   key={prize} 
-                  className={`px-4 py-3 rounded-lg cursor-pointer transition-all ${winner ? 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' : 'bg-white/5 hover:bg-white/10'}`}
+                  className={`px-4 py-3 rounded-lg cursor-pointer transition-all ${
+                    winner 
+                      ? isLuckyDraw 
+                        ? 'bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30' 
+                        : 'bg-green-500/20 border border-green-500/30 hover:bg-green-500/30' 
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
                   onClick={() => {
                     if (winner) {
-                      if (isFullSheetCorner) {
+                      if (isFullSheet || isLuckyDraw) {
                         setSelectedWinnerTicket({ 
                           prize, 
                           winner,
-                          isFullSheetCorner: true,
-                          corner_numbers: winner.corner_numbers,
-                          sheet_tickets: winner.sheet_tickets,
-                          ticket_number: winner.ticket_number
+                          isFullSheet: true,
+                          isLuckyDraw: isLuckyDraw,
+                          ticket_number: winner.ticket_number || winner.full_sheet_id,
+                          ticket_range: winner.ticket_range,
+                          sheet_tickets: winner.sheet_tickets
                         });
                       } else if (winner.ticket_id) {
                         const winningTicket = allBookedTickets.find(t => t.ticket_id === winner.ticket_id);
@@ -436,16 +445,20 @@ export default function LiveGame() {
                   }}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm font-bold ${winner ? 'text-green-400 line-through' : 'text-gray-300'}`}>{prize}</span>
+                    <span className={`text-sm font-bold ${winner ? isLuckyDraw ? 'text-amber-400' : 'text-green-400 line-through' : 'text-gray-300'}`}>
+                      {isLuckyDraw && '🎰 '}{prize}
+                    </span>
                     <span className="text-sm font-bold text-amber-400">₹{amount}</span>
                   </div>
                   {winner && (
-                    <p className="text-xs text-green-300 mt-1 text-left">
-                      🎉 {winnerFirstName || 'Winner'}
-                      {winner.ticket_number && <span className="text-amber-300 ml-1">({winner.ticket_number})</span>}
+                    <p className={`text-xs mt-1 text-left ${isLuckyDraw ? 'text-amber-300' : 'text-green-300'}`}>
+                      {isLuckyDraw ? '🎰' : '🎉'} {winnerFirstName || 'Winner'}
+                      {(winner.ticket_number || winner.full_sheet_id) && (
+                        <span className="text-amber-300 ml-1">({winner.ticket_number || winner.full_sheet_id})</span>
+                      )}
                     </p>
                   )}
-                  {winner && <p className="text-gray-400 text-[10px] mt-1 text-left">Click to view winning ticket</p>}
+                  {winner && <p className="text-gray-400 text-[10px] mt-1 text-left">Click to view details</p>}
                 </div>
               );
             })}
