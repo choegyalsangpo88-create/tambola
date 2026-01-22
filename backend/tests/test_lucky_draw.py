@@ -366,10 +366,9 @@ class TestLuckyDrawFeature:
         assert create_response.status_code == 200
         game_id = create_response.json()["game_id"]
         
-        # Start the game
+        # Start the game (public endpoint)
         start_response = requests.post(
-            f"{BASE_URL}/api/admin/games/{game_id}/start",
-            headers={"Authorization": f"Admin {admin_token}"}
+            f"{BASE_URL}/api/games/{game_id}/start"
         )
         assert start_response.status_code == 200, f"Failed to start game: {start_response.text}"
         
