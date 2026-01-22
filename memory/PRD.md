@@ -235,15 +235,15 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 **How It Works:**
 1. Game auto-detects when all non-Lucky Draw prizes are won
 2. Lucky Draw is triggered immediately (not waiting for 90 calls)
-3. Random selection from all eligible Full Sheets (complete 6-ticket bookings)
-4. Casino reel animation displays on frontend
-5. Game ends automatically after Lucky Draw winner is announced
+3. **NEW: Intro Screen** - Shows announcement "All Dividends Claimed! Now it's time for the Full Sheet Lucky Draw" with "Start the Draw!" button
+4. Random selection from all eligible Full Sheets (complete 6-ticket bookings)
+5. Casino reel animation displays on frontend
+6. Game ends automatically after Lucky Draw winner is announced
 
-**Frontend Animation:**
-- Casino-style spinning reel showing all eligible Full Sheet IDs
-- 5-second animation before winner reveal
-- Confetti celebration when winner is shown
-- Winner details: Full Sheet ID, Holder Name, Ticket Range, Prize Amount
+**Frontend Animation Phases:**
+1. **Intro Phase** - Announcement with eligible count and prize amount, "Start the Draw!" button
+2. **Spinning Phase** - Casino-style spinning reel showing all eligible Full Sheet IDs
+3. **Winner Phase** - Confetti celebration when winner is shown with Full Sheet ID, Holder Name, Ticket Range, Prize Amount
 
 **Backend Logic (`check_winners_for_session`):**
 - Excludes Lucky Draw from dividend count when checking if game should end
@@ -252,6 +252,20 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 
 **API Endpoint:**
 - `GET /api/games/{game_id}/lucky-draw` - Returns eligible sheets, winner data, and game status
+
+### 10. Admin Ticket/Booking Cancellation ✅ (2026-01-22)
+**Purpose:** Allow admin to cancel tickets or entire bookings before game starts (for users who want to change tickets)
+
+**Endpoints:**
+1. `POST /api/admin/tickets/{ticket_id}/cancel` - Cancel single ticket
+2. `POST /api/admin/bookings/{booking_id}/cancel` - Cancel entire booking
+
+**Rules:**
+- Only works for **upcoming** games (before game starts)
+- Cannot cancel tickets/bookings for live or completed games
+- Cancelled tickets are released back to available pool
+- Game's available_tickets count is updated
+- Booking status set to "cancelled" with timestamp
 
 ### Removed Features
 - **Full Sheet Bonus (FSB)**: Removed due to persistent bugs (2026-01-22)
