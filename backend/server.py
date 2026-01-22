@@ -2344,11 +2344,94 @@ async def declare_winner(winner_data: DeclareWinnerRequest):
 
 @api_router.post("/games/{game_id}/end")
 async def end_game(game_id: str):
+    """End a game and run the Full Sheet Lucky Draw if configured"""
+    
+    # Get game details
+    game = await db.games.find_one({"game_id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Get current session to access winners
+    session = await db.game_sessions.find_one({"game_id": game_id})
+    existing_winners = session.get("winners", {}) if session else {}
+    
+    # Check if Full Sheet Lucky Draw is a prize
+    game_prizes = game.get("prizes", {})
+    lucky_draw_prize = None
+    lucky_draw_amount = 0
+    
+    for prize_name in game_prizes:
+        if "lucky draw" in prize_name.lower() or "full sheet lucky" in prize_name.lower():
+            lucky_draw_prize = prize_name
+            lucky_draw_amount = game_prizes[prize_name]
+            break
+    
+    lucky_draw_result = None
+    
+    # Run Full Sheet Lucky Draw if enabled and not already won
+    if lucky_draw_prize and lucky_draw_prize not in existing_winners:
+        # Get all eligible full sheets (complete 6-ticket bookings)
+        pipeline = [
+            {"$match": {"game_id": game_id, "is_booked": True}},
+            {"$group": {
+                "_id": "$full_sheet_id",
+                "count": {"$sum": 1},
+                "holder_name": {"$first": "$holder_name"},
+                "booked_by_user_id": {"$first": "$booked_by_user_id"},
+                "tickets": {"$push": "$ticket_number"}
+            }},
+            {"$match": {"count": 6, "_id": {"$ne": None}}}  # Only complete sheets
+        ]
+        
+        eligible_sheets = await db.tickets.aggregate(pipeline).to_list(None)
+        
+        if eligible_sheets:
+            # Randomly select winner
+            import random
+            winner_sheet = random.choice(eligible_sheets)
+            
+            # Sort ticket numbers for display
+            tickets = sorted(winner_sheet["tickets"], key=lambda x: int(''.join(filter(str.isdigit, x)) or 0))
+            first_ticket = tickets[0] if tickets else "T001"
+            last_ticket = tickets[-1] if tickets else "T006"
+            
+            lucky_draw_result = {
+                "full_sheet_id": winner_sheet["_id"],
+                "holder_name": winner_sheet["holder_name"] or "Unknown",
+                "user_id": winner_sheet["booked_by_user_id"],
+                "ticket_number": winner_sheet["_id"],  # Display as FS003
+                "ticket_range": f"{first_ticket}–{last_ticket}",
+                "pattern": "Full Sheet Lucky Draw",
+                "is_lucky_draw": True,
+                "prize_amount": lucky_draw_amount,
+                "eligible_count": len(eligible_sheets),
+                "eligible_sheets": [s["_id"] for s in eligible_sheets]
+            }
+            
+            # Store winner in session
+            await db.game_sessions.update_one(
+                {"game_id": game_id},
+                {"$set": {f"winners.{lucky_draw_prize}": lucky_draw_result}},
+                upsert=True
+            )
+            
+            logger.info(f"🎰 LUCKY DRAW WINNER: {winner_sheet['holder_name']} - {winner_sheet['_id']}")
+            logger.info(f"   Eligible sheets: {len(eligible_sheets)}")
+    
+    # Update game status
     await db.games.update_one(
         {"game_id": game_id},
-        {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "status": "completed", 
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "lucky_draw_result": lucky_draw_result
+        }}
     )
-    return {"message": "Game ended"}
+    
+    return {
+        "message": "Game ended",
+        "lucky_draw": lucky_draw_result
+    }
 
 # ============ PROFILE ROUTES ============
 
