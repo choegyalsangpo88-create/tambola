@@ -228,7 +228,7 @@ export default function LiveGame() {
     } catch (error) { console.error('Failed to fetch session:', error); }
   };
 
-  // Fetch Lucky Draw data and trigger animation
+  // Fetch Lucky Draw data and trigger animation with intro phase
   const fetchLuckyDrawData = async () => {
     try {
       const response = await axios.get(`${API}/games/${gameId}/lucky-draw`);
@@ -237,15 +237,16 @@ export default function LiveGame() {
       if (data.eligible_sheets && data.eligible_sheets.length > 0 && data.winner) {
         setLuckyDrawData(data);
         setShowLuckyDraw(true);
-        setLuckyDrawAnimating(true);
+        setLuckyDrawPhase('intro'); // Start with intro phase
+        setLuckyDrawAnimating(false);
+        setLuckyDrawWinner(null);
         
-        // Start animation, then reveal winner
-        setTimeout(() => {
-          setLuckyDrawAnimating(false);
-          setLuckyDrawWinner(data.winner);
-          confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
-          toast.success(`🎰 Lucky Draw Winner: ${data.winner.holder_name}!`);
-        }, 5000); // 5 seconds animation
+        // No auto-progression - user clicks "Start Draw" button
+      } else if (data.eligible_sheets && data.eligible_sheets.length > 0) {
+        // Lucky Draw exists but winner not yet selected (shouldn't happen normally)
+        setLuckyDrawData(data);
+        setShowLuckyDraw(true);
+        setLuckyDrawPhase('intro');
       } else {
         // No lucky draw or no eligible sheets
         toast.success('🎉 Game Completed! All prizes have been claimed.');
@@ -256,6 +257,23 @@ export default function LiveGame() {
       toast.success('🎉 Game Completed!');
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
+  };
+
+  // Start the Lucky Draw spinning animation
+  const startLuckyDrawSpin = () => {
+    setLuckyDrawPhase('spinning');
+    setLuckyDrawAnimating(true);
+    
+    // After 5 seconds, reveal winner
+    setTimeout(() => {
+      setLuckyDrawAnimating(false);
+      setLuckyDrawPhase('winner');
+      if (luckyDrawData?.winner) {
+        setLuckyDrawWinner(luckyDrawData.winner);
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+        toast.success(`🎰 Lucky Draw Winner: ${luckyDrawData.winner.holder_name}!`);
+      }
+    }, 5000);
   };
 
   const fetchMyTickets = async () => {
