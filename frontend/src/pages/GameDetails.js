@@ -73,7 +73,8 @@ const REGION_DEFAULTS = {
 
 // Single Lotto Ticket Component (clickable for individual selection)
 // Consistent styling whether in a full sheet or standalone
-function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked, isInFullSheet = false, zoomLevel = 1 }) {
+// zoomLevel: 3 = largest (1 col), 2 = medium (2 cols), 1 = smallest (3 cols)
+function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked, isInFullSheet = false, zoomLevel = 3 }) {
   const bookedByName = ticket.booked_by_name || ticket.holder_name;
 
   return (
@@ -105,25 +106,25 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
           <div className="flex items-center gap-1">
             {isFirst && pageNumber && (
               <span 
-                className={`font-bold text-gray-600 mr-1 ${zoomLevel === 1 ? 'text-[9px]' : zoomLevel === 2 ? 'text-[8px]' : 'text-[7px]'}`}
+                className={`font-bold text-gray-600 mr-1 ${zoomLevel === 3 ? 'text-[9px]' : zoomLevel === 2 ? 'text-[8px]' : 'text-[7px]'}`}
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 {pageNumber}
               </span>
             )}
             <p 
-              className={`font-bold text-black uppercase ${zoomLevel === 1 ? 'text-[10px]' : zoomLevel === 2 ? 'text-[9px]' : 'text-[7px]'}`}
+              className={`font-bold text-black uppercase ${zoomLevel === 3 ? 'text-[10px]' : zoomLevel === 2 ? 'text-[9px]' : 'text-[7px]'}`}
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               LOTTO TICKET {ticket.ticket_number}
             </p>
             {isSelected && (
-              <span className={`text-amber-500 font-bold ${zoomLevel === 1 ? 'text-[10px]' : 'text-[8px]'}`}>✓</span>
+              <span className={`text-amber-500 font-bold ${zoomLevel === 3 ? 'text-[10px]' : 'text-[8px]'}`}>✓</span>
             )}
           </div>
           {bookedByName && (
             <span 
-              className={`font-bold text-black ${zoomLevel === 1 ? 'text-[9px]' : zoomLevel === 2 ? 'text-[8px]' : 'text-[7px]'}`}
+              className={`font-bold text-black ${zoomLevel === 3 ? 'text-[9px]' : zoomLevel === 2 ? 'text-[8px]' : 'text-[7px]'}`}
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               {bookedByName.length > 8 ? bookedByName.slice(0, 8) + '..' : bookedByName}
@@ -140,9 +141,9 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
               key={`${rowIndex}-${colIndex}`}
               className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
               style={{
-                height: zoomLevel === 1 ? '22px' : zoomLevel === 2 ? '18px' : '14px',
+                height: zoomLevel === 3 ? '22px' : zoomLevel === 2 ? '18px' : '14px',
                 fontFamily: 'Arial, sans-serif',
-                fontSize: zoomLevel === 1 ? '12px' : zoomLevel === 2 ? '10px' : '8px',
+                fontSize: zoomLevel === 3 ? '12px' : zoomLevel === 2 ? '10px' : '8px',
                 fontWeight: 'bold',
                 color: '#000'
               }}
