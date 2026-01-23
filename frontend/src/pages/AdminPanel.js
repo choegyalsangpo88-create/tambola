@@ -309,8 +309,9 @@ export default function AdminPanel() {
       fetchActionLogs();
       fetchCallerSettings();
       fetchAgents();
+      fetchAllUsers();
     }
-  }, [isAuthenticated, fetchGames, fetchBookings, fetchBookingRequests, fetchPayments, fetchActionLogs, fetchCallerSettings, fetchAgents]);
+  }, [isAuthenticated, fetchGames, fetchBookings, fetchBookingRequests, fetchPayments, fetchActionLogs, fetchCallerSettings, fetchAgents, fetchAllUsers]);
 
   const handleLogout = async () => {
     await logAction('ADMIN_LOGOUT', { timestamp: new Date().toISOString() });
