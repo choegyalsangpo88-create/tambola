@@ -92,37 +92,40 @@ export default function InstallPrompt() {
         {/* Content */}
         <div className="p-4">
           {isIOS ? (
-            // iOS Instructions
-            <div className="space-y-3">
-              <p className="text-sm text-gray-300 text-center">
-                Install this app on your iPhone:
+            // iOS Instructions - Simplified with visual share button
+            <div className="space-y-4">
+              <p className="text-sm text-white text-center font-medium">
+                Install this app on your iPhone
               </p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
-                  <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                    <Share className="w-4 h-4 text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-white">1. Tap the <strong>Share</strong> button</p>
-                    <p className="text-[10px] text-gray-500">At the bottom of Safari</p>
-                  </div>
+              
+              {/* Visual Share Button */}
+              <div className="flex flex-col items-center gap-2 py-3">
+                <p className="text-xs text-gray-400">Tap this button in Safari:</p>
+                <div className="bg-white/10 rounded-xl px-6 py-3 flex items-center gap-3">
+                  {/* iOS Share Icon - Accurate representation */}
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+                    <path d="M12 2L12 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M8 6L12 2L16 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4 14V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-white font-medium">Share</span>
                 </div>
-                <div className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
-                  <div className="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
-                    <Plus className="w-4 h-4 text-amber-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-white">2. Tap <strong>Add to Home Screen</strong></p>
-                    <p className="text-[10px] text-gray-500">Scroll down in the share menu</p>
-                  </div>
+                <p className="text-[10px] text-gray-500">Found at the bottom of Safari browser</p>
+              </div>
+
+              {/* Simple 2-step instruction */}
+              <div className="bg-white/5 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                  <p className="text-sm text-white">Tap <span className="text-blue-400 font-bold">Share</span> button below</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
-                  <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <Download className="w-4 h-4 text-green-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-white">3. Tap <strong>Add</strong></p>
-                    <p className="text-[10px] text-gray-500">App will appear on your home screen</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-white">Tap</p>
+                    <span className="bg-white/20 px-2 py-1 rounded text-xs text-white flex items-center gap-1">
+                      <Plus className="w-3 h-3" /> Add to Home Screen
+                    </span>
                   </div>
                 </div>
               </div>
