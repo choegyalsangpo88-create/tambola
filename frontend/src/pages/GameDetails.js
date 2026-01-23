@@ -1310,6 +1310,57 @@ export default function GameDetails() {
           </div>
         </div>
       )}
+
+      {/* Pending Booking Warning Modal */}
+      {showPendingWarning && existingPendingBooking && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1e] rounded-2xl p-6 max-w-md w-full border border-orange-500/30">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-orange-500/20 rounded-full">
+                <Info className="w-6 h-6 text-orange-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Pending Booking Found</h3>
+            </div>
+            
+            <p className="text-gray-300 mb-4">
+              You have a pending booking for another game that needs to be completed or cancelled first.
+            </p>
+            
+            <div className="bg-orange-500/10 rounded-xl p-4 mb-6 border border-orange-500/20">
+              <p className="text-sm text-gray-400 mb-1">Pending booking:</p>
+              <p className="text-white font-semibold">
+                {existingPendingBooking.ticket_ids?.length || 0} tickets • ₹{existingPendingBooking.total_amount}
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={() => {
+                  setShowPendingWarning(false);
+                  navigate('/');
+                }}
+                className="w-full h-12 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold"
+              >
+                Go to Dashboard
+              </Button>
+              <Button
+                onClick={handleCancelExistingAndProceed}
+                variant="outline"
+                className="w-full h-12 border-red-500/50 text-red-400 hover:bg-red-500/10"
+              >
+                Cancel Previous & Continue Here
+              </Button>
+              <Button
+                onClick={() => setShowPendingWarning(false)}
+                variant="ghost"
+                className="w-full h-10 text-gray-400"
+              >
+                Back to Selection
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
