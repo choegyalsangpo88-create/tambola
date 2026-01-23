@@ -162,11 +162,21 @@ export default function LiveGame() {
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchGameData();
     fetchMyTickets();
     fetchAllBookedTickets();
-    pollInterval.current = setInterval(fetchSession, 3000);
-    return () => { if (pollInterval.current) clearInterval(pollInterval.current); };
+    
+    // Start optimized polling with lightweight endpoint (every 2 seconds)
+    pollInterval.current = setInterval(pollGameState, 2000);
+    
+    return () => {
+      isMountedRef.current = false;
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
+        pollInterval.current = null;
+      }
+    };
   }, [gameId]);
 
   useEffect(() => {
