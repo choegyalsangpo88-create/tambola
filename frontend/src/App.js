@@ -63,6 +63,7 @@ function AppRouter() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <Toaster position="top-right" />
+      <InstallPrompt />
     </>
   );
 }
