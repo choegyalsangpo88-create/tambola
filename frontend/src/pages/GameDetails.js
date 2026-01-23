@@ -24,6 +24,14 @@ const SEPA_BIC = 'BNPAFRPP';
 const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
 
+// Exchange rates (INR as base currency)
+// These are approximate rates - update periodically
+const EXCHANGE_RATES = {
+  INR: 1,
+  CAD: 0.016,  // 1 INR = 0.016 CAD (approx)
+  EUR: 0.011   // 1 INR = 0.011 EUR (approx)
+};
+
 // Payment methods configuration
 const PAYMENT_METHODS = {
   upi: {
@@ -32,7 +40,8 @@ const PAYMENT_METHODS = {
     icon: '🇮🇳',
     currency: '₹',
     currencyCode: 'INR',
-    region: 'india'
+    region: 'india',
+    exchangeRate: EXCHANGE_RATES.INR
   },
   interac: {
     id: 'interac',
@@ -40,7 +49,8 @@ const PAYMENT_METHODS = {
     icon: '🇨🇦',
     currency: '$',
     currencyCode: 'CAD',
-    region: 'canada'
+    region: 'canada',
+    exchangeRate: EXCHANGE_RATES.CAD
   },
   wero: {
     id: 'wero',
@@ -48,7 +58,8 @@ const PAYMENT_METHODS = {
     icon: '🇪🇺',
     currency: '€',
     currencyCode: 'EUR',
-    region: 'europe'
+    region: 'europe',
+    exchangeRate: EXCHANGE_RATES.EUR
   }
 };
 
