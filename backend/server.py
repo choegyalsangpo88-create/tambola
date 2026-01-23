@@ -2348,6 +2348,32 @@ async def get_booking_request(request_id: str, user: User = Depends(get_current_
     
     return req
 
+class UpdatePaymentMethodRequest(BaseModel):
+    payment_method: str  # upi, interac, wero
+
+@api_router.put("/booking-requests/{request_id}/payment-method")
+async def update_booking_payment_method(
+    request_id: str, 
+    data: UpdatePaymentMethodRequest,
+    user: User = Depends(get_current_user)
+):
+    """Update the payment method for a booking request"""
+    req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Booking request not found")
+    
+    # Verify user owns this request
+    if req["user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this booking request")
+    
+    # Update payment method
+    await db.booking_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"payment_method": data.payment_method}}
+    )
+    
+    return {"message": "Payment method updated", "payment_method": data.payment_method}
+
 @api_router.get("/admin/booking-requests")
 async def get_all_booking_requests(request: Request, status: Optional[str] = None, _: bool = Depends(verify_admin)):
     """Get all booking requests (admin)"""
