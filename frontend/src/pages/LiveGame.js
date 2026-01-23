@@ -216,16 +216,113 @@ export default function LiveGame() {
   const fetchGameData = async () => {
     try {
       const response = await axios.get(`${API}/games/${gameId}`);
+      if (!isMountedRef.current) return;
       setGame(response.data);
       previousWinnersRef.current = response.data.winners || {};
+      // Initial full session fetch
       fetchSession();
     } catch (error) { console.error('Failed to fetch game:', error); }
   };
 
+  // Lightweight polling function - uses delta updates
+  const pollGameState = async () => {
+    // Prevent concurrent polls
+    if (isPollingRef.current || !isMountedRef.current) return;
+    isPollingRef.current = true;
+    
+    try {
+      const response = await axios.get(
+        `${API}/games/${gameId}/poll?last_count=${calledCountRef.current}`
+      );
+      
+      if (!isMountedRef.current) return;
+      
+      const data = response.data;
+      
+      // Check if game ended - stop polling
+      if (data.status === 'completed') {
+        if (pollInterval.current) {
+          clearInterval(pollInterval.current);
+          pollInterval.current = null;
+        }
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        setGame(prev => prev ? { ...prev, status: 'completed' } : prev);
+        
+        // Trigger Lucky Draw if not shown
+        if (!luckyDrawShownRef.current) {
+          luckyDrawShownRef.current = true;
+          fetchLuckyDrawData();
+        }
+      }
+      
+      // Update marked numbers incrementally (only add new ones)
+      if (data.new_numbers && data.new_numbers.length > 0) {
+        setMarkedNumbers(prev => {
+          const newSet = new Set(prev);
+          data.new_numbers.forEach(num => newSet.add(num));
+          return newSet;
+        });
+        calledCountRef.current = data.total_called;
+        
+        // Play TTS for new number
+        const latestNumber = data.new_numbers[data.new_numbers.length - 1];
+        if (latestNumber && latestNumber !== lastPlayedNumber) {
+          playTTSAnnouncement(latestNumber);
+        }
+      }
+      
+      // Update session state with current data
+      setSession(prev => ({
+        ...prev,
+        called_numbers: [...(prev?.called_numbers || []), ...(data.new_numbers || [])].slice(-90),
+        current_number: data.current_number,
+        winners: data.winners,
+        status: data.status
+      }));
+      
+      // Check for new winners and celebrate
+      if (data.winners) {
+        Object.keys(data.winners).forEach(prize => {
+          if (!previousWinnersRef.current[prize]) {
+            const winner = data.winners[prize];
+            const winnerName = winner.holder_name || winner.name || 'Player';
+            const ticketNum = winner.ticket_number || '';
+            
+            if (winner.is_lucky_draw && !luckyDrawShownRef.current) {
+              luckyDrawShownRef.current = true;
+              setTimeout(() => fetchLuckyDrawData(), 3000);
+            } else {
+              celebrateWinner(prize, winnerName, ticketNum);
+            }
+          }
+        });
+        previousWinnersRef.current = data.winners;
+      }
+      
+    } catch (error) {
+      // Silent fail for polling - don't spam console
+      if (error.response?.status === 404) {
+        // Game not found - stop polling
+        if (pollInterval.current) {
+          clearInterval(pollInterval.current);
+          pollInterval.current = null;
+        }
+      }
+    } finally {
+      isPollingRef.current = false;
+    }
+  };
+
+  // Full session fetch (used for initial load)
   const fetchSession = async () => {
     try {
       const response = await axios.get(`${API}/games/${gameId}/session`);
+      if (!isMountedRef.current) return;
+      
       const newSession = response.data;
+      
+      // Initialize called count ref
+      calledCountRef.current = newSession.called_numbers?.length || 0;
       
       // Check if game ended
       if (newSession.status === 'completed' && game?.status !== 'completed') {
@@ -234,7 +331,7 @@ export default function LiveGame() {
           pollInterval.current = null;
         }
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-        setGame(prev => ({ ...prev, status: 'completed' }));
+        setGame(prev => prev ? { ...prev, status: 'completed' } : prev);
         
         // Check for Lucky Draw and show animation
         if (!luckyDrawShownRef.current) {
@@ -244,6 +341,11 @@ export default function LiveGame() {
       }
       
       setSession(newSession);
+      
+      // Initialize marked numbers
+      if (newSession.called_numbers) {
+        setMarkedNumbers(new Set(newSession.called_numbers));
+      }
     } catch (error) { console.error('Failed to fetch session:', error); }
   };
 
