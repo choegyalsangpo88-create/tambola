@@ -223,10 +223,42 @@ export default function GameDetails() {
   const [copied, setCopied] = useState(false);
   const [bookingRequestId, setBookingRequestId] = useState(null);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  const [userRegion, setUserRegion] = useState('india'); // Default to India
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
+  const [paymentStep, setPaymentStep] = useState(1); // 1 = select method, 2 = payment details
   
   // Timer state (10 minutes = 600 seconds)
   const [timeLeft, setTimeLeft] = useState(600);
   const [timerActive, setTimerActive] = useState(false);
+
+  // Detect user region on mount
+  useEffect(() => {
+    const detectRegion = async () => {
+      try {
+        // Using free IP geolocation API
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        const countryCode = data.country_code?.toUpperCase();
+        
+        let region = 'india'; // Default
+        if (countryCode === 'CA') {
+          region = 'canada';
+        } else if (['FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'IE', 'FI', 'GR', 'LU'].includes(countryCode)) {
+          region = 'europe';
+        } else if (countryCode === 'IN') {
+          region = 'india';
+        }
+        
+        setUserRegion(region);
+        setSelectedPaymentMethod(REGION_DEFAULTS[region] || 'upi');
+      } catch (error) {
+        console.log('Region detection failed, using default');
+        setUserRegion('india');
+        setSelectedPaymentMethod('upi');
+      }
+    };
+    detectRegion();
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {
