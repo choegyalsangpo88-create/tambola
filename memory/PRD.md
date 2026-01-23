@@ -20,9 +20,37 @@ A full-stack Tambola (Housie) game application designed for Indian players with 
 - `/public/icons/` - App icons in various sizes (48x48 to 512x512)
 - `/src/components/InstallPrompt.js` - Install prompt UI for iOS/Android
 
-### 1. User Authentication
-- **Google OAuth** via Emergent-managed Google Auth
-- Session management with 7-day expiry
+### 1. User Authentication ✅ (Updated 2026-01-23)
+**Phone + PIN Based Login (No OTP/External APIs)**
+
+**Flow:**
+1. User enters phone number with country code
+2. If new user → Create PIN (4 digits) + Enter name + Optional WhatsApp number
+3. If existing user → Enter PIN to login
+4. If name missing → Prompt to enter name after login
+
+**Security:**
+- PIN hashed with SHA256 + salt before storing
+- Max 5 failed PIN attempts → Account auto-locked
+- Admin can reset PIN to default (1234) and unblock users
+
+**Session:**
+- 30-day session tokens stored in localStorage
+- Auto-login on app load if session exists
+- Session invalidated on logout or account block
+
+**Database Fields:**
+- `phone` - Login phone number (normalized with country code)
+- `whatsapp_number` - Separate WhatsApp if different from phone
+- `pin_hash` - Hashed 4-digit PIN
+- `failed_attempts` - Counter for login failures
+- `is_blocked` - Boolean for blocked accounts
+
+**API Endpoints:**
+- `POST /api/auth/phone/check` - Check if phone exists
+- `POST /api/auth/phone/register` - Register new user
+- `POST /api/auth/phone/login` - Login with PIN
+- `PUT /api/auth/update-name` - Update user name
 
 ### 2. Admin Booking/Ticket Cancellation ✅ (2026-01-22)
 **Purpose:** Allow admin to cancel tickets or bookings before game starts for users who want to change tickets
