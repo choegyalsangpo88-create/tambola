@@ -232,33 +232,44 @@ export default function LiveGame() {
     } catch (error) { console.error('Failed to fetch session:', error); }
   };
 
-  // Fetch Lucky Draw data and trigger animation automatically
+  // Fetch Lucky Draw data and trigger countdown then animation
   const fetchLuckyDrawData = async () => {
     try {
       const response = await axios.get(`${API}/games/${gameId}/lucky-draw`);
       const data = response.data;
       
-      if (data.eligible_sheets && data.eligible_sheets.length > 0 && data.winner) {
+      if (data.eligible_sheets && data.eligible_sheets.length > 0) {
         setLuckyDrawData(data);
         setShowLuckyDraw(true);
-        setLuckyDrawPhase('spinning'); // Start spinning immediately
-        setLuckyDrawAnimating(true);
+        setLuckyDrawPhase('countdown');
+        setLuckyDrawCountdown(5);
+        setLuckyDrawAnimating(false);
         setLuckyDrawWinner(null);
         
-        // After 5 seconds of spinning, reveal winner
-        setTimeout(() => {
-          setLuckyDrawAnimating(false);
-          setLuckyDrawPhase('winner');
-          setLuckyDrawWinner(data.winner);
-          confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
-          toast.success(`🎰 Lucky Draw Winner: ${data.winner.holder_name}!`);
-        }, 5000);
-      } else if (data.eligible_sheets && data.eligible_sheets.length > 0) {
-        // Lucky Draw exists but winner not yet selected
-        setLuckyDrawData(data);
-        setShowLuckyDraw(true);
-        setLuckyDrawPhase('spinning');
-        setLuckyDrawAnimating(true);
+        // Start countdown from 5
+        let count = 5;
+        const countdownInterval = setInterval(() => {
+          count -= 1;
+          setLuckyDrawCountdown(count);
+          
+          if (count <= 0) {
+            clearInterval(countdownInterval);
+            // Start spinning phase
+            setLuckyDrawPhase('spinning');
+            setLuckyDrawAnimating(true);
+            
+            // After 5 seconds of spinning, reveal winner
+            setTimeout(() => {
+              setLuckyDrawAnimating(false);
+              setLuckyDrawPhase('winner');
+              if (data.winner) {
+                setLuckyDrawWinner(data.winner);
+                confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+                toast.success(`🎰 Lucky Draw Winner: ${data.winner.holder_name}!`);
+              }
+            }, 5000);
+          }
+        }, 1000);
       } else {
         // No lucky draw or no eligible sheets
         toast.success('🎉 Game Completed! All prizes have been claimed.');
