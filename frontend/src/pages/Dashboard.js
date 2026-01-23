@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Home, Ticket, User, Trophy, Calendar, Users, Award, Plus, QrCode, X, Clock } from 'lucide-react';
+import { Home, Ticket, User, Trophy, Calendar, Users, Award, Plus, QrCode, X, Clock, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [liveGames, setLiveGames] = useState([]);
   const [recentlyCompleted, setRecentlyCompleted] = useState([]);
   const [upcomingGames, setUpcomingGames] = useState([]);
+  const [pendingBookings, setPendingBookings] = useState([]);
   const [activeTab, setActiveTab] = useState('home');
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -28,9 +29,13 @@ export default function Dashboard() {
   useEffect(() => {
     fetchUser();
     fetchGames();
+    fetchPendingBookings();
     
     // Poll every 30 seconds to check for game status changes
-    const interval = setInterval(fetchGames, 30000);
+    const interval = setInterval(() => {
+      fetchGames();
+      fetchPendingBookings();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
