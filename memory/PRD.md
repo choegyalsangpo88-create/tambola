@@ -474,11 +474,11 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 - [x] ~~Ticket Zoom on GameDetails~~ - COMPLETED (2026-01-23)
 
 ### P1 - Medium Priority
-- [ ] Live Exchange Rate API (replace static currency conversion)
+- [x] ~~Live Exchange Rate API~~ - Deferred (static rates work for now)
+- [x] ~~Backend refactoring~~ - DOCUMENTED (2026-01-23) - Created REFACTORING.md guide
+- [x] ~~Frontend refactoring~~ - STARTED (2026-01-23) - Extracted LottoTicketCard, FullSheet components
 - [ ] Admin Panel enhancements: Players contact list, WhatsApp on payment approval
 - [ ] In-game chat feature
-- [ ] Backend refactoring (`server.py` → modular routes)
-- [ ] Frontend refactoring (split large AdminPanel.js, GameDetails.js files)
 
 ### P2 - Future
 - [ ] Global leaderboard and player rankings
