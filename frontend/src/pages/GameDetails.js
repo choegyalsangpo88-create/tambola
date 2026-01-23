@@ -428,9 +428,31 @@ export default function GameDetails() {
       .join(', ');
   };
 
-  // Calculate total amount
+  // Calculate total amount in INR (base currency)
   const getTotalAmount = () => {
     return selectedTickets.length * (game?.price || 0);
+  };
+
+  // Convert INR amount to selected payment method currency
+  const getConvertedAmount = (paymentMethodId = selectedPaymentMethod) => {
+    const amountINR = getTotalAmount();
+    const method = PAYMENT_METHODS[paymentMethodId];
+    if (!method || method.currencyCode === 'INR') {
+      return amountINR;
+    }
+    const converted = amountINR * method.exchangeRate;
+    // Round to 2 decimal places
+    return Math.round(converted * 100) / 100;
+  };
+
+  // Format amount with currency symbol
+  const formatAmount = (paymentMethodId = selectedPaymentMethod) => {
+    const method = PAYMENT_METHODS[paymentMethodId];
+    const amount = getConvertedAmount(paymentMethodId);
+    if (method.currencyCode === 'INR') {
+      return `₹${amount}`;
+    }
+    return `${method.currency}${amount.toFixed(2)} ${method.currencyCode}`;
   };
 
   // Copy UPI ID to clipboard
