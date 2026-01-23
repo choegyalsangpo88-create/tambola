@@ -157,7 +157,7 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
 }
 
 // Full Sheet Component - 6 tickets stacked vertically with individual selection
-function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelectAll, pageNumber }) {
+function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelectAll, pageNumber, zoomLevel = 1 }) {
   // Check booking status
   const hasBookedTickets = tickets.some(t => t.is_booked);
   const allBooked = tickets.every(t => t.is_booked);
@@ -170,20 +170,20 @@ function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelect
       {/* Sheet header with ID, status, and Select All button */}
       <div className="flex items-center justify-between mb-1 px-1">
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-bold ${selectedCount > 0 ? 'text-amber-400' : 'text-amber-500/80'}`}>
+          <span className={`font-bold ${selectedCount > 0 ? 'text-amber-400' : 'text-amber-500/80'} ${zoomLevel === 1 ? 'text-sm' : zoomLevel === 2 ? 'text-xs' : 'text-[10px]'}`}>
             {sheetId}
           </span>
-          <span className="text-[10px] text-gray-500">
+          <span className={`text-gray-500 ${zoomLevel === 1 ? 'text-xs' : zoomLevel === 2 ? 'text-[10px]' : 'text-[8px]'}`}>
             {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
           </span>
           {selectedCount > 0 && (
-            <span className="text-xs text-amber-400 font-bold">{selectedCount}/6 selected</span>
+            <span className={`text-amber-400 font-bold ${zoomLevel === 1 ? 'text-xs' : 'text-[10px]'}`}>{selectedCount}/6 selected</span>
           )}
         </div>
         {!allBooked && (
           <button
             onClick={() => onSelectAll(tickets)}
-            className={`text-[10px] px-2 py-0.5 rounded ${
+            className={`px-2 py-0.5 rounded ${zoomLevel === 1 ? 'text-[10px]' : zoomLevel === 2 ? 'text-[9px]' : 'text-[8px]'} ${
               allAvailableSelected 
                 ? 'bg-amber-500 text-black' 
                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
@@ -212,6 +212,7 @@ function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelect
             isSelected={selectedTickets.includes(ticket.ticket_id)}
             onToggle={onToggleTicket}
             isBooked={ticket.is_booked}
+            zoomLevel={zoomLevel}
           />
         ))}
       </div>
