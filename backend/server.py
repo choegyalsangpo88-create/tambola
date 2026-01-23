@@ -2395,7 +2395,7 @@ async def cancel_booking_request(request_id: str, user: User = Depends(get_curre
         raise HTTPException(status_code=400, detail=f"Cannot cancel booking for {game['status']} game")
     
     # Release tickets back to availability
-    await release_booking_tickets(req.get("ticket_ids", []))
+    await release_booking_tickets(request_id, req["game_id"], req.get("ticket_ids", []))
     
     # Update request status
     await db.booking_requests.update_one(
