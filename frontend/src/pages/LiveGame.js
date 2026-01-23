@@ -1057,56 +1057,60 @@ export default function LiveGame() {
               
               return (
                 <div className="space-y-3">
-                  {/* Full Sheets - displayed as grouped yellow blocks */}
-                  {fullSheets.map(({ sheetId, tickets }) => (
-                    <div key={sheetId} className="rounded-lg overflow-hidden" style={{ backgroundColor: '#E6B800', padding: '4px' }}>
-                      <div className="flex items-center justify-between mb-1 px-2">
-                        <span className="text-xs font-bold text-black">{sheetId}</span>
-                        <span className="text-[10px] text-black/70">
-                          {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
-                        </span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {tickets.map((ticket) => (
-                          <div 
-                            key={ticket.ticket_id}
-                            className="bg-white rounded"
-                            style={{ border: '2px solid #D4A017', margin: '2px' }}
-                          >
-                            {/* Ticket Header */}
-                            <div className="py-0.5 px-2 border-b border-gray-300 bg-gray-50">
-                              <p className="text-[10px] font-bold text-black text-center">
-                                LOTTO TICKET {ticket.ticket_number}
-                              </p>
-                            </div>
-                            {/* Number Grid */}
-                            <div className="grid grid-cols-9">
-                              {ticket.numbers?.map((row, rowIdx) => (
-                                row.map((num, colIdx) => {
-                                  const isMarked = num && markedNumbers.has(num);
-                                  return (
-                                    <div
-                                      key={`${rowIdx}-${colIdx}`}
-                                      className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
-                                      style={{
-                                        height: ticketZoom === 1 ? '18px' : ticketZoom === 2 ? '22px' : '26px',
-                                        fontSize: ticketZoom === 1 ? '9px' : ticketZoom === 2 ? '11px' : '13px',
-                                        fontWeight: 'bold',
-                                        backgroundColor: isMarked ? '#22c55e' : 'white',
-                                        color: isMarked ? 'white' : '#000'
-                                      }}
-                                    >
-                                      {num || ''}
-                                    </div>
-                                  );
-                                })
-                              ))}
-                            </div>
+                  {/* Full Sheets Grid - zoom level determines columns */}
+                  {fullSheets.length > 0 && (
+                    <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-1' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                      {fullSheets.map(({ sheetId, tickets }) => (
+                        <div key={sheetId} className="rounded-lg overflow-hidden" style={{ backgroundColor: '#E6B800', padding: '4px' }}>
+                          <div className="flex items-center justify-between mb-1 px-2">
+                            <span className={`font-bold text-black ${ticketZoom === 1 ? 'text-sm' : ticketZoom === 2 ? 'text-xs' : 'text-[10px]'}`}>{sheetId}</span>
+                            <span className={`text-black/70 ${ticketZoom === 1 ? 'text-xs' : ticketZoom === 2 ? 'text-[10px]' : 'text-[8px]'}`}>
+                              {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
+                            </span>
                           </div>
-                        ))}
-                      </div>
+                          <div className="space-y-0.5">
+                            {tickets.map((ticket) => (
+                              <div 
+                                key={ticket.ticket_id}
+                                className="bg-white rounded"
+                                style={{ border: '2px solid #D4A017', margin: '2px' }}
+                              >
+                                {/* Ticket Header */}
+                                <div className="py-0.5 px-1 border-b border-gray-300 bg-gray-50">
+                                  <p className={`font-bold text-black text-center ${ticketZoom === 1 ? 'text-[10px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-[7px]'}`}>
+                                    LOTTO TICKET {ticket.ticket_number}
+                                  </p>
+                                </div>
+                                {/* Number Grid */}
+                                <div className="grid grid-cols-9">
+                                  {ticket.numbers?.map((row, rowIdx) => (
+                                    row.map((num, colIdx) => {
+                                      const isMarked = num && markedNumbers.has(num);
+                                      return (
+                                        <div
+                                          key={`${rowIdx}-${colIdx}`}
+                                          className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
+                                          style={{
+                                            height: ticketZoom === 1 ? '22px' : ticketZoom === 2 ? '16px' : '12px',
+                                            fontSize: ticketZoom === 1 ? '11px' : ticketZoom === 2 ? '9px' : '7px',
+                                            fontWeight: 'bold',
+                                            backgroundColor: isMarked ? '#22c55e' : 'white',
+                                            color: isMarked ? 'white' : '#000'
+                                          }}
+                                        >
+                                          {num || ''}
+                                        </div>
+                                      );
+                                    })
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                   
                   {/* Individual Tickets */}
                   {individualTickets.length > 0 && (
