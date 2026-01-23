@@ -2374,6 +2374,37 @@ async def update_booking_payment_method(
     
     return {"message": "Payment method updated", "payment_method": data.payment_method}
 
+@api_router.delete("/booking-requests/{request_id}")
+async def cancel_booking_request(request_id: str, user: User = Depends(get_current_user)):
+    """Cancel a pending booking request - releases tickets back to availability"""
+    req = await db.booking_requests.find_one({"request_id": request_id}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=404, detail="Booking request not found")
+    
+    # Verify user owns this request
+    if req["user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this booking request")
+    
+    # Only pending requests can be cancelled
+    if req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Cannot cancel {req['status']} request. Only pending requests can be cancelled.")
+    
+    # Check game status - cannot cancel for live/completed games
+    game = await db.games.find_one({"game_id": req["game_id"]}, {"_id": 0, "status": 1})
+    if game and game.get("status") in ["live", "completed"]:
+        raise HTTPException(status_code=400, detail=f"Cannot cancel booking for {game['status']} game")
+    
+    # Release tickets back to availability
+    await release_booking_tickets(req.get("ticket_ids", []))
+    
+    # Update request status
+    await db.booking_requests.update_one(
+        {"request_id": request_id},
+        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Booking request cancelled successfully", "request_id": request_id}
+
 @api_router.get("/admin/booking-requests")
 async def get_all_booking_requests(request: Request, status: Optional[str] = None, _: bool = Depends(verify_admin)):
     """Get all booking requests (admin)"""
