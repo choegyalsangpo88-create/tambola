@@ -1114,7 +1114,7 @@ export default function LiveGame() {
                   
                   {/* Individual Tickets */}
                   {individualTickets.length > 0 && (
-                    <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-3' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-1' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                       {individualTickets.map((ticket) => (
                         <LottoTicket
                           key={ticket.ticket_id}
@@ -1122,7 +1122,7 @@ export default function LiveGame() {
                           numbers={ticket.numbers}
                           calledNumbers={Array.from(markedNumbers)}
                           showRemaining={false}
-                          size={ticketZoom === 1 ? 'small' : ticketZoom === 2 ? 'normal' : 'large'}
+                          size={ticketZoom === 1 ? 'large' : ticketZoom === 2 ? 'normal' : 'small'}
                         />
                       ))}
                     </div>
