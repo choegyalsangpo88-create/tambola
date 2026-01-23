@@ -209,7 +209,8 @@ export default function LoginScreen() {
       localStorage.setItem('tambola_user', JSON.stringify(user));
 
       toast.success('Welcome to 67Tambola!');
-      navigate('/', { replace: true });
+      // Use window.location for full page reload to reset auth state
+      window.location.href = '/';
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update name');
     } finally {
