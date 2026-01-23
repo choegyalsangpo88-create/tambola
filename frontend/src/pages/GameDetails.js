@@ -157,9 +157,8 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
 }
 
 // Full Sheet Component - 6 tickets stacked vertically with individual selection
-function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelectAll, pageNumber, zoomLevel = 1 }) {
+function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelectAll, pageNumber, zoomLevel = 3 }) {
   // Check booking status
-  const hasBookedTickets = tickets.some(t => t.is_booked);
   const allBooked = tickets.every(t => t.is_booked);
   const availableTickets = tickets.filter(t => !t.is_booked);
   const selectedCount = tickets.filter(t => selectedTickets.includes(t.ticket_id)).length;
@@ -170,20 +169,20 @@ function FullSheet({ sheetId, tickets, selectedTickets, onToggleTicket, onSelect
       {/* Sheet header with ID, status, and Select All button */}
       <div className="flex items-center justify-between mb-1 px-1">
         <div className="flex items-center gap-2">
-          <span className={`font-bold ${selectedCount > 0 ? 'text-amber-400' : 'text-amber-500/80'} ${zoomLevel === 1 ? 'text-sm' : zoomLevel === 2 ? 'text-xs' : 'text-[10px]'}`}>
+          <span className={`font-bold ${selectedCount > 0 ? 'text-amber-400' : 'text-amber-500/80'} ${zoomLevel === 3 ? 'text-sm' : zoomLevel === 2 ? 'text-xs' : 'text-[10px]'}`}>
             {sheetId}
           </span>
-          <span className={`text-gray-500 ${zoomLevel === 1 ? 'text-xs' : zoomLevel === 2 ? 'text-[10px]' : 'text-[8px]'}`}>
+          <span className={`text-gray-500 ${zoomLevel === 3 ? 'text-xs' : zoomLevel === 2 ? 'text-[10px]' : 'text-[8px]'}`}>
             {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
           </span>
           {selectedCount > 0 && (
-            <span className={`text-amber-400 font-bold ${zoomLevel === 1 ? 'text-xs' : 'text-[10px]'}`}>{selectedCount}/6 selected</span>
+            <span className={`text-amber-400 font-bold ${zoomLevel === 3 ? 'text-xs' : 'text-[10px]'}`}>{selectedCount}/6 selected</span>
           )}
         </div>
         {!allBooked && (
           <button
             onClick={() => onSelectAll(tickets)}
-            className={`px-2 py-0.5 rounded ${zoomLevel === 1 ? 'text-[10px]' : zoomLevel === 2 ? 'text-[9px]' : 'text-[8px]'} ${
+            className={`px-2 py-0.5 rounded ${zoomLevel === 3 ? 'text-[10px]' : zoomLevel === 2 ? 'text-[9px]' : 'text-[8px]'} ${
               allAvailableSelected 
                 ? 'bg-amber-500 text-black' 
                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
