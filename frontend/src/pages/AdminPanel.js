@@ -118,6 +118,9 @@ export default function AdminPanel() {
     country_codes: ['+91']
   });
 
+  // Users/Players state
+  const [allUsers, setAllUsers] = useState([]);
+
   const [gameForm, setGameForm] = useState({
     name: '',
     date: '',
