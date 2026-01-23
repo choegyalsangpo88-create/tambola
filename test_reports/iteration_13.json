@@ -1,0 +1,110 @@
+{
+  "summary": "Tested new features: 1) Enhanced Past Results page with complete game information (called numbers, winners with winning tickets), 2) Performance optimization with faster polling (5s for games, 10s for admin panel), 3) WhatsApp button fix using window.location.href for mobile compatibility. All features working correctly.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Backend: GET /api/games/{game_id}/results - returns full game details with called_numbers, winners, ticket details",
+    "Backend: GET /api/games/{game_id}/results - winners include ticket_numbers (3x9 grid) for visualization",
+    "Backend: GET /api/games/{game_id}/results - returns 404 for non-existent game",
+    "Backend: GET /api/games/{game_id}/results - works for games without winners (empty winners dict)",
+    "Backend: GET /api/games/completed - returns list of completed games",
+    "Backend: GET /api/games/completed - all games have status 'completed'",
+    "Backend: GET /api/games/completed - includes winners preview field",
+    "Backend: GET /api/games - returns all games for dashboard polling",
+    "Backend: GET /api/games - includes live games",
+    "Frontend: Past Results page loads and displays completed games",
+    "Frontend: View Details button expands to show game stats (Numbers Called, Winners, Tickets Sold, Players)",
+    "Frontend: Winners & Winning Tickets section shows prize types with amounts",
+    "Frontend: WinningTicket component displays 3x9 grid with called numbers highlighted in green",
+    "Frontend: CalledNumbersBoard shows 1-90 grid with called numbers highlighted",
+    "Frontend: Call Order section shows sequence of called numbers",
+    "Frontend: Dashboard polls games every 5 seconds (verified in code)",
+    "Frontend: AdminPanel polls every 10 seconds (verified in code)",
+    "Frontend: 'I've Sent Payment' button uses window.location.href (synchronous, mobile-compatible)"
+  ],
+  
+  "code_review_verification": {
+    "whatsapp_button_fix": {
+      "file": "/app/frontend/src/pages/GameDetails.js",
+      "lines": "1259-1290",
+      "status": "VERIFIED",
+      "details": "Handler is synchronous (no async), uses window.location.href instead of window.open, WhatsApp URL opened immediately before any async operations, backend update is fire-and-forget"
+    },
+    "dashboard_polling": {
+      "file": "/app/frontend/src/pages/Dashboard.js",
+      "lines": "35-49",
+      "status": "VERIFIED",
+      "details": "Games polling: 5 seconds (fastInterval), Pending bookings polling: 15 seconds (slowInterval)"
+    },
+    "admin_panel_polling": {
+      "file": "/app/frontend/src/pages/AdminPanel.js",
+      "lines": "314-321",
+      "status": "VERIFIED",
+      "details": "Games, bookings, and booking requests polling: 10 seconds"
+    },
+    "results_endpoint": {
+      "file": "/app/backend/server.py",
+      "lines": "1687-1728",
+      "status": "VERIFIED",
+      "details": "Returns game, called_numbers, total_called, winners with ticket_numbers (3x9 grid), total_tickets, booked_tickets, total_bookings, completed_at, started_at"
+    },
+    "past_results_page": {
+      "file": "/app/frontend/src/pages/PastResults.js",
+      "status": "VERIFIED",
+      "details": "Displays completed games, expandable details with WinningTicket and CalledNumbersBoard components"
+    }
+  },
+  
+  "test_report_links": [
+    "/app/backend/tests/test_past_results_and_polling.py",
+    "/app/test_reports/pytest/past_results_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [],
+  
+  "updated_files": [],
+  
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all features verified via Playwright)"
+  },
+  
+  "test_credentials": {
+    "test_phone": "9876543210",
+    "test_pin": "1234",
+    "completed_game_with_winners": "game_ed9cc4d9",
+    "completed_game_without_winners": "game_35d396f2"
+  },
+  
+  "seed_data_creation": "None - used existing completed games in database",
+  
+  "retest_needed": false,
+  
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "All new features tested and working: 1) Past Results page shows completed games with expandable details including game stats, winners with winning ticket visualization (3x9 grid with called numbers highlighted), and called numbers board (1-90 grid). 2) Polling intervals verified: Dashboard polls games every 5s, AdminPanel polls every 10s. 3) WhatsApp 'I've Sent Payment' button uses window.location.href for mobile compatibility (synchronous handler). Test game with winners: game_ed9cc4d9 (Test Game 174839) has 3 winners (second_line, first_line, full_house) and 86 called numbers.",
+  
+  "feature_verification": {
+    "past_results_page": "VERIFIED - Shows completed games with COMPLETED badge, View Details expands to show stats and details",
+    "game_stats_display": "VERIFIED - Shows Numbers Called, Winners, Tickets Sold, Players",
+    "winners_with_tickets": "VERIFIED - Shows prize type, amount, winner name, and winning ticket visualization",
+    "winning_ticket_component": "VERIFIED - Displays 3x9 grid with called numbers highlighted in green",
+    "called_numbers_board": "VERIFIED - Shows 1-90 grid with called numbers highlighted",
+    "call_order_display": "VERIFIED - Shows sequence of called numbers",
+    "dashboard_5s_polling": "VERIFIED in code - setInterval 5000ms for fetchGames()",
+    "admin_10s_polling": "VERIFIED in code - setInterval 10000ms for fetchGames(), fetchBookings(), fetchBookingRequests()",
+    "whatsapp_button_mobile_fix": "VERIFIED in code - Uses window.location.href, synchronous handler"
+  }
+}
