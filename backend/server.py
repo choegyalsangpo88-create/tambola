@@ -2407,7 +2407,8 @@ async def approve_booking_request(request_id: str, request: Request, data: Appro
         "total_amount": req["total_amount"],
         "booking_date": datetime.now(timezone.utc),
         "status": "confirmed",
-        "whatsapp_confirmed": True
+        "whatsapp_confirmed": True,
+        "payment_method": req.get("payment_method")
     }
     
     await db.bookings.insert_one(booking)
