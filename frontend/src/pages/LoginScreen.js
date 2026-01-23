@@ -134,7 +134,8 @@ export default function LoginScreen() {
       }
 
       toast.success(`Welcome back, ${response.data.user?.name || 'Player'}!`);
-      navigate('/', { replace: true });
+      // Use window.location for full page reload to reset auth state
+      window.location.href = '/';
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Login failed');
     } finally {
