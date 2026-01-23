@@ -217,10 +217,7 @@ export default function LoginScreen() {
 
   const renderPhoneInput = () => (
     <>
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
-          <Phone className="w-8 h-8 text-amber-400" />
-        </div>
+      <div className="text-center mb-4">
         <h2 className="text-xl font-bold text-white mb-2">Enter Phone Number</h2>
         <p className="text-gray-400 text-sm">Login or create account with your phone</p>
       </div>
