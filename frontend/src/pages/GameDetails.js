@@ -624,24 +624,26 @@ export default function GameDetails() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-400">Select Your Tickets</h2>
           <div className="flex items-center gap-3">
-            {/* Zoom Controls */}
+            {/* Zoom Controls - Zoom 3 = 1 col (largest), Zoom 1 = 3 cols (smallest) */}
             <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))} 
-                disabled={ticketZoom >= 3} 
-                className="h-6 w-6 text-white hover:bg-white/10"
-                title="Zoom out (more sheets per row)"
-              >
-                <ZoomOut className="w-3 h-3" />
-              </Button>
-              <span className="text-xs text-gray-400 w-6 text-center">{ticketZoom === 1 ? '1' : ticketZoom === 2 ? '2' : '3'}/row</span>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))} 
                 disabled={ticketZoom <= 1} 
+                className="h-6 w-6 text-white hover:bg-white/10"
+                title="Zoom out (more sheets per row)"
+              >
+                <ZoomOut className="w-3 h-3" />
+              </Button>
+              <span className="text-xs text-gray-400 w-8 text-center">
+                {ticketZoom === 3 ? '1' : ticketZoom === 2 ? '2' : '3'}/row
+              </span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))} 
+                disabled={ticketZoom >= 3} 
                 className="h-6 w-6 text-white hover:bg-white/10"
                 title="Zoom in (fewer sheets per row)"
               >
@@ -689,8 +691,9 @@ export default function GameDetails() {
         )}
 
         {/* Full Sheets Display - Zoom responsive grid */}
+        {/* Zoom 3 = 1 column (largest), Zoom 2 = 2 columns, Zoom 1 = 3 columns (smallest) */}
         <div className={`grid gap-4 ${
-          ticketZoom === 1 ? 'grid-cols-1' : 
+          ticketZoom === 3 ? 'grid-cols-1' : 
           ticketZoom === 2 ? 'grid-cols-1 md:grid-cols-2' : 
           'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
         }`}>
