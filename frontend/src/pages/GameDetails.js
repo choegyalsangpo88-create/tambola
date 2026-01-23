@@ -1123,7 +1123,24 @@ export default function GameDetails() {
 
                   {/* I've Sent Payment Button */}
                   <Button
-                    onClick={() => {
+                    onClick={async () => {
+                      // Update payment method in backend
+                      try {
+                        const session = localStorage.getItem('tambola_session');
+                        if (session && bookingRequestId) {
+                          await axios.put(
+                            `${API}/booking-requests/${bookingRequestId}/payment-method`,
+                            { payment_method: selectedPaymentMethod },
+                            {
+                              headers: { 'Authorization': `Bearer ${session}` },
+                              withCredentials: true
+                            }
+                          );
+                        }
+                      } catch (error) {
+                        console.error('Failed to update payment method:', error);
+                      }
+                      
                       // Open WhatsApp with payment details
                       const userName = JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player';
                       const method = PAYMENT_METHODS[selectedPaymentMethod];
