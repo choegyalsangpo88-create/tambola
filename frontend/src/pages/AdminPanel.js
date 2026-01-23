@@ -185,6 +185,15 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const fetchAllUsers = useCallback(async () => {
+    try {
+      const response = await adminAxios.get(`${API}/admin/users`);
+      setAllUsers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  }, []);
+
   const fetchBookingRequests = useCallback(async () => {
     try {
       const response = await adminAxios.get(`${API}/admin/booking-requests`);
