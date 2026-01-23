@@ -2825,6 +2825,103 @@ async def get_game_session(game_id: str):
         raise HTTPException(status_code=404, detail="Game session not found")
     return session
 
+# ============== LIGHTWEIGHT POLLING ENDPOINTS ==============
+# These endpoints return minimal data for efficient real-time updates
+
+@api_router.get("/games/{game_id}/poll")
+async def poll_game_state(game_id: str, last_count: int = 0):
+    """
+    Lightweight polling endpoint for live game updates.
+    Returns only changed data since last poll.
+    - last_count: number of called numbers client already has
+    Returns new numbers only if count changed, plus current winners and status.
+    """
+    # Get game status first (lightweight)
+    game = await db.games.find_one(
+        {"game_id": game_id}, 
+        {"_id": 0, "status": 1, "name": 1}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # If game not live/completed, return minimal response
+    if game["status"] not in ["live", "completed"]:
+        return {
+            "status": game["status"],
+            "total_called": 0,
+            "new_numbers": [],
+            "current_number": None,
+            "winners": {},
+            "has_changes": False
+        }
+    
+    # Get session data
+    session = await db.game_sessions.find_one(
+        {"game_id": game_id},
+        {"_id": 0, "called_numbers": 1, "current_number": 1, "winners": 1, "status": 1}
+    )
+    
+    if not session:
+        return {
+            "status": game["status"],
+            "total_called": 0,
+            "new_numbers": [],
+            "current_number": None,
+            "winners": {},
+            "has_changes": False
+        }
+    
+    called_numbers = session.get("called_numbers", [])
+    total_called = len(called_numbers)
+    
+    # Only return new numbers if there are changes
+    new_numbers = called_numbers[last_count:] if total_called > last_count else []
+    
+    return {
+        "status": session.get("status", game["status"]),
+        "total_called": total_called,
+        "new_numbers": new_numbers,
+        "current_number": session.get("current_number"),
+        "winners": session.get("winners", {}),
+        "has_changes": len(new_numbers) > 0 or total_called != last_count
+    }
+
+@api_router.get("/games/poll-list")
+async def poll_games_list():
+    """
+    Lightweight endpoint to poll game list for dashboard.
+    Returns minimal game data for status updates.
+    """
+    games = await db.games.find(
+        {},
+        {"_id": 0, "game_id": 1, "name": 1, "status": 1, "date": 1, "time": 1, "prize_pool": 1}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {
+        "games": games,
+        "live_count": len([g for g in games if g["status"] == "live"]),
+        "upcoming_count": len([g for g in games if g["status"] == "upcoming"]),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.get("/booking-requests/my/poll")
+async def poll_my_booking_requests(user: User = Depends(get_current_user)):
+    """
+    Lightweight endpoint to poll user's pending booking requests.
+    Returns only pending requests with minimal data.
+    """
+    requests = await db.booking_requests.find(
+        {"user_id": user.user_id, "status": "pending"},
+        {"_id": 0, "request_id": 1, "game_id": 1, "total_amount": 1, "status": 1, "created_at": 1}
+    ).to_list(20)
+    
+    return {
+        "pending_count": len(requests),
+        "requests": requests
+    }
+
+# ============== END LIGHTWEIGHT POLLING ENDPOINTS ==============
+
 @api_router.post("/games/{game_id}/declare-winner")
 async def declare_winner(winner_data: DeclareWinnerRequest):
     session = await db.game_sessions.find_one({"game_id": winner_data.game_id}, {"_id": 0})
