@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Calendar, Users, Award, Ticket, Filter, CreditCard, MessageCircle, Copy, CheckCircle, Info, X } from 'lucide-react';
+import { ArrowLeft, Trophy, Calendar, Users, Award, Ticket, Filter, CreditCard, MessageCircle, Copy, CheckCircle, Info, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
