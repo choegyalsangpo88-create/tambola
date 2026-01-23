@@ -52,7 +52,24 @@ A full-stack Tambola (Housie) game application designed for Indian players with 
 - `POST /api/auth/phone/login` - Login with PIN
 - `PUT /api/auth/update-name` - Update user name
 
-### 2. Admin Booking/Ticket Cancellation ✅ (2026-01-22)
+### 2. Admin User Management ✅ (2026-01-23)
+**Features:**
+- View all registered players in Admin Panel → Players tab
+- Separate columns for Login Phone and WhatsApp (if different)
+- Player stats: Total users, Active, Blocked, Total Revenue
+- Actions per user:
+  - 🔄 **Reset PIN** - Resets to 1234 and unblocks user
+  - 🚫 **Block User** - Prevents login, invalidates sessions
+  - ✅ **Unblock User** - Re-enables account
+  - 💬 **WhatsApp** - Quick link to message user
+
+**API Endpoints:**
+- `GET /api/admin/users` - Get all users with booking stats
+- `POST /api/admin/users/{user_id}/reset-pin` - Reset PIN to 1234
+- `POST /api/admin/users/{user_id}/block` - Block user
+- `POST /api/admin/users/{user_id}/unblock` - Unblock user
+
+### 3. Admin Booking/Ticket Cancellation ✅ (2026-01-22)
 **Purpose:** Allow admin to cancel tickets or bookings before game starts for users who want to change tickets
 
 **Features:**
