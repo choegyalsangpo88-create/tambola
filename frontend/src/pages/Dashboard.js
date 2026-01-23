@@ -32,12 +32,21 @@ export default function Dashboard() {
     fetchGames();
     fetchPendingBookings();
     
-    // Poll every 30 seconds to check for game status changes
-    const interval = setInterval(() => {
+    // Fast polling for real-time updates (every 5 seconds)
+    // This ensures game status changes are reflected immediately
+    const fastInterval = setInterval(() => {
       fetchGames();
+    }, 5000);
+    
+    // Slower polling for pending bookings (every 15 seconds)
+    const slowInterval = setInterval(() => {
       fetchPendingBookings();
-    }, 30000);
-    return () => clearInterval(interval);
+    }, 15000);
+    
+    return () => {
+      clearInterval(fastInterval);
+      clearInterval(slowInterval);
+    };
   }, []);
 
   const fetchUser = async () => {
@@ -71,8 +80,8 @@ export default function Dashboard() {
       setRecentlyCompleted(games.filter(g => g.status === 'completed'));
       setUpcomingGames(games.filter(g => g.status === 'upcoming'));
     } catch (error) {
+      // Silent fail for polling - don't spam toasts
       console.error('Failed to fetch games:', error);
-      toast.error('Failed to load games');
     }
   };
 
