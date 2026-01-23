@@ -497,6 +497,20 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
   - Changed from `async/await` + `window.open` to synchronous + `window.location.href`
   - Mobile browsers blocked the popup due to async delay
 
+- **Optimized Real-time Polling (COMPLETED)**
+  - **Lightweight Endpoints:**
+    - `GET /api/games/poll-list` - Minimal game data (game_id, name, status, date, time, prize_pool)
+    - `GET /api/games/{game_id}/poll?last_count=N` - Delta updates (only new numbers since N)
+  - **Polling Intervals:**
+    - Dashboard: 3 seconds (using poll-list)
+    - Live Game: 2 seconds (using game poll with delta updates)
+    - Pending Bookings: 10 seconds
+  - **Performance Features:**
+    - Delta updates - only new data sent, not full state
+    - `isMountedRef` pattern - prevents updates after unmount
+    - Automatic polling stop when game completes
+    - Response times < 500ms
+
 ---
 
 ## Pending / Backlog
