@@ -763,6 +763,43 @@ Good luck 🍀
     }
   };
 
+  // User management handlers
+  const handleResetUserPin = async (userId, userName) => {
+    if (!window.confirm(`Reset PIN for ${userName}? The new PIN will be 1234.`)) return;
+    try {
+      const response = await adminAxios.post(`${API}/admin/users/${userId}/reset-pin`);
+      await logAction('USER_PIN_RESET', { user_id: userId, user_name: userName });
+      toast.success(response.data.message || 'PIN reset to 1234');
+      fetchAllUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to reset PIN');
+    }
+  };
+
+  const handleBlockUser = async (userId, userName) => {
+    if (!window.confirm(`Block user ${userName}? They will not be able to login.`)) return;
+    try {
+      const response = await adminAxios.post(`${API}/admin/users/${userId}/block`);
+      await logAction('USER_BLOCKED', { user_id: userId, user_name: userName });
+      toast.success(response.data.message || 'User blocked');
+      fetchAllUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to block user');
+    }
+  };
+
+  const handleUnblockUser = async (userId, userName) => {
+    if (!window.confirm(`Unblock user ${userName}?`)) return;
+    try {
+      const response = await adminAxios.post(`${API}/admin/users/${userId}/unblock`);
+      await logAction('USER_UNBLOCKED', { user_id: userId, user_name: userName });
+      toast.success(response.data.message || 'User unblocked');
+      fetchAllUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to unblock user');
+    }
+  };
+
   const handleUpdateCallerSettings = async (updates) => {
     try {
       const response = await adminAxios.put(`${API}/admin/caller-settings`, updates);
