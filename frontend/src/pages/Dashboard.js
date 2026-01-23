@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [joinCode, setJoinCode] = useState('');
   const navigate = useNavigate();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchUser();
     fetchGames();
@@ -55,7 +56,9 @@ export default function Dashboard() {
       if (storedUser) {
         try {
           setUser(JSON.parse(storedUser));
-        } catch (e) {}
+        } catch (e) {
+          // Parse error - ignore
+        }
       }
     }
   };
