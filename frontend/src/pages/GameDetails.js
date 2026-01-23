@@ -842,7 +842,12 @@ export default function GameDetails() {
                               <span className="text-2xl">{method.icon}</span>
                               <div className="text-left">
                                 <p className="text-white font-semibold">{method.name}</p>
-                                <p className="text-gray-400 text-xs">Pay in {method.currency} {method.currencyCode}</p>
+                                <p className="text-gray-400 text-xs">
+                                  {method.currencyCode === 'INR' 
+                                    ? `Pay ₹${getTotalAmount()}`
+                                    : `Pay ${method.currency}${getConvertedAmount(methodId).toFixed(2)} ${method.currencyCode}`
+                                  }
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
