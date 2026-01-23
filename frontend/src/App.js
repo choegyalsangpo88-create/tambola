@@ -20,6 +20,7 @@ import UserGameDetails from './pages/UserGameDetails';
 import JoinUserGame from './pages/JoinUserGame';
 import UserGamePlay from './pages/UserGamePlay';
 import ProtectedRoute from './components/ProtectedRoute';
+import InstallPrompt from './components/InstallPrompt';
 import './App.css';
 
 function AppRouter() {
