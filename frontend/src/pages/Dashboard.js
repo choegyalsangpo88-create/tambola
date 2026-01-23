@@ -313,6 +313,91 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Pending Tickets Section */}
+        {pendingBookings.length > 0 && (
+          <div className="mb-10" data-testid="pending-tickets-section">
+            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <AlertCircle className="inline w-7 h-7 text-orange-500 mr-2" />
+              Pending Tickets
+            </h2>
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-4">
+              <p className="text-orange-300 text-sm">
+                You have pending bookings awaiting payment confirmation. Complete payment or cancel to book new tickets.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingBookings.map((booking) => (
+                <div
+                  key={booking.request_id}
+                  className="glass-card p-5 border-2 border-orange-500/30 hover-lift"
+                  data-testid={`pending-booking-${booking.request_id}`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-bold text-white truncate pr-2">
+                      {booking.game?.name || 'Tambola Game'}
+                    </h3>
+                    <span className="px-2 py-1 bg-orange-500/20 text-orange-400 text-xs font-bold rounded-full whitespace-nowrap">
+                      PENDING
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-400 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Ticket className="w-4 h-4 text-orange-500" />
+                      <span>{booking.ticket_ids?.length || 0} tickets selected</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-orange-500" />
+                      <span>Amount: ₹{booking.total_amount}</span>
+                    </div>
+                    {booking.game && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-orange-500" />
+                        <span>{booking.game.date} at {booking.game.time}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-orange-500" />
+                      <span>Booked: {new Date(booking.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigate(`/game/${booking.game_id}`)}
+                      className="flex-1 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-semibold text-sm"
+                    >
+                      Complete Payment
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditBooking(booking.request_id, booking.game_id);
+                      }}
+                      variant="outline"
+                      className="h-10 px-3 rounded-xl border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                      title="Edit - Select new tickets"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelBooking(booking.request_id);
+                      }}
+                      variant="outline"
+                      className="h-10 px-3 rounded-xl border-red-500/50 text-red-400 hover:bg-red-500/10"
+                      title="Cancel booking"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Upcoming Games */}
         <div data-testid="upcoming-games-section">
           <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6" style={{ fontFamily: 'Outfit, sans-serif' }}>
