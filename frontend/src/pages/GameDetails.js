@@ -9,10 +9,56 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // ===== PAYMENT CONFIGURATION (Single source of truth) =====
+// India - UPI
 const UPI_ID = 'choegyalsangpo@ibl';
 const UPI_PAYEE_NAME = 'Choegyal Sangpo';
+// Canada - Interac e-Transfer
+const INTERAC_EMAIL = 'payments@sixseventambola.ca';
+const INTERAC_AUTO_DEPOSIT = true;
+// Europe - Wero / SEPA
+const WERO_PHONE = '+33612345678';
+const WERO_RECIPIENT = 'SixSeven Tambola';
+const SEPA_IBAN = 'FR76 3000 1007 1600 0000 0000 123';
+const SEPA_BIC = 'BNPAFRPP';
+// WhatsApp for all regions
 const WHATSAPP_NUMBER = '918837489781';
 const WHATSAPP_DISPLAY = '+91 8837489781';
+
+// Payment methods configuration
+const PAYMENT_METHODS = {
+  upi: {
+    id: 'upi',
+    name: 'UPI',
+    icon: '🇮🇳',
+    currency: '₹',
+    currencyCode: 'INR',
+    region: 'india'
+  },
+  interac: {
+    id: 'interac',
+    name: 'Interac e-Transfer',
+    icon: '🇨🇦',
+    currency: '$',
+    currencyCode: 'CAD',
+    region: 'canada'
+  },
+  wero: {
+    id: 'wero',
+    name: 'Wero',
+    icon: '🇪🇺',
+    currency: '€',
+    currencyCode: 'EUR',
+    region: 'europe'
+  }
+};
+
+// Region to default payment method mapping
+const REGION_DEFAULTS = {
+  india: 'upi',
+  canada: 'interac',
+  europe: 'wero',
+  default: 'upi'
+};
 
 // Single Lotto Ticket Component (clickable for individual selection)
 // Consistent styling whether in a full sheet or standalone
