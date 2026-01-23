@@ -63,6 +63,13 @@ export default function LoginScreen() {
     return selectedCountry.code + phone;
   };
 
+  const handleGoogleLogin = () => {
+    setIsLoading(true);
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    const redirectUrl = window.location.origin + '/';
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  };
+
   const handleCheckPhone = async () => {
     if (!phone || phone.length < 7) {
       toast.error('Please enter a valid phone number');
