@@ -1257,32 +1257,32 @@ export default function GameDetails() {
 
                   {/* I've Sent Payment Button */}
                   <Button
-                    onClick={async () => {
-                      // Update payment method in backend
-                      try {
-                        const session = localStorage.getItem('tambola_session');
-                        if (session && bookingRequestId) {
-                          await axios.put(
-                            `${API}/booking-requests/${bookingRequestId}/payment-method`,
-                            { payment_method: selectedPaymentMethod },
-                            {
-                              headers: { 'Authorization': `Bearer ${session}` },
-                              withCredentials: true
-                            }
-                          );
-                        }
-                      } catch (error) {
-                        console.error('Failed to update payment method:', error);
-                      }
-                      
-                      // Open WhatsApp with payment details
+                    onClick={() => {
+                      // Open WhatsApp IMMEDIATELY (before any async operations)
+                      // Mobile browsers block popups that aren't triggered immediately by user action
                       const userName = JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player';
                       const method = PAYMENT_METHODS[selectedPaymentMethod];
                       const convertedAmt = method.currencyCode === 'INR' 
                         ? `₹${getTotalAmount()}` 
                         : `${method.currency}${getConvertedAmount().toFixed(2)} ${method.currencyCode} (₹${getTotalAmount()} INR)`;
                       const message = `✅ PAYMENT SENT\n\nBooking ID: ${bookingRequestId}\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ${convertedAmt}\nPayment Method: ${method.name}\nName: ${userName}\n\n📸 Screenshot attached`;
-                      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+                      
+                      // Use location.href for better mobile compatibility
+                      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+                      window.location.href = whatsappUrl;
+                      
+                      // Update payment method in backend (fire-and-forget, non-blocking)
+                      const session = localStorage.getItem('tambola_session');
+                      if (session && bookingRequestId) {
+                        axios.put(
+                          `${API}/booking-requests/${bookingRequestId}/payment-method`,
+                          { payment_method: selectedPaymentMethod },
+                          {
+                            headers: { 'Authorization': `Bearer ${session}` },
+                            withCredentials: true
+                          }
+                        ).catch(error => console.error('Failed to update payment method:', error));
+                      }
                     }}
                     className="w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl"
                   >
