@@ -440,6 +440,26 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 - Fixed CORS for custom domain
 - UI cleanup on Live Game screen
 
+### 2026-01-23 (Session 6 - Current)
+- **UPI Deep Links (COMPLETED)**
+  - Added GPay, PhonePe, and Paytm direct payment buttons in UPI payment step
+  - Deep links format: `gpay://upi/pay?...`, `phonepe://pay?...`, `paytmmp://pay?...`
+  - Added "App not opening? Pay manually" fallback with copy-able UPI ID
+  - File: `/app/frontend/src/pages/GameDetails.js` (lines 897-989)
+  
+- **Payment Method in Admin Panel (COMPLETED)**
+  - Added payment method badges in Admin Panel Payments tab
+  - Badges show: 🇮🇳 UPI (orange), 🇨🇦 Interac (blue), 🇪🇺 Wero (purple)
+  - Payment method saved via new endpoint: `PUT /api/booking-requests/{request_id}/payment-method`
+  - Payment method carried over to bookings when approved
+  - Files: `/app/frontend/src/pages/AdminPanel.js`, `/app/backend/server.py`
+  
+- **Ticket Zoom on GameDetails.js (COMPLETED)**
+  - Added 3-level zoom controls (1, 2, or 3 sheets per row)
+  - Zoom in/out buttons with visual indicator
+  - Ticket grid, text sizes, and cell heights adjust based on zoom level
+  - File: `/app/frontend/src/pages/GameDetails.js`
+
 ---
 
 ## Pending / Backlog
@@ -449,11 +469,16 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 - [x] ~~WhatsApp Number Update~~ - FIXED (2026-01-09)
 - [x] ~~Mobile Authentication Fix~~ - FIXED (2026-01-09)
 - [x] ~~UPI + WhatsApp Booking Flow~~ - COMPLETED (2026-01-19)
+- [x] ~~UPI Deep Links~~ - COMPLETED (2026-01-23)
+- [x] ~~Payment Method in Admin Panel~~ - COMPLETED (2026-01-23)
+- [x] ~~Ticket Zoom on GameDetails~~ - COMPLETED (2026-01-23)
 
 ### P1 - Medium Priority
-- [ ] Admin Panel enhancements: Payment History revamp, Players contact list, WhatsApp on payment approval
+- [ ] Live Exchange Rate API (replace static currency conversion)
+- [ ] Admin Panel enhancements: Players contact list, WhatsApp on payment approval
 - [ ] In-game chat feature
 - [ ] Backend refactoring (`server.py` → modular routes)
+- [ ] Frontend refactoring (split large AdminPanel.js, GameDetails.js files)
 
 ### P2 - Future
 - [ ] Global leaderboard and player rankings
@@ -468,3 +493,4 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
 1. **Google Login on Custom Domain** - CORS fix applied, requires redeployment to `sixseventambola.com`
 2. **WhatsApp Login on Mobile** - Session token fix applied with auth headers, requires redeployment
 3. **Old Tickets in Database** - Tickets created before the fix may have invalid numbers (< 15). Only newly created games have valid tickets.
+4. **Single Ticket Styling** - Recurring visual bug, may be cache-related
