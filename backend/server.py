@@ -1684,6 +1684,49 @@ async def get_completed_games():
     
     return games
 
+@api_router.get("/games/{game_id}/results")
+async def get_game_results(game_id: str):
+    """Get complete game results including all called numbers, winners, and winning tickets"""
+    game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Get game session with called numbers and winners
+    session = await db.game_sessions.find_one({"game_id": game_id}, {"_id": 0})
+    
+    # Get all tickets with their holders
+    tickets = await db.tickets.find(
+        {"game_id": game_id},
+        {"_id": 0, "ticket_id": 1, "ticket_number": 1, "numbers": 1, "holder_name": 1, "full_sheet_id": 1, "is_booked": 1}
+    ).to_list(1000)
+    
+    # Build winners with ticket details
+    winners_detailed = {}
+    if session and session.get("winners"):
+        for prize_type, winner_info in session["winners"].items():
+            ticket_id = winner_info.get("ticket_id")
+            winning_ticket = next((t for t in tickets if t.get("ticket_id") == ticket_id), None)
+            winners_detailed[prize_type] = {
+                **winner_info,
+                "ticket_numbers": winning_ticket.get("numbers") if winning_ticket else None,
+                "ticket_number": winning_ticket.get("ticket_number") if winning_ticket else None
+            }
+    
+    # Get total bookings count
+    bookings_count = await db.bookings.count_documents({"game_id": game_id, "status": {"$ne": "cancelled"}})
+    
+    return {
+        "game": game,
+        "called_numbers": session.get("called_numbers", []) if session else [],
+        "total_called": len(session.get("called_numbers", [])) if session else 0,
+        "winners": winners_detailed,
+        "total_tickets": len(tickets),
+        "booked_tickets": len([t for t in tickets if t.get("is_booked")]),
+        "total_bookings": bookings_count,
+        "completed_at": game.get("completed_at"),
+        "started_at": session.get("started_at") if session else None
+    }
+
 @api_router.get("/games/{game_id}", response_model=Game)
 async def get_game(game_id: str):
     game = await db.games.find_one({"game_id": game_id}, {"_id": 0})
