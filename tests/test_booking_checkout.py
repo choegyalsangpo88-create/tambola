@@ -9,7 +9,7 @@ import uuid
 import subprocess
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://lucky-draw-129.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tambola-pwa.preview.emergentagent.com').rstrip('/')
 
 
 class TestBookingCheckoutFlow:
