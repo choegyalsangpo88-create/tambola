@@ -796,14 +796,16 @@ export default function GameDetails() {
                       <div className="border-t border-white/10 pt-2 mt-2">
                         <div className="flex justify-between items-center">
                           <span className="text-white font-bold">Total Amount:</span>
-                          <span className="text-amber-500 font-bold text-xl">
-                            {PAYMENT_METHODS[selectedPaymentMethod]?.currency}{getTotalAmount()}
+                          <div className="text-right">
+                            <span className="text-amber-500 font-bold text-xl">
+                              {formatAmount(selectedPaymentMethod)}
+                            </span>
                             {selectedPaymentMethod !== 'upi' && (
-                              <span className="text-xs text-gray-400 ml-1">
-                                ({PAYMENT_METHODS[selectedPaymentMethod]?.currencyCode})
-                              </span>
+                              <p className="text-xs text-gray-500">
+                                (₹{getTotalAmount()} INR)
+                              </p>
                             )}
-                          </span>
+                          </div>
                         </div>
                       </div>
                     </div>
