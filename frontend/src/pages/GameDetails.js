@@ -1019,8 +1019,11 @@ export default function GameDetails() {
                           <div className="bg-black/30 rounded-lg p-3">
                             <p className="text-gray-400 text-xs mb-1">Amount</p>
                             <div className="flex items-center justify-between">
-                              <span className="text-amber-500 font-bold text-xl">€{getTotalAmount()} EUR</span>
-                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(getTotalAmount().toString()); toast.success('Amount copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                              <div>
+                                <span className="text-amber-500 font-bold text-xl">€{getConvertedAmount('wero').toFixed(2)} EUR</span>
+                                <p className="text-gray-500 text-xs">(₹{getTotalAmount()} INR)</p>
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(getConvertedAmount('wero').toFixed(2)); toast.success('Amount copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
                                 <Copy className="w-4 h-4" />
                               </Button>
                             </div>
