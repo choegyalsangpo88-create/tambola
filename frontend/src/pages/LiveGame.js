@@ -28,14 +28,15 @@ export default function LiveGame() {
   const [markedNumbers, setMarkedNumbers] = useState(new Set());
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const [ticketZoom, setTicketZoom] = useState(2);
+  const [ticketZoom, setTicketZoom] = useState(1); // 1 = 1 sheet/row, 2 = 2 sheets/row, 3 = 3 sheets/row
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null);
   const [showLuckyDraw, setShowLuckyDraw] = useState(false);
   const [luckyDrawData, setLuckyDrawData] = useState(null);
-  const [luckyDrawPhase, setLuckyDrawPhase] = useState('intro'); // 'intro', 'spinning', 'winner'
+  const [luckyDrawPhase, setLuckyDrawPhase] = useState('countdown'); // 'countdown', 'spinning', 'winner'
   const [luckyDrawAnimating, setLuckyDrawAnimating] = useState(false);
   const [luckyDrawWinner, setLuckyDrawWinner] = useState(null);
+  const [luckyDrawCountdown, setLuckyDrawCountdown] = useState(5);
   const pollInterval = useRef(null);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
