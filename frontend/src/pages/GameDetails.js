@@ -622,26 +622,54 @@ export default function GameDetails() {
       <div className="max-w-7xl mx-auto px-3 py-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-400">Select Your Tickets</h2>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFilterMode('all')}
-              className={`h-7 px-3 text-xs border-white/20 ${filterMode === 'all' ? 'bg-amber-500 text-black border-amber-500' : 'text-gray-300'}`}
-              data-testid="filter-all-btn"
-            >
-              All
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFilterMode('fullsheets')}
-              className={`h-7 px-3 text-xs border-white/20 ${filterMode === 'fullsheets' ? 'bg-amber-500 text-black border-amber-500' : 'text-gray-300'}`}
-              data-testid="filter-fullsheets-btn"
-            >
-              <Filter className="w-3 h-3 mr-1" />
-              Full Sheets
-            </Button>
+          <div className="flex items-center gap-3">
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))} 
+                disabled={ticketZoom >= 3} 
+                className="h-6 w-6 text-white hover:bg-white/10"
+                title="Zoom out (more sheets per row)"
+              >
+                <ZoomOut className="w-3 h-3" />
+              </Button>
+              <span className="text-xs text-gray-400 w-6 text-center">{ticketZoom === 1 ? '1' : ticketZoom === 2 ? '2' : '3'}/row</span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))} 
+                disabled={ticketZoom <= 1} 
+                className="h-6 w-6 text-white hover:bg-white/10"
+                title="Zoom in (fewer sheets per row)"
+              >
+                <ZoomIn className="w-3 h-3" />
+              </Button>
+            </div>
+            
+            {/* Filter Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFilterMode('all')}
+                className={`h-7 px-3 text-xs border-white/20 ${filterMode === 'all' ? 'bg-amber-500 text-black border-amber-500' : 'text-gray-300'}`}
+                data-testid="filter-all-btn"
+              >
+                All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFilterMode('fullsheets')}
+                className={`h-7 px-3 text-xs border-white/20 ${filterMode === 'fullsheets' ? 'bg-amber-500 text-black border-amber-500' : 'text-gray-300'}`}
+                data-testid="filter-fullsheets-btn"
+              >
+                <Filter className="w-3 h-3 mr-1" />
+                Full Sheets
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -659,8 +687,12 @@ export default function GameDetails() {
           </div>
         )}
 
-        {/* Full Sheets Display - Print-ready style with individual ticket selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Full Sheets Display - Zoom responsive grid */}
+        <div className={`grid gap-4 ${
+          ticketZoom === 1 ? 'grid-cols-1' : 
+          ticketZoom === 2 ? 'grid-cols-1 md:grid-cols-2' : 
+          'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        }`}>
           {displayedSheets.map((sheet, sheetIndex) => {
             const pageNumber = sheetIndex + 1;
             
@@ -673,6 +705,7 @@ export default function GameDetails() {
                 onToggleTicket={toggleTicket}
                 onSelectAll={selectFullSheet}
                 pageNumber={pageNumber}
+                zoomLevel={ticketZoom}
               />
             );
           })}
