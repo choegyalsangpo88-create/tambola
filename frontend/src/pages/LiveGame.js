@@ -179,36 +179,13 @@ export default function LiveGame() {
     };
   }, [gameId]);
 
+  // This effect is simplified - main logic is in pollGameState
   useEffect(() => {
     if (session && session.called_numbers) {
-      setMarkedNumbers(new Set(session.called_numbers));
-      
-      // Check for new winners and celebrate
-      if (session.winners) {
-        Object.keys(session.winners).forEach(prize => {
-          if (!previousWinnersRef.current[prize]) {
-            const winner = session.winners[prize];
-            const winnerName = winner.holder_name || winner.name || 'Player';
-            const ticketNum = winner.ticket_number || '';
-            
-            // Check if this is Lucky Draw winner - trigger the animation with delay
-            if (winner.is_lucky_draw && !luckyDrawShownRef.current) {
-              luckyDrawShownRef.current = true;
-              // Wait 3 seconds for the last dividend celebration to finish
-              setTimeout(() => {
-                fetchLuckyDrawData();
-              }, 3000);
-            } else {
-              celebrateWinner(prize, winnerName, ticketNum);
-            }
-          }
-        });
-        previousWinnersRef.current = session.winners;
-      }
-      
-      // Play TTS for new number with ball animation
-      if (session.current_number && session.current_number !== lastPlayedNumber) {
-        playTTSAnnouncement(session.current_number);
+      // Sync marked numbers from full session load (initial load only)
+      if (calledCountRef.current === 0 && session.called_numbers.length > 0) {
+        setMarkedNumbers(new Set(session.called_numbers));
+        calledCountRef.current = session.called_numbers.length;
       }
     }
   }, [session]);
