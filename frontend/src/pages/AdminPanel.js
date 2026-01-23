@@ -1565,175 +1565,186 @@ Good luck 🍀
                 <div>
                   <h4 className="text-sm font-semibold text-green-400">Player Management</h4>
                   <p className="text-xs text-green-400/80 mt-1">
-                    View all players who have booked tickets. Send game notifications, alerts, and booking confirmations via WhatsApp.
+                    Manage all registered players. Reset PINs, block/unblock users, and send notifications via WhatsApp.
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Player Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="bg-zinc-900 rounded-xl p-4">
-                <p className="text-xs text-zinc-500">Total Players</p>
-                <p className="text-2xl font-bold text-white">
-                  {(() => {
-                    const uniquePlayers = new Set();
-                    bookings.forEach(b => { if (b.user?.phone) uniquePlayers.add(b.user.phone); });
-                    return uniquePlayers.size;
-                  })()}
-                </p>
+                <p className="text-xs text-zinc-500">Total Users</p>
+                <p className="text-2xl font-bold text-white">{allUsers.length}</p>
               </div>
               <div className="bg-zinc-900 rounded-xl p-4">
-                <p className="text-xs text-zinc-500">Active Bookings</p>
+                <p className="text-xs text-zinc-500">Active Users</p>
                 <p className="text-2xl font-bold text-emerald-400">
-                  {bookings.filter(b => b.status === 'confirmed').length}
+                  {allUsers.filter(u => !u.is_blocked).length}
                 </p>
               </div>
               <div className="bg-zinc-900 rounded-xl p-4">
-                <p className="text-xs text-zinc-500">Pending Confirmations</p>
+                <p className="text-xs text-zinc-500">Blocked Users</p>
+                <p className="text-2xl font-bold text-red-400">
+                  {allUsers.filter(u => u.is_blocked).length}
+                </p>
+              </div>
+              <div className="bg-zinc-900 rounded-xl p-4">
+                <p className="text-xs text-zinc-500">Total Revenue</p>
                 <p className="text-2xl font-bold text-amber-400">
-                  {bookings.filter(b => b.status === 'pending').length}
+                  ₹{allUsers.reduce((sum, u) => sum + (u.total_spent || 0), 0).toLocaleString()}
                 </p>
               </div>
             </div>
 
-            <h3 className="text-sm font-semibold text-white">All Players</h3>
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              All Registered Players
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchAllUsers}
+                className="h-6 px-2 text-xs text-zinc-400 hover:text-white"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+              </Button>
+            </h3>
             <div className="bg-zinc-900 rounded-xl overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[500px]">
                 <table className="w-full text-sm">
-                  <thead className="bg-zinc-800">
+                  <thead className="bg-zinc-800 sticky top-0">
                     <tr className="text-xs text-zinc-500 uppercase">
                       <th className="px-4 py-3 text-left">Player</th>
-                      <th className="px-4 py-3 text-left">Phone</th>
+                      <th className="px-4 py-3 text-left">Login Phone</th>
+                      <th className="px-4 py-3 text-left">WhatsApp</th>
                       <th className="px-4 py-3 text-left">Games</th>
-                      <th className="px-4 py-3 text-left">Total Spent</th>
+                      <th className="px-4 py-3 text-left">Spent</th>
+                      <th className="px-4 py-3 text-left">Status</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800">
-                    {(() => {
-                      const playerMap = new Map();
-                      bookings.filter(b => b.status === 'confirmed').forEach(b => {
-                        const phone = b.user?.phone || 'unknown';
-                        if (!playerMap.has(phone)) {
-                          playerMap.set(phone, {
-                            name: b.user?.name || 'Unknown',
-                            phone: phone,
-                            email: b.user?.email,
-                            games: [],
-                            totalSpent: 0,
-                            bookings: []
-                          });
-                        }
-                        const player = playerMap.get(phone);
-                        player.totalSpent += (b.total_amount || 0);
-                        player.bookings.push(b);
-                        const gameName = b.game?.name || games.find(g => g.game_id === b.game_id)?.name || 'Unknown Game';
-                        if (!player.games.includes(gameName)) player.games.push(gameName);
-                      });
-                      
-                      return Array.from(playerMap.values()).map((player, idx) => (
-                        <tr key={idx} className="hover:bg-zinc-800/50">
+                    {allUsers.map((user) => {
+                      const whatsappDifferent = user.whatsapp_number && user.whatsapp_number !== user.phone;
+                      return (
+                        <tr key={user.user_id} className={`hover:bg-zinc-800/50 ${user.is_blocked ? 'opacity-60' : ''}`}>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                                <span className="text-xs text-white font-bold">{player.name[0].toUpperCase()}</span>
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                user.is_blocked 
+                                  ? 'bg-red-500/20' 
+                                  : 'bg-gradient-to-br from-amber-500 to-orange-600'
+                              }`}>
+                                <span className={`text-xs font-bold ${user.is_blocked ? 'text-red-400' : 'text-white'}`}>
+                                  {(user.name || 'U')[0].toUpperCase()}
+                                </span>
                               </div>
                               <div>
-                                <p className="text-white font-medium">{player.name}</p>
-                                {player.email && <p className="text-[10px] text-zinc-500">{player.email}</p>}
+                                <p className="text-white font-medium">{user.name || 'No Name'}</p>
+                                <p className="text-[10px] text-zinc-500">
+                                  {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                                </p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-zinc-400">{player.phone}</td>
                           <td className="px-4 py-3">
-                            <div className="flex flex-wrap gap-1">
-                              {player.games.slice(0, 2).map((g, i) => (
-                                <span key={i} className="px-1.5 py-0.5 text-[10px] bg-zinc-700 text-zinc-300 rounded">{g}</span>
-                              ))}
-                              {player.games.length > 2 && (
-                                <span className="px-1.5 py-0.5 text-[10px] bg-zinc-700 text-zinc-300 rounded">+{player.games.length - 2}</span>
-                              )}
-                            </div>
+                            <span className="text-zinc-300 font-mono text-xs">{user.phone || '-'}</span>
                           </td>
-                          <td className="px-4 py-3 text-emerald-400 font-medium">₹{player.totalSpent.toLocaleString()}</td>
+                          <td className="px-4 py-3">
+                            {whatsappDifferent ? (
+                              <span className="text-green-400 font-mono text-xs">{user.whatsapp_number}</span>
+                            ) : (
+                              <span className="text-zinc-500 text-xs">Same as phone</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-zinc-400">{user.games_played || 0}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-emerald-400 font-medium">₹{(user.total_spent || 0).toLocaleString()}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {user.is_blocked ? (
+                              <span className="px-2 py-0.5 text-[10px] rounded-full bg-red-500/20 text-red-400 font-medium">
+                                BLOCKED
+                              </span>
+                            ) : user.failed_attempts > 0 ? (
+                              <span className="px-2 py-0.5 text-[10px] rounded-full bg-amber-500/20 text-amber-400 font-medium">
+                                {user.failed_attempts} FAILED
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/20 text-emerald-400 font-medium">
+                                ACTIVE
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-1">
-                              {/* Game Notification */}
+                              {/* Reset PIN */}
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300"
-                                title="Send Game Notification"
-                                onClick={() => {
-                                  const upcomingGame = games.find(g => g.status === 'upcoming');
-                                  if (!upcomingGame) {
-                                    toast.error('No upcoming games to notify about');
-                                    return;
-                                  }
-                                  handleNotifyNewGame(upcomingGame, { name: player.name, phone: player.phone });
-                                }}
+                                className="h-7 px-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                title="Reset PIN to 1234"
+                                onClick={() => handleResetUserPin(user.user_id, user.name)}
                               >
-                                <Bell className="w-4 h-4" />
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                <span className="text-[10px]">Reset PIN</span>
                               </Button>
-                              {/* Game Alert */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300"
-                                title="Send Game Alert"
-                                onClick={() => {
-                                  let phoneNumber = player.phone.replace(/\D/g, '');
-                                  if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) phoneNumber = '91' + phoneNumber;
-                                  const message = `⏰ Game Alert!
-
-Hi ${player.name},
-This is a reminder about your upcoming Tambola game!
-
-Don't forget to join on time.
-Good luck 🍀
-
-— SixSeven Tambola`;
-                                  window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-                                  toast.success('WhatsApp alert opened');
-                                }}
-                              >
-                                <Clock className="w-4 h-4" />
-                              </Button>
-                              {/* Booking Confirmation */}
+                              
+                              {/* Block/Unblock */}
+                              {user.is_blocked ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                                  title="Unblock User"
+                                  onClick={() => handleUnblockUser(user.user_id, user.name)}
+                                >
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                  <span className="text-[10px]">Unblock</span>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  title="Block User"
+                                  onClick={() => handleBlockUser(user.user_id, user.name)}
+                                >
+                                  <Ban className="w-3 h-3 mr-1" />
+                                  <span className="text-[10px]">Block</span>
+                                </Button>
+                              )}
+                              
+                              {/* WhatsApp */}
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0 text-green-400 hover:text-green-300"
-                                title="Resend Booking Confirmation"
+                                title="Send WhatsApp Message"
                                 onClick={() => {
-                                  const latestBooking = player.bookings[player.bookings.length - 1];
-                                  let phoneNumber = player.phone.replace(/\D/g, '');
-                                  if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) phoneNumber = '91' + phoneNumber;
-                                  const gameName = latestBooking.game?.name || games.find(g => g.game_id === latestBooking.game_id)?.name || 'Tambola Game';
-                                  const message = `✅ Booking Confirmed!
-
-Hi ${player.name},
-Your booking for ${gameName} is confirmed.
-
-🎟️ Tickets: ${latestBooking.ticket_ids?.length || 0}
-💰 Amount: ₹${latestBooking.total_amount}
-
-Join the game on time!
-Good luck 🍀
-
-— SixSeven Tambola`;
-                                  window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-                                  toast.success('WhatsApp confirmation opened');
+                                  const waNumber = (user.whatsapp_number || user.phone || '').replace(/\D/g, '');
+                                  if (!waNumber) {
+                                    toast.error('No phone number available');
+                                    return;
+                                  }
+                                  window.open(`https://wa.me/${waNumber}`, '_blank');
                                 }}
                               >
-                                <CheckCircle2 className="w-4 h-4" />
+                                <MessageSquare className="w-4 h-4" />
                               </Button>
                             </div>
                           </td>
                         </tr>
-                      ));
-                    })()}
+                      );
+                    })}
+                    {allUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                          No registered users yet
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
