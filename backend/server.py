@@ -37,10 +37,11 @@ auto_game_task_running = False
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
-    email: str
-    name: str
+    email: Optional[str] = None
+    name: Optional[str] = None
     picture: Optional[str] = None
     phone: Optional[str] = None
+    whatsapp_number: Optional[str] = None
     avatar: str = "avatar1"
 
 class UserSession(BaseModel):
