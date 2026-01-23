@@ -1,9 +1,24 @@
 # Six Seven Tambola - Product Requirements Document
 
 ## Overview
-A full-stack Tambola (Housie) game application designed for Indian players with user authentication, game management, live gameplay, and comprehensive admin capabilities.
+A full-stack Tambola (Housie) game application designed for Indian players with user authentication, game management, live gameplay, and comprehensive admin capabilities. **Now available as a Progressive Web App (PWA) for installation on mobile devices.**
 
 ## Core Features
+
+### 0. Progressive Web App (PWA) ✅ (2026-01-23)
+**Features:**
+- Installable on Android and iOS home screens
+- Standalone mode (no browser UI)
+- Custom app icon from provided logo
+- Service worker for offline support
+- iOS "Add to Home Screen" instructions
+- Android native install prompt
+
+**Files:**
+- `/public/manifest.json` - App manifest with icons, name, display mode
+- `/public/service-worker.js` - Caching and offline support
+- `/public/icons/` - App icons in various sizes (48x48 to 512x512)
+- `/src/components/InstallPrompt.js` - Install prompt UI for iOS/Android
 
 ### 1. User Authentication
 - **Google OAuth** via Emergent-managed Google Auth
