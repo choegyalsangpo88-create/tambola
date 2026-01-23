@@ -1078,7 +1078,10 @@ export default function GameDetails() {
                       // Open WhatsApp with payment details
                       const userName = JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player';
                       const method = PAYMENT_METHODS[selectedPaymentMethod];
-                      const message = `✅ PAYMENT SENT\n\nBooking ID: ${bookingRequestId}\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ${method.currency}${getTotalAmount()} ${method.currencyCode}\nPayment Method: ${method.name}\nName: ${userName}\n\n📸 Screenshot attached`;
+                      const convertedAmt = method.currencyCode === 'INR' 
+                        ? `₹${getTotalAmount()}` 
+                        : `${method.currency}${getConvertedAmount().toFixed(2)} ${method.currencyCode} (₹${getTotalAmount()} INR)`;
+                      const message = `✅ PAYMENT SENT\n\nBooking ID: ${bookingRequestId}\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ${convertedAmt}\nPayment Method: ${method.name}\nName: ${userName}\n\n📸 Screenshot attached`;
                       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
                     }}
                     className="w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl"
