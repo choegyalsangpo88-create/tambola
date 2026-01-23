@@ -1010,11 +1010,11 @@ export default function LiveGame() {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-white">My Tickets ({myTickets.length})</h3>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))} disabled={ticketZoom <= 1} className="h-5 w-5 text-white hover:bg-white/10">
+                <Button variant="ghost" size="icon" onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))} disabled={ticketZoom >= 3} className="h-5 w-5 text-white hover:bg-white/10">
                   <ZoomOut className="w-3 h-3" />
                 </Button>
-                <span className="text-[9px] text-gray-400 w-5 text-center">{ticketZoom === 1 ? 'S' : ticketZoom === 2 ? 'M' : 'L'}</span>
-                <Button variant="ghost" size="icon" onClick={() => setTicketZoom(Math.min(3, ticketZoom + 1))} disabled={ticketZoom >= 3} className="h-5 w-5 text-white hover:bg-white/10">
+                <span className="text-[9px] text-gray-400 w-5 text-center">{ticketZoom === 1 ? '1' : ticketZoom === 2 ? '2' : '3'}</span>
+                <Button variant="ghost" size="icon" onClick={() => setTicketZoom(Math.max(1, ticketZoom - 1))} disabled={ticketZoom <= 1} className="h-5 w-5 text-white hover:bg-white/10">
                   <ZoomIn className="w-3 h-3" />
                 </Button>
               </div>
