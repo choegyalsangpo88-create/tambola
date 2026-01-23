@@ -156,6 +156,7 @@ class BookingRequest(BaseModel):
 class TicketRequestInput(BaseModel):
     game_id: str
     ticket_ids: List[str]
+    payment_method: Optional[str] = None  # upi, interac, wero
 
 class ApproveRejectRequest(BaseModel):
     admin_notes: Optional[str] = None
@@ -2292,6 +2293,7 @@ async def create_booking_request(
         "ticket_ids": request_data.ticket_ids,
         "total_amount": total_amount,
         "status": "pending",
+        "payment_method": request_data.payment_method,
         "created_at": datetime.now(timezone.utc)
     }
     
