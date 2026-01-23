@@ -1057,14 +1057,14 @@ export default function LiveGame() {
               
               return (
                 <div className="space-y-3">
-                  {/* Full Sheets Grid - zoom level determines columns */}
+                  {/* Full Sheets Grid - zoom 3 = 1 col (largest), zoom 1 = 3 cols (smallest) */}
                   {fullSheets.length > 0 && (
-                    <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-1' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                    <div className={`grid gap-2 ${ticketZoom === 3 ? 'grid-cols-1' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                       {fullSheets.map(({ sheetId, tickets }) => (
                         <div key={sheetId} className="rounded-lg overflow-hidden" style={{ backgroundColor: '#E6B800', padding: '4px' }}>
                           <div className="flex items-center justify-between mb-1 px-2">
-                            <span className={`font-bold text-black ${ticketZoom === 1 ? 'text-sm' : ticketZoom === 2 ? 'text-xs' : 'text-[10px]'}`}>{sheetId}</span>
-                            <span className={`text-black/70 ${ticketZoom === 1 ? 'text-xs' : ticketZoom === 2 ? 'text-[10px]' : 'text-[8px]'}`}>
+                            <span className={`font-bold text-black ${ticketZoom === 3 ? 'text-sm' : ticketZoom === 2 ? 'text-xs' : 'text-[10px]'}`}>{sheetId}</span>
+                            <span className={`text-black/70 ${ticketZoom === 3 ? 'text-xs' : ticketZoom === 2 ? 'text-[10px]' : 'text-[8px]'}`}>
                               {tickets[0]?.ticket_number} - {tickets[5]?.ticket_number}
                             </span>
                           </div>
@@ -1077,7 +1077,7 @@ export default function LiveGame() {
                               >
                                 {/* Ticket Header */}
                                 <div className="py-0.5 px-1 border-b border-gray-300 bg-gray-50">
-                                  <p className={`font-bold text-black text-center ${ticketZoom === 1 ? 'text-[10px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-[7px]'}`}>
+                                  <p className={`font-bold text-black text-center ${ticketZoom === 3 ? 'text-[10px]' : ticketZoom === 2 ? 'text-[9px]' : 'text-[7px]'}`}>
                                     LOTTO TICKET {ticket.ticket_number}
                                   </p>
                                 </div>
@@ -1091,8 +1091,8 @@ export default function LiveGame() {
                                           key={`${rowIdx}-${colIdx}`}
                                           className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
                                           style={{
-                                            height: ticketZoom === 1 ? '22px' : ticketZoom === 2 ? '16px' : '12px',
-                                            fontSize: ticketZoom === 1 ? '11px' : ticketZoom === 2 ? '9px' : '7px',
+                                            height: ticketZoom === 3 ? '22px' : ticketZoom === 2 ? '16px' : '12px',
+                                            fontSize: ticketZoom === 3 ? '11px' : ticketZoom === 2 ? '9px' : '7px',
                                             fontWeight: 'bold',
                                             backgroundColor: isMarked ? '#22c55e' : 'white',
                                             color: isMarked ? 'white' : '#000'
@@ -1114,7 +1114,7 @@ export default function LiveGame() {
                   
                   {/* Individual Tickets */}
                   {individualTickets.length > 0 && (
-                    <div className={`grid gap-2 ${ticketZoom === 1 ? 'grid-cols-1' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                    <div className={`grid gap-2 ${ticketZoom === 3 ? 'grid-cols-1' : ticketZoom === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                       {individualTickets.map((ticket) => (
                         <LottoTicket
                           key={ticket.ticket_id}
@@ -1122,7 +1122,7 @@ export default function LiveGame() {
                           numbers={ticket.numbers}
                           calledNumbers={Array.from(markedNumbers)}
                           showRemaining={false}
-                          size={ticketZoom === 1 ? 'large' : ticketZoom === 2 ? 'normal' : 'small'}
+                          size={ticketZoom === 3 ? 'large' : ticketZoom === 2 ? 'normal' : 'small'}
                         />
                       ))}
                     </div>
