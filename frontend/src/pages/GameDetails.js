@@ -701,9 +701,18 @@ export default function GameDetails() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Panel Header with Timer */}
-            <div className="sticky top-0 bg-[#0f0f14] px-4 py-3 border-b border-white/10">
+            <div className="sticky top-0 bg-[#0f0f14] px-4 py-3 border-b border-white/10 z-10">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Complete Payment</h2>
+                <div className="flex items-center gap-2">
+                  {paymentStep === 2 && (
+                    <Button variant="ghost" size="icon" onClick={() => setPaymentStep(1)} className="h-8 w-8 text-gray-400 hover:text-white">
+                      <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                  )}
+                  <h2 className="text-lg font-bold text-white">
+                    {paymentStep === 1 ? 'Select Payment Method' : 'Complete Payment'}
+                  </h2>
+                </div>
                 <div className="flex items-center gap-3">
                   {/* Timer */}
                   <div className={`px-3 py-1 rounded-full font-mono text-sm font-bold ${
@@ -713,12 +722,7 @@ export default function GameDetails() {
                   }`}>
                     ⏱️ {formatTime(timeLeft)}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCancelBooking}
-                    className="h-8 w-8 text-gray-400 hover:text-white"
-                  >
+                  <Button variant="ghost" size="icon" onClick={handleCancelBooking} className="h-8 w-8 text-gray-400 hover:text-white">
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
@@ -741,151 +745,323 @@ export default function GameDetails() {
                 </div>
               )}
 
-              {/* ===== A. BOOKING SUMMARY (Read-only) ===== */}
-              <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
-                <h3 className="text-base font-bold text-white mb-3">🧾 Booking Summary</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Game:</span>
-                    <span className="text-white font-semibold">{game.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Tickets:</span>
-                    <span className="text-white font-mono text-sm">{getSelectedTicketNumbers()}</span>
-                  </div>
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-bold">Total Amount:</span>
-                      <span className="text-amber-500 font-bold text-xl">₹{getTotalAmount()}</span>
+              {/* ===== STEP 1: PAYMENT METHOD SELECTION ===== */}
+              {paymentStep === 1 && (
+                <>
+                  {/* Booking Summary */}
+                  <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
+                    <h3 className="text-base font-bold text-white mb-3">🧾 Booking Summary</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Game:</span>
+                        <span className="text-white font-semibold text-sm">{game.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tickets:</span>
+                        <span className="text-white font-mono text-sm">{getSelectedTicketNumbers()}</span>
+                      </div>
+                      <div className="border-t border-white/10 pt-2 mt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-bold">Total Amount:</span>
+                          <span className="text-amber-500 font-bold text-xl">
+                            {PAYMENT_METHODS[selectedPaymentMethod]?.currency}{getTotalAmount()}
+                            {selectedPaymentMethod !== 'upi' && (
+                              <span className="text-xs text-gray-400 ml-1">
+                                ({PAYMENT_METHODS[selectedPaymentMethod]?.currencyCode})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* ===== B. BUTTON 1 — UPI PAYMENT ===== */}
-              <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
-                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-amber-500" />
-                  Step 1: Pay via UPI
-                </h3>
-                
-                {/* UPI App Selection for iOS compatibility */}
-                <div className="space-y-2">
-                  {/* Google Pay */}
-                  <a
-                    href={`gpay://upi/pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
-                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl flex items-center justify-center no-underline"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    Pay ₹{getTotalAmount()} with Google Pay
-                  </a>
-                  
-                  {/* PhonePe */}
-                  <a
-                    href={`phonepe://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
-                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl flex items-center justify-center no-underline"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    Pay ₹{getTotalAmount()} with PhonePe
-                  </a>
-                  
-                  {/* Paytm */}
-                  <a
-                    href={`paytmmp://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
-                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-xl flex items-center justify-center no-underline"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    Pay ₹{getTotalAmount()} with Paytm
-                  </a>
-
-                  {/* Generic UPI (for Android) */}
-                  <a
-                    href={`upi://pay?pa=choegyalsangpo@ibl&pn=${encodeURIComponent('Choegyal Sangpo')}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent('Order-' + txnRef)}`}
-                    className="block w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center no-underline"
-                    style={{ textDecoration: 'none' }}
-                    data-testid="pay-upi-btn"
-                  >
-                    Pay ₹{getTotalAmount()} with Other UPI App
-                  </a>
-                </div>
-
-                {/* Fallback for UPI */}
-                <div className="mt-3 p-3 bg-black/30 rounded-lg">
-                  <p className="text-gray-400 text-sm mb-1 flex items-center gap-1">
-                    <Info className="w-4 h-4" />
-                    If UPI app did not open, pay manually to:
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white font-mono">{UPI_ID}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={copyUPIId}
-                      className="text-amber-500 hover:text-amber-400 h-8 px-2"
-                    >
-                      {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    </Button>
+                  {/* Payment Method Selection */}
+                  <div className="space-y-2">
+                    <p className="text-gray-400 text-sm">Choose your payment method:</p>
+                    
+                    {/* Payment methods ordered by region */}
+                    {(() => {
+                      const methodOrder = userRegion === 'canada' 
+                        ? ['interac', 'upi', 'wero']
+                        : userRegion === 'europe'
+                        ? ['wero', 'upi', 'interac']
+                        : ['upi', 'interac', 'wero'];
+                      
+                      return methodOrder.map((methodId) => {
+                        const method = PAYMENT_METHODS[methodId];
+                        const isRecommended = REGION_DEFAULTS[userRegion] === methodId;
+                        const isSelected = selectedPaymentMethod === methodId;
+                        
+                        return (
+                          <button
+                            key={methodId}
+                            onClick={() => setSelectedPaymentMethod(methodId)}
+                            className={`w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between ${
+                              isSelected
+                                ? 'border-amber-500 bg-amber-500/10'
+                                : 'border-white/10 bg-[#1a1a2e] hover:border-white/30'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{method.icon}</span>
+                              <div className="text-left">
+                                <p className="text-white font-semibold">{method.name}</p>
+                                <p className="text-gray-400 text-xs">Pay in {method.currency} {method.currencyCode}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isRecommended && (
+                                <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-500/20 text-green-400 font-medium">
+                                  Recommended
+                                </span>
+                              )}
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                isSelected ? 'border-amber-500 bg-amber-500' : 'border-gray-500'
+                              }`}>
+                                {isSelected && <CheckCircle className="w-3 h-3 text-black" />}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      });
+                    })()}
+                    
+                    <p className="text-gray-500 text-xs text-center mt-2">
+                      Not in this country? You can change payment method above.
+                    </p>
                   </div>
-                </div>
-              </div>
 
-              {/* ===== C. INSTRUCTION TEXT (MANDATORY) ===== */}
-              <div className="bg-green-900/20 rounded-xl p-4 border border-green-500/30">
-                <p className="text-green-300 text-center font-medium">
-                  After completing your UPI payment,<br />
-                  click the WhatsApp button below and send payment screenshot.
-                </p>
-              </div>
+                  {/* Continue Button */}
+                  <Button
+                    onClick={() => setPaymentStep(2)}
+                    className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl"
+                  >
+                    Continue with {PAYMENT_METHODS[selectedPaymentMethod]?.name}
+                  </Button>
+                </>
+              )}
 
-              {/* ===== D. BUTTON 2 — WHATSAPP CONFIRMATION ===== */}
-              <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
-                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-green-500" />
-                  Step 2: Send Confirmation
-                </h3>
+              {/* ===== STEP 2: PAYMENT DETAILS ===== */}
+              {paymentStep === 2 && (
+                <>
+                  {/* UPI Payment (India) */}
+                  {selectedPaymentMethod === 'upi' && (
+                    <div className="space-y-4">
+                      <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
+                        <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                          🇮🇳 Pay via UPI
+                        </h3>
+                        
+                        {/* UPI Details */}
+                        <div className="space-y-3">
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">UPI ID</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-mono text-lg">{UPI_ID}</span>
+                              <Button variant="ghost" size="sm" onClick={copyUPIId} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                <span className="ml-1 text-xs">Copy</span>
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Amount</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-amber-500 font-bold text-xl">₹{getTotalAmount()}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(getTotalAmount().toString()); toast.success('Amount copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" /><span className="ml-1 text-xs">Copy</span>
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Reference / Note</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-mono text-sm">{bookingRequestId} – {JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(`${bookingRequestId} – ${JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'}`); toast.success('Reference copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
 
-                {/* Transaction Reference */}
-                <div className="bg-black/30 rounded-lg p-3 mb-3">
-                  <p className="text-gray-400 text-xs mb-1">Your Transaction Reference</p>
-                  <p className="text-amber-500 font-mono text-lg font-bold">{txnRef}</p>
-                </div>
+                        {/* UPI App Buttons */}
+                        <div className="mt-4 space-y-2">
+                          <a href={`upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${getTotalAmount()}&cu=INR&tn=${encodeURIComponent(bookingRequestId + ' - ' + (JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'))}`}
+                            className="block w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl flex items-center justify-center no-underline"
+                          >
+                            Open UPI App
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                {/* WHATSAPP BUTTON - Direct anchor link to WhatsApp */}
-                <a
-                  href={`https://wa.me/918837489781?text=${encodeURIComponent(`✅ PAYMENT DONE\n\nBooking ID: ${bookingRequestId || 'N/A'}\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ₹${getTotalAmount()}\nTxn Ref: ${txnRef}\n\n📸 Screenshot attached`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl flex items-center justify-center no-underline"
-                  data-testid="send-whatsapp-btn"
-                  style={{ textDecoration: 'none' }}
-                >
-                  📱 Send Payment Confirmation on WhatsApp
-                </a>
+                  {/* Interac e-Transfer (Canada) */}
+                  {selectedPaymentMethod === 'interac' && (
+                    <div className="space-y-4">
+                      <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
+                        <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                          🇨🇦 Pay via Interac e-Transfer
+                        </h3>
+                        
+                        {INTERAC_AUTO_DEPOSIT && (
+                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2 mb-3">
+                            <p className="text-green-400 text-xs text-center">✓ Auto-Deposit Enabled</p>
+                          </div>
+                        )}
+                        
+                        <div className="space-y-3">
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Payment Email</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-mono">{INTERAC_EMAIL}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(INTERAC_EMAIL); toast.success('Email copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" /><span className="ml-1 text-xs">Copy</span>
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Amount</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-amber-500 font-bold text-xl">${getTotalAmount()} CAD</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(getTotalAmount().toString()); toast.success('Amount copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Message / Reference</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-mono text-sm">{bookingRequestId} – {JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(`${bookingRequestId} – ${JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'}`); toast.success('Reference copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Fallback for WhatsApp */}
-                <div className="mt-3 p-3 bg-black/30 rounded-lg">
-                  <p className="text-gray-400 text-sm mb-1 flex items-center gap-1">
-                    <Info className="w-4 h-4" />
-                    If WhatsApp did not open, message us at:
-                  </p>
-                  <p className="text-green-400 font-mono">{WHATSAPP_DISPLAY}</p>
-                </div>
-              </div>
+                  {/* Wero Payment (Europe) */}
+                  {selectedPaymentMethod === 'wero' && (
+                    <div className="space-y-4">
+                      <div className="bg-[#1a1a2e] rounded-xl p-4 border border-white/10">
+                        <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                          🇪🇺 Pay with Wero
+                        </h3>
+                        <p className="text-gray-400 text-xs mb-3">Send money instantly from your bank using Wero.</p>
+                        
+                        <div className="space-y-3">
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Recipient Name</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white">{WERO_RECIPIENT}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(WERO_RECIPIENT); toast.success('Copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Phone / Alias</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-mono">{WERO_PHONE}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(WERO_PHONE); toast.success('Phone copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" /><span className="ml-1 text-xs">Copy</span>
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Amount</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-amber-500 font-bold text-xl">€{getTotalAmount()} EUR</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(getTotalAmount().toString()); toast.success('Amount copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-lg p-3">
+                            <p className="text-gray-400 text-xs mb-1">Reference</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-mono text-sm">{bookingRequestId} – {JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'}</span>
+                              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(`${bookingRequestId} – ${JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player'}`); toast.success('Reference copied!'); }} className="text-amber-500 hover:text-amber-400 h-8 px-2">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
 
-              {/* Done button */}
-              <Button
-                onClick={() => {
-                  setShowPaymentPanel(false);
-                  setTimerActive(false);
-                  setSelectedTickets([]);
-                  setBookingRequestId(null);
-                  toast.success('Your booking request has been submitted! We will confirm after payment verification.');
-                }}
-                variant="outline"
-                className="w-full h-12 border-white/20 text-white"
-              >
-                Done - I&apos;ve Sent Payment Confirmation
-              </Button>
+                        {/* SEPA Fallback */}
+                        <details className="mt-4">
+                          <summary className="text-gray-400 text-sm cursor-pointer hover:text-white">
+                            Bank Transfer (SEPA) - Alternative
+                          </summary>
+                          <div className="mt-2 space-y-2 p-3 bg-black/20 rounded-lg">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400 text-xs">Recipient:</span>
+                              <span className="text-white text-xs">{WERO_RECIPIENT}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400 text-xs">IBAN:</span>
+                              <span className="text-white font-mono text-xs">{SEPA_IBAN}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400 text-xs">BIC:</span>
+                              <span className="text-white font-mono text-xs">{SEPA_BIC}</span>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Confirmation Instruction */}
+                  <div className="bg-green-900/20 rounded-xl p-4 border border-green-500/30">
+                    <p className="text-green-300 text-center font-medium text-sm">
+                      After completing your payment, click the button below.<br />
+                      Admin will verify and confirm your booking.
+                    </p>
+                  </div>
+
+                  {/* I've Sent Payment Button */}
+                  <Button
+                    onClick={() => {
+                      // Open WhatsApp with payment details
+                      const userName = JSON.parse(localStorage.getItem('tambola_user') || '{}').name || 'Player';
+                      const method = PAYMENT_METHODS[selectedPaymentMethod];
+                      const message = `✅ PAYMENT SENT\n\nBooking ID: ${bookingRequestId}\nGame: ${game?.name || 'Tambola Game'}\nTickets: ${getSelectedTicketNumbers()}\nAmount: ${method.currency}${getTotalAmount()} ${method.currencyCode}\nPayment Method: ${method.name}\nName: ${userName}\n\n📸 Screenshot attached`;
+                      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+                    }}
+                    className="w-full h-14 text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl"
+                  >
+                    ✅ I&apos;ve Sent Payment
+                  </Button>
+
+                  {/* Done button */}
+                  <Button
+                    onClick={() => {
+                      setShowPaymentPanel(false);
+                      setTimerActive(false);
+                      setSelectedTickets([]);
+                      setBookingRequestId(null);
+                      setPaymentStep(1);
+                      toast.success('Your booking is pending! We will confirm after payment verification.');
+                    }}
+                    variant="outline"
+                    className="w-full h-12 border-white/20 text-white"
+                  >
+                    Done
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
