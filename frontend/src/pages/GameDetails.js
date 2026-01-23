@@ -243,6 +243,49 @@ export default function GameDetails() {
   // Timer state (10 minutes = 600 seconds)
   const [timeLeft, setTimeLeft] = useState(600);
   const [timerActive, setTimerActive] = useState(false);
+  
+  // Pending bookings state
+  const [existingPendingBooking, setExistingPendingBooking] = useState(null);
+  const [showPendingWarning, setShowPendingWarning] = useState(false);
+
+  // Check for existing pending bookings on mount
+  useEffect(() => {
+    const checkExistingBookings = async () => {
+      try {
+        const session = localStorage.getItem('tambola_session');
+        if (!session) return;
+        
+        const response = await axios.get(`${API}/booking-requests/my`, {
+          headers: { 'Authorization': `Bearer ${session}` },
+          withCredentials: true
+        });
+        
+        // Find any pending booking for this game
+        const pendingForThisGame = response.data.find(
+          b => b.status === 'pending' && b.game_id === gameId
+        );
+        
+        if (pendingForThisGame) {
+          setExistingPendingBooking(pendingForThisGame);
+          // Pre-select the tickets from the pending booking
+          setSelectedTickets(pendingForThisGame.ticket_ids || []);
+          setBookingRequestId(pendingForThisGame.request_id);
+        }
+        
+        // Check for pending bookings on OTHER games
+        const pendingOtherGames = response.data.filter(
+          b => b.status === 'pending' && b.game_id !== gameId
+        );
+        if (pendingOtherGames.length > 0) {
+          setExistingPendingBooking(pendingOtherGames[0]);
+        }
+      } catch (error) {
+        console.log('Failed to check existing bookings');
+      }
+    };
+    
+    checkExistingBookings();
+  }, [gameId]);
 
   // Detect user region on mount
   useEffect(() => {
