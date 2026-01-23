@@ -28,22 +28,24 @@ export default function Dashboard() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    let isMounted = true;
+    
     fetchUser();
     fetchGames();
     fetchPendingBookings();
     
-    // Fast polling for real-time updates (every 5 seconds)
-    // This ensures game status changes are reflected immediately
+    // Fast polling for real-time updates (every 3 seconds) using lightweight endpoint
     const fastInterval = setInterval(() => {
-      fetchGames();
-    }, 5000);
+      if (isMounted) pollGames();
+    }, 3000);
     
-    // Slower polling for pending bookings (every 15 seconds)
+    // Slower polling for pending bookings (every 10 seconds)
     const slowInterval = setInterval(() => {
-      fetchPendingBookings();
-    }, 15000);
+      if (isMounted) fetchPendingBookings();
+    }, 10000);
     
     return () => {
+      isMounted = false;
       clearInterval(fastInterval);
       clearInterval(slowInterval);
     };
@@ -72,6 +74,23 @@ export default function Dashboard() {
     }
   };
 
+  // Lightweight polling for games (used for fast updates)
+  const pollGames = async () => {
+    try {
+      const response = await axios.get(`${API}/games/poll-list`);
+      const data = response.data;
+      if (data.games) {
+        setLiveGames(data.games.filter(g => g.status === 'live'));
+        setRecentlyCompleted(data.games.filter(g => g.status === 'completed'));
+        setUpcomingGames(data.games.filter(g => g.status === 'upcoming'));
+      }
+    } catch (error) {
+      // Silent fail for polling
+      console.error('Poll failed:', error);
+    }
+  };
+
+  // Full games fetch (used for initial load)
   const fetchGames = async () => {
     try {
       const response = await axios.get(`${API}/games`);
