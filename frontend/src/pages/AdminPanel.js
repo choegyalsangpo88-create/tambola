@@ -1512,6 +1512,20 @@ Good luck 🍀
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Payment Method Badge */}
+                            {booking.payment_method && (
+                              <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${
+                                booking.payment_method === 'upi' ? 'bg-orange-500/20 text-orange-400' :
+                                booking.payment_method === 'interac' ? 'bg-blue-500/20 text-blue-400' :
+                                booking.payment_method === 'wero' ? 'bg-purple-500/20 text-purple-400' :
+                                'bg-zinc-500/20 text-zinc-400'
+                              }`}>
+                                {booking.payment_method === 'upi' ? '🇮🇳 UPI' :
+                                 booking.payment_method === 'interac' ? '🇨🇦 Interac' :
+                                 booking.payment_method === 'wero' ? '🇪🇺 Wero' :
+                                 booking.payment_method.toUpperCase()}
+                              </span>
+                            )}
                             <span className="text-amber-400 text-sm font-medium">₹{booking.total_amount}</span>
                             {booking.status === 'cancelled' ? (
                               <span className="px-2 py-0.5 text-[10px] rounded bg-red-500/20 text-red-400">CANCELLED</span>
