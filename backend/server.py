@@ -622,6 +622,321 @@ async def logout(request: Request, response: Response):
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out"}
 
+# ============ PHONE/PIN AUTH ROUTES ============
+
+class PhoneCheckRequest(BaseModel):
+    phone: str
+
+class PhoneRegisterRequest(BaseModel):
+    phone: str
+    pin: str
+    name: str
+    whatsapp_number: Optional[str] = None
+
+class PhoneLoginRequest(BaseModel):
+    phone: str
+    pin: str
+
+class UpdateNameRequest(BaseModel):
+    name: str
+
+def hash_pin(pin: str) -> str:
+    """Hash PIN using SHA256 with salt"""
+    salt = "tambola_pin_salt_2026"
+    return hashlib.sha256(f"{salt}{pin}{salt}".encode()).hexdigest()
+
+@api_router.post("/auth/phone/check")
+async def check_phone(request: PhoneCheckRequest):
+    """Check if phone number exists and return user status"""
+    phone = request.phone.strip().replace(" ", "")
+    
+    # Normalize phone number
+    if not phone.startswith("+"):
+        if phone.startswith("91") and len(phone) >= 12:
+            phone = "+" + phone
+        elif len(phone) == 10:
+            phone = "+91" + phone
+    
+    user = await db.users.find_one({"phone": phone}, {"_id": 0})
+    
+    if user:
+        # Check if user is blocked
+        if user.get("is_blocked"):
+            return {
+                "exists": True,
+                "is_blocked": True,
+                "message": "This account has been blocked. Please contact support."
+            }
+        return {
+            "exists": True,
+            "has_name": bool(user.get("name")),
+            "name": user.get("name", ""),
+            "is_blocked": False
+        }
+    
+    return {"exists": False}
+
+@api_router.post("/auth/phone/register")
+async def register_with_phone(request: PhoneRegisterRequest, response: Response):
+    """Register new user with phone number and PIN"""
+    phone = request.phone.strip().replace(" ", "")
+    
+    # Normalize phone number
+    if not phone.startswith("+"):
+        if phone.startswith("91") and len(phone) >= 12:
+            phone = "+" + phone
+        elif len(phone) == 10:
+            phone = "+91" + phone
+    
+    # Validate PIN
+    if not request.pin or len(request.pin) != 4 or not request.pin.isdigit():
+        raise HTTPException(status_code=400, detail="PIN must be exactly 4 digits")
+    
+    # Validate name
+    if not request.name or len(request.name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Name must be at least 2 characters")
+    
+    # Check if phone already exists
+    existing = await db.users.find_one({"phone": phone})
+    if existing:
+        raise HTTPException(status_code=400, detail="Phone number already registered")
+    
+    # Create user
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    hashed_pin = hash_pin(request.pin)
+    
+    # Normalize WhatsApp number if provided
+    whatsapp = request.whatsapp_number
+    if whatsapp:
+        whatsapp = whatsapp.strip().replace(" ", "")
+        if not whatsapp.startswith("+"):
+            if whatsapp.startswith("91") and len(whatsapp) >= 12:
+                whatsapp = "+" + whatsapp
+            elif len(whatsapp) == 10:
+                whatsapp = "+91" + whatsapp
+    
+    user_data = {
+        "user_id": user_id,
+        "phone": phone,
+        "whatsapp_number": whatsapp if whatsapp else phone,  # Default to phone if not provided
+        "name": request.name.strip(),
+        "pin_hash": hashed_pin,
+        "avatar": "avatar1",
+        "failed_attempts": 0,
+        "is_blocked": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.users.insert_one(user_data)
+    
+    # Create session
+    session_token = f"session_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=30)  # 30 days session
+    
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=30*24*60*60  # 30 days
+    )
+    
+    return {
+        "success": True,
+        "user": {
+            "user_id": user_id,
+            "phone": phone,
+            "whatsapp_number": user_data["whatsapp_number"],
+            "name": user_data["name"],
+            "avatar": user_data["avatar"]
+        },
+        "session_token": session_token
+    }
+
+@api_router.post("/auth/phone/login")
+async def login_with_phone(request: PhoneLoginRequest, response: Response):
+    """Login with phone number and PIN"""
+    phone = request.phone.strip().replace(" ", "")
+    
+    # Normalize phone number
+    if not phone.startswith("+"):
+        if phone.startswith("91") and len(phone) >= 12:
+            phone = "+" + phone
+        elif len(phone) == 10:
+            phone = "+91" + phone
+    
+    # Find user
+    user = await db.users.find_one({"phone": phone}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Phone number not registered")
+    
+    # Check if blocked
+    if user.get("is_blocked"):
+        raise HTTPException(status_code=403, detail="This account has been blocked. Please contact support.")
+    
+    # Check failed attempts (max 5)
+    if user.get("failed_attempts", 0) >= 5:
+        # Block user after 5 failed attempts
+        await db.users.update_one(
+            {"phone": phone},
+            {"$set": {"is_blocked": True}}
+        )
+        raise HTTPException(status_code=403, detail="Too many failed attempts. Account locked.")
+    
+    # Verify PIN
+    hashed_pin = hash_pin(request.pin)
+    if user.get("pin_hash") != hashed_pin:
+        # Increment failed attempts
+        await db.users.update_one(
+            {"phone": phone},
+            {"$inc": {"failed_attempts": 1}}
+        )
+        remaining = 5 - user.get("failed_attempts", 0) - 1
+        raise HTTPException(
+            status_code=401, 
+            detail=f"Incorrect PIN. {remaining} attempts remaining."
+        )
+    
+    # Reset failed attempts on successful login
+    await db.users.update_one(
+        {"phone": phone},
+        {"$set": {"failed_attempts": 0}}
+    )
+    
+    # Create session
+    session_token = f"session_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+    
+    await db.user_sessions.insert_one({
+        "user_id": user["user_id"],
+        "session_token": session_token,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=30*24*60*60
+    )
+    
+    return {
+        "success": True,
+        "user": {
+            "user_id": user["user_id"],
+            "phone": user["phone"],
+            "whatsapp_number": user.get("whatsapp_number", user["phone"]),
+            "name": user.get("name", ""),
+            "avatar": user.get("avatar", "avatar1")
+        },
+        "session_token": session_token,
+        "needs_name": not bool(user.get("name"))
+    }
+
+@api_router.put("/auth/update-name")
+async def update_user_name(request: UpdateNameRequest, user: User = Depends(get_current_user)):
+    """Update user's name"""
+    if not request.name or len(request.name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Name must be at least 2 characters")
+    
+    await db.users.update_one(
+        {"user_id": user.user_id},
+        {"$set": {"name": request.name.strip()}}
+    )
+    
+    return {"success": True, "name": request.name.strip()}
+
+# ============ ADMIN USER MANAGEMENT ============
+
+@api_router.get("/admin/users")
+async def get_all_users(_: bool = Depends(verify_admin)):
+    """Get all registered users for admin"""
+    users = await db.users.find({}, {"_id": 0, "pin_hash": 0}).to_list(1000)
+    
+    # Add booking stats for each user
+    for user in users:
+        bookings = await db.bookings.find(
+            {"user_id": user["user_id"]},
+            {"_id": 0, "total_amount": 1, "status": 1, "game_id": 1}
+        ).to_list(100)
+        
+        user["total_bookings"] = len(bookings)
+        user["confirmed_bookings"] = len([b for b in bookings if b.get("status") == "confirmed"])
+        user["total_spent"] = sum(b.get("total_amount", 0) for b in bookings if b.get("status") == "confirmed")
+        user["games_played"] = len(set(b.get("game_id") for b in bookings if b.get("status") == "confirmed"))
+    
+    return users
+
+@api_router.post("/admin/users/{user_id}/reset-pin")
+async def admin_reset_user_pin(user_id: str, _: bool = Depends(verify_admin)):
+    """Admin resets user's PIN to default (1234) and unblocks"""
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Reset PIN to 1234 and unblock
+    default_pin_hash = hash_pin("1234")
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {
+            "pin_hash": default_pin_hash,
+            "failed_attempts": 0,
+            "is_blocked": False,
+            "pin_reset_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {
+        "success": True,
+        "message": f"PIN reset to 1234 for user {user.get('name', user_id)}. User has been unblocked."
+    }
+
+@api_router.post("/admin/users/{user_id}/block")
+async def admin_block_user(user_id: str, _: bool = Depends(verify_admin)):
+    """Admin blocks a user"""
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_blocked": True}}
+    )
+    
+    # Invalidate all user sessions
+    await db.user_sessions.delete_many({"user_id": user_id})
+    
+    return {"success": True, "message": f"User {user.get('name', user_id)} has been blocked"}
+
+@api_router.post("/admin/users/{user_id}/unblock")
+async def admin_unblock_user(user_id: str, _: bool = Depends(verify_admin)):
+    """Admin unblocks a user"""
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_blocked": False, "failed_attempts": 0}}
+    )
+    
+    return {"success": True, "message": f"User {user.get('name', user_id)} has been unblocked"}
+
 # ============ ADMIN AUTH ROUTES ============
 
 @api_router.post("/admin/login")
