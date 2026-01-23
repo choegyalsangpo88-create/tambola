@@ -73,6 +73,70 @@ export default function Dashboard() {
     }
   };
 
+  const fetchPendingBookings = async () => {
+    try {
+      const response = await axios.get(`${API}/booking-requests/my`, {
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
+      // Filter only pending bookings and enrich with game info
+      const pending = response.data.filter(b => b.status === 'pending');
+      
+      // Fetch game info for each booking
+      const enrichedBookings = await Promise.all(
+        pending.map(async (booking) => {
+          try {
+            const gameRes = await axios.get(`${API}/games/${booking.game_id}`);
+            return {
+              ...booking,
+              game: gameRes.data
+            };
+          } catch {
+            return booking;
+          }
+        })
+      );
+      
+      setPendingBookings(enrichedBookings);
+    } catch (error) {
+      console.error('Failed to fetch pending bookings:', error);
+    }
+  };
+
+  const handleCancelBooking = async (requestId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking? Your tickets will be released.')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API}/booking-requests/${requestId}`, {
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
+      toast.success('Booking cancelled successfully');
+      fetchPendingBookings();
+    } catch (error) {
+      console.error('Failed to cancel booking:', error);
+      toast.error(error.response?.data?.detail || 'Failed to cancel booking');
+    }
+  };
+
+  const handleEditBooking = async (requestId, gameId) => {
+    // First cancel the current booking to release tickets
+    try {
+      await axios.delete(`${API}/booking-requests/${requestId}`, {
+        withCredentials: true,
+        headers: getAuthHeaders()
+      });
+      toast.success('Booking cancelled - select new tickets');
+      // Navigate to game page to select new tickets
+      navigate(`/game/${gameId}`);
+    } catch (error) {
+      console.error('Failed to edit booking:', error);
+      toast.error(error.response?.data?.detail || 'Failed to edit booking');
+    }
+  };
+
   const handleNavigation = (path) => {
     navigate(path);
   };
