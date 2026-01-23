@@ -456,9 +456,27 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
   
 - **Ticket Zoom on GameDetails.js (COMPLETED)**
   - Added 3-level zoom controls (1, 2, or 3 sheets per row)
-  - Zoom in/out buttons with visual indicator
   - Ticket grid, text sizes, and cell heights adjust based on zoom level
   - File: `/app/frontend/src/pages/GameDetails.js`
+
+### 2026-01-23 (Session 6 - Continued)
+- **Reversed Zoom Logic (COMPLETED)**
+  - Zoom 3 = 1 column (largest view, default)
+  - Zoom 2 = 2 columns (medium)
+  - Zoom 1 = 3 columns (smallest view)
+  - Applied to both GameDetails.js and LiveGame.js
+  
+- **Pending Tickets Section on Dashboard (COMPLETED)**
+  - Added new section between Live Games and Upcoming Games
+  - Shows user's pending booking requests with game info
+  - "Complete Payment" button - navigates to game page
+  - "Edit" button - cancels booking and navigates to select new tickets
+  - "Cancel" button - removes pending booking and releases tickets
+  - New backend endpoint: `DELETE /api/booking-requests/{request_id}`
+  
+- **Bug Fix: release_booking_tickets arguments (FIXED)**
+  - Fixed incorrect function call in DELETE endpoint
+  - Changed from `release_booking_tickets(ticket_ids)` to `release_booking_tickets(request_id, game_id, ticket_ids)`
 
 ---
 
