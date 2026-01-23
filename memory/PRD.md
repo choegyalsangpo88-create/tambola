@@ -478,6 +478,25 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
   - Fixed incorrect function call in DELETE endpoint
   - Changed from `release_booking_tickets(ticket_ids)` to `release_booking_tickets(request_id, game_id, ticket_ids)`
 
+- **Enhanced Past Results Page (COMPLETED)**
+  - View complete game information when clicking "View Details"
+  - Shows: game stats (numbers called, winners count, tickets sold, players)
+  - Winners section with winning ticket visualization (3x9 grid with called numbers highlighted green)
+  - Called Numbers Board (1-90 grid showing which numbers were called)
+  - Call Order list showing sequence of number calls
+  - New backend endpoint: `GET /api/games/{game_id}/results`
+  
+- **Performance Optimization & Real-time Updates (COMPLETED)**
+  - Dashboard polling: 5 seconds for games (was 30s)
+  - Admin Panel polling: 10 seconds for games/bookings
+  - Pending bookings polling: 15 seconds
+  - Game status changes (upcoming → live) reflect within seconds
+  
+- **Mobile WhatsApp Button Fix (COMPLETED)**
+  - Fixed "I've Sent Payment" button not working on mobile
+  - Changed from `async/await` + `window.open` to synchronous + `window.location.href`
+  - Mobile browsers blocked the popup due to async delay
+
 ---
 
 ## Pending / Backlog
