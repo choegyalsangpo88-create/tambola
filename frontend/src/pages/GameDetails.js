@@ -227,6 +227,7 @@ export default function GameDetails() {
   const [selectedTickets, setSelectedTickets] = useState([]);
   const [filterMode, setFilterMode] = useState('all');
   const [tickets, setTickets] = useState([]);
+  const [ticketZoom, setTicketZoom] = useState(1); // 1 = 1 sheet/row, 2 = 2 sheets/row, 3 = 3 sheets/row
   
   // Payment flow state
   const [showPaymentPanel, setShowPaymentPanel] = useState(false);
