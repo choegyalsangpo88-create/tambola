@@ -37,11 +37,16 @@ export default function LiveGame() {
   const [luckyDrawAnimating, setLuckyDrawAnimating] = useState(false);
   const [luckyDrawWinner, setLuckyDrawWinner] = useState(null);
   const [luckyDrawCountdown, setLuckyDrawCountdown] = useState(5);
+  
+  // Optimized polling refs
   const pollInterval = useRef(null);
+  const calledCountRef = useRef(0); // Track called numbers count for delta updates
+  const isPollingRef = useRef(false); // Prevent concurrent polls
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
   const previousWinnersRef = useRef({});
   const luckyDrawShownRef = useRef(false);
+  const isMountedRef = useRef(true); // Track if component is mounted
 
   // Unlock audio on iOS/mobile using Howler.js - MUST be triggered by user gesture
   const unlockAudio = useCallback(async () => {
