@@ -178,7 +178,8 @@ export default function LoginScreen() {
       }
 
       toast.success('Account created successfully!');
-      navigate('/', { replace: true });
+      // Use window.location for full page reload to reset auth state
+      window.location.href = '/';
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Registration failed');
     } finally {
