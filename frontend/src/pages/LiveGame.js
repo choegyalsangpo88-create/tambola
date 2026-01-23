@@ -28,7 +28,7 @@ export default function LiveGame() {
   const [markedNumbers, setMarkedNumbers] = useState(new Set());
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const [ticketZoom, setTicketZoom] = useState(1); // 1 = 1 sheet/row, 2 = 2 sheets/row, 3 = 3 sheets/row
+  const [ticketZoom, setTicketZoom] = useState(3); // 3 = 1 sheet/row (largest), 2 = 2 sheets/row, 1 = 3 sheets/row (smallest)
   const [lastPlayedNumber, setLastPlayedNumber] = useState(null);
   const [selectedWinnerTicket, setSelectedWinnerTicket] = useState(null);
   const [showLuckyDraw, setShowLuckyDraw] = useState(false);
