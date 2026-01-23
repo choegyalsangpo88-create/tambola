@@ -310,6 +310,15 @@ export default function AdminPanel() {
       fetchCallerSettings();
       fetchAgents();
       fetchAllUsers();
+      
+      // Auto-refresh games and bookings every 10 seconds for real-time updates
+      const refreshInterval = setInterval(() => {
+        fetchGames();
+        fetchBookings();
+        fetchBookingRequests();
+      }, 10000);
+      
+      return () => clearInterval(refreshInterval);
     }
   }, [isAuthenticated, fetchGames, fetchBookings, fetchBookingRequests, fetchPayments, fetchActionLogs, fetchCallerSettings, fetchAgents, fetchAllUsers]);
 
