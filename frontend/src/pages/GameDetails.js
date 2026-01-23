@@ -73,7 +73,7 @@ const REGION_DEFAULTS = {
 
 // Single Lotto Ticket Component (clickable for individual selection)
 // Consistent styling whether in a full sheet or standalone
-function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked, isInFullSheet = false }) {
+function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, isBooked, isInFullSheet = false, zoomLevel = 1 }) {
   const bookedByName = ticket.booked_by_name || ticket.holder_name;
 
   return (
@@ -105,25 +105,25 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
           <div className="flex items-center gap-1">
             {isFirst && pageNumber && (
               <span 
-                className="text-[8px] font-bold text-gray-600 mr-1"
+                className={`font-bold text-gray-600 mr-1 ${zoomLevel === 1 ? 'text-[9px]' : zoomLevel === 2 ? 'text-[8px]' : 'text-[7px]'}`}
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 {pageNumber}
               </span>
             )}
             <p 
-              className="text-[9px] font-bold text-black uppercase"
+              className={`font-bold text-black uppercase ${zoomLevel === 1 ? 'text-[10px]' : zoomLevel === 2 ? 'text-[9px]' : 'text-[7px]'}`}
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               LOTTO TICKET {ticket.ticket_number}
             </p>
             {isSelected && (
-              <span className="text-amber-500 text-[10px] font-bold">✓</span>
+              <span className={`text-amber-500 font-bold ${zoomLevel === 1 ? 'text-[10px]' : 'text-[8px]'}`}>✓</span>
             )}
           </div>
           {bookedByName && (
             <span 
-              className="text-[9px] font-bold text-black"
+              className={`font-bold text-black ${zoomLevel === 1 ? 'text-[9px]' : zoomLevel === 2 ? 'text-[8px]' : 'text-[7px]'}`}
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               {bookedByName.length > 8 ? bookedByName.slice(0, 8) + '..' : bookedByName}
@@ -140,9 +140,9 @@ function LottoTicketCard({ ticket, isFirst, pageNumber, isSelected, onToggle, is
               key={`${rowIndex}-${colIndex}`}
               className="flex items-center justify-center border-r border-b border-gray-200 last:border-r-0"
               style={{
-                height: '18px',
+                height: zoomLevel === 1 ? '22px' : zoomLevel === 2 ? '18px' : '14px',
                 fontFamily: 'Arial, sans-serif',
-                fontSize: '10px',
+                fontSize: zoomLevel === 1 ? '12px' : zoomLevel === 2 ? '10px' : '8px',
                 fontWeight: 'bold',
                 color: '#000'
               }}
