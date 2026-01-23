@@ -515,6 +515,20 @@ export default function GameDetails() {
       return;
     }
     
+    // Check if user has pending booking on a different game
+    if (existingPendingBooking && existingPendingBooking.game_id !== gameId) {
+      setShowPendingWarning(true);
+      return;
+    }
+    
+    // If there's already a pending booking for this game, just show payment panel
+    if (existingPendingBooking && existingPendingBooking.game_id === gameId) {
+      setBookingRequestId(existingPendingBooking.request_id);
+      generateTxnRef();
+      setShowPaymentPanel(true);
+      return;
+    }
+    
     setIsCreatingBooking(true);
     
     try {
@@ -541,6 +555,7 @@ export default function GameDetails() {
       
       if (response.data.request_id) {
         setBookingRequestId(response.data.request_id);
+        setExistingPendingBooking(response.data);
         generateTxnRef();
         setTimeLeft(600); // Reset timer to 10 minutes
         setTimerActive(true);
@@ -560,14 +575,52 @@ export default function GameDetails() {
     }
   };
 
+  // Cancel existing pending booking and proceed with new selection
+  const handleCancelExistingAndProceed = async () => {
+    if (!existingPendingBooking) return;
+    
+    try {
+      const session = localStorage.getItem('tambola_session');
+      await axios.delete(`${API}/booking-requests/${existingPendingBooking.request_id}`, {
+        headers: { 'Authorization': `Bearer ${session}` },
+        withCredentials: true
+      });
+      
+      setExistingPendingBooking(null);
+      setShowPendingWarning(false);
+      toast.success('Previous booking cancelled');
+      
+      // Now proceed with new booking
+      handleProceedToPayment();
+    } catch (error) {
+      console.error('Failed to cancel existing booking:', error);
+      toast.error('Failed to cancel previous booking');
+    }
+  };
+
   // Cancel booking and close panel
-  const handleCancelBooking = () => {
+  const handleCancelBooking = async () => {
+    // If there's a booking request, cancel it in the backend
+    if (bookingRequestId) {
+      try {
+        const session = localStorage.getItem('tambola_session');
+        await axios.delete(`${API}/booking-requests/${bookingRequestId}`, {
+          headers: { 'Authorization': `Bearer ${session}` },
+          withCredentials: true
+        });
+      } catch (error) {
+        console.log('Failed to cancel booking request:', error);
+      }
+    }
+    
     setShowPaymentPanel(false);
     setTimerActive(false);
     setTimeLeft(600);
     setSelectedTickets([]);
     setBookingRequestId(null);
+    setExistingPendingBooking(null);
     toast.info('Booking cancelled');
+    fetchAllTickets(); // Refresh to show released tickets
   };
 
   // Filter sheets
