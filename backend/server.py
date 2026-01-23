@@ -1646,6 +1646,28 @@ async def get_games(status: Optional[str] = None, include_recent_completed: bool
     games = await db.games.find(query, {"_id": 0}).to_list(100)
     return games
 
+# ============== LIGHTWEIGHT POLLING ENDPOINTS (MUST BE BEFORE {game_id} ROUTES) ==============
+
+@api_router.get("/games/poll-list")
+async def poll_games_list():
+    """
+    Lightweight endpoint to poll game list for dashboard.
+    Returns minimal game data for status updates.
+    """
+    games = await db.games.find(
+        {},
+        {"_id": 0, "game_id": 1, "name": 1, "status": 1, "date": 1, "time": 1, "prize_pool": 1}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {
+        "games": games,
+        "live_count": len([g for g in games if g["status"] == "live"]),
+        "upcoming_count": len([g for g in games if g["status"] == "upcoming"]),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+# ============== END LIGHTWEIGHT POLLING ENDPOINTS ==============
+
 @api_router.get("/games/recent-completed")
 async def get_recent_completed_games():
     """Get games completed within the last 5 minutes (for showing in live section with 'Just Ended' badge)"""
