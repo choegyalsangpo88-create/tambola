@@ -19,6 +19,7 @@ import MyUserGames from './pages/MyUserGames';
 import UserGameDetails from './pages/UserGameDetails';
 import JoinUserGame from './pages/JoinUserGame';
 import UserGamePlay from './pages/UserGamePlay';
+import AudioCaller from './pages/AudioCaller';
 import ProtectedRoute from './components/ProtectedRoute';
 import InstallPrompt from './components/InstallPrompt';
 import './App.css';
