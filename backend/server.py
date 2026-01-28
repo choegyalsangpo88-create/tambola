@@ -3650,9 +3650,36 @@ async def call_user_game_number(
     
     return {
         "number": next_number,
+        "current_number": next_number,
         "called_numbers": called_numbers,
         "remaining": len(available) - 1
     }
+
+@api_router.post("/user-games/{user_game_id}/reset")
+async def reset_user_game(
+    user_game_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Reset a user game - clear all called numbers (host only)"""
+    game = await db.user_games.find_one({"user_game_id": user_game_id}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["host_user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only host can reset game")
+    
+    # Reset called numbers and keep game live
+    await db.user_games.update_one(
+        {"user_game_id": user_game_id},
+        {"$set": {
+            "called_numbers": [],
+            "current_number": None,
+            "winners": {},
+            "status": "live"  # Keep it live so host can continue
+        }}
+    )
+    
+    return {"message": "Game reset successfully", "status": "live"}
 
 @api_router.get("/user-games/{user_game_id}/session")
 async def get_user_game_session(user_game_id: str):
