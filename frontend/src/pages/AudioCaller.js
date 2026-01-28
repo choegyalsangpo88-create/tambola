@@ -102,6 +102,7 @@ export default function AudioCaller() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     isMountedRef.current = true;
     fetchGameData();
@@ -114,6 +115,7 @@ export default function AudioCaller() {
   }, [userGameId, shareCode]);
 
   // Start polling when game is live
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (game && game.status === 'live') {
       pollIntervalRef.current = setInterval(pollGameState, 2000);
