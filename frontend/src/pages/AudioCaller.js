@@ -61,7 +61,7 @@ function CurrentBall({ number, callName }) {
       </div>
       {callName && (
         <p className="mt-4 text-lg sm:text-xl text-amber-400 font-bold text-center">
-          "{callName}"
+          &quot;{callName}&quot;
         </p>
       )}
     </div>
