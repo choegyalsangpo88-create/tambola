@@ -249,6 +249,8 @@ class UserGame(BaseModel):
     prizes_description: str = ""
     share_code: str  # Short unique code for sharing
     status: str = "upcoming"  # upcoming, live, completed
+    audio_only: bool = False  # Audio-only mode - no digital tickets
+    call_interval: int = 8  # Seconds between auto-calls (default 8)
     created_at: datetime
     players: List[Dict[str, Any]] = Field(default_factory=list)  # [{name, tickets: []}]
 
@@ -258,6 +260,8 @@ class CreateUserGameRequest(BaseModel):
     time: str
     max_tickets: int = 90
     prizes_description: str = ""
+    audio_only: bool = False  # Audio-only mode
+    call_interval: int = 8  # Seconds between auto-calls
 
 class UpdateUserGameRequest(BaseModel):
     name: Optional[str] = None
