@@ -152,6 +152,51 @@ export default function CreateUserGame() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Game Mode Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Game Mode
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    gameMode === 'digital' 
+                      ? 'bg-amber-500/20 border-amber-500' 
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+                  onClick={() => setGameMode('digital')}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <Ticket className={`w-6 h-6 ${gameMode === 'digital' ? 'text-amber-400' : 'text-gray-400'}`} />
+                    <span className={`font-semibold ${gameMode === 'digital' ? 'text-amber-400' : 'text-gray-300'}`}>
+                      Digital Tickets
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Players join online with digital tickets. Full game with winner detection.
+                  </p>
+                </div>
+                <div
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    gameMode === 'audio' 
+                      ? 'bg-purple-500/20 border-purple-500' 
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+                  onClick={() => setGameMode('audio')}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <Mic className={`w-6 h-6 ${gameMode === 'audio' ? 'text-purple-400' : 'text-gray-400'}`} />
+                    <span className={`font-semibold ${gameMode === 'audio' ? 'text-purple-400' : 'text-gray-300'}`}>
+                      Audio Caller
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Just audio calling with number board. For physical tickets.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Game Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -195,75 +240,104 @@ export default function CreateUserGame() {
               </div>
             </div>
 
-            {/* Max Tickets */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                <Ticket className="inline w-4 h-4 mr-1" /> Number of Tickets
-              </label>
-              <Input
-                type="number"
-                min="6"
-                max="90"
-                value={formData.max_tickets}
-                onChange={(e) => setFormData({ ...formData, max_tickets: parseInt(e.target.value) || 30 })}
-                className="bg-white/5 border-white/10 text-white"
-              />
-              <p className="text-xs text-gray-500 mt-1">Recommend: 30-60 tickets for family games</p>
-            </div>
-
-            {/* Dividends Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                <Trophy className="inline w-4 h-4 mr-1" /> Select Prizes (Click to enable/disable)
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {Object.entries(dividends).map(([name, data]) => (
-                  <div
-                    key={name}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                      data.enabled 
-                        ? 'bg-amber-500/20 border-amber-500/50' 
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                    }`}
-                    onClick={() => toggleDividend(name)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                            data.enabled 
-                              ? 'bg-amber-500 border-amber-500' 
-                              : 'border-gray-500'
-                          }`}
-                        >
-                          {data.enabled && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className={`font-medium ${data.enabled ? 'text-amber-400' : 'text-gray-300'}`}>
-                          {name}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mb-2">{data.description}</p>
-                    {data.enabled && (
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-gray-400 text-sm">₹</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={data.amount}
-                          onChange={(e) => updateDividendAmount(name, e.target.value)}
-                          className="h-8 bg-white/10 border-white/20 text-white w-24 text-sm"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {/* Audio Mode Settings */}
+            {gameMode === 'audio' && (
+              <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <Volume2 className="w-5 h-5 text-purple-400" />
+                  <span className="font-medium text-purple-400">Audio Caller Settings</span>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-2">
+                    Call Interval (seconds)
+                  </label>
+                  <Input
+                    type="number"
+                    min="5"
+                    max="30"
+                    value={formData.call_interval}
+                    onChange={(e) => setFormData({ ...formData, call_interval: parseInt(e.target.value) || 8 })}
+                    className="bg-white/10 border-purple-500/30 text-white w-24"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Time between each number call (5-30 seconds)</p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Digital Mode Settings */}
+            {gameMode === 'digital' && (
+              <>
+                {/* Max Tickets */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <Ticket className="inline w-4 h-4 mr-1" /> Number of Tickets
+                  </label>
+                  <Input
+                    type="number"
+                    min="6"
+                    max="90"
+                    value={formData.max_tickets}
+                    onChange={(e) => setFormData({ ...formData, max_tickets: parseInt(e.target.value) || 30 })}
+                    className="bg-white/5 border-white/10 text-white"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Recommend: 30-60 tickets for family games</p>
+                </div>
+
+                {/* Dividends Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-3">
+                    <Trophy className="inline w-4 h-4 mr-1" /> Select Prizes (Click to enable/disable)
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Object.entries(dividends).map(([name, data]) => (
+                      <div
+                        key={name}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                          data.enabled 
+                            ? 'bg-amber-500/20 border-amber-500/50' 
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                        onClick={() => toggleDividend(name)}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                data.enabled 
+                                  ? 'bg-amber-500 border-amber-500' 
+                                  : 'border-gray-500'
+                              }`}
+                            >
+                              {data.enabled && (
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                            <span className={`font-medium ${data.enabled ? 'text-amber-400' : 'text-gray-300'}`}>
+                              {name}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-2">{data.description}</p>
+                        {data.enabled && (
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <span className="text-gray-400 text-sm">₹</span>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={data.amount}
+                              onChange={(e) => updateDividendAmount(name, e.target.value)}
+                              className="h-8 bg-white/10 border-white/20 text-white w-24 text-sm"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Submit Button */}
             <Button
