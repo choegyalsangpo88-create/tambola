@@ -206,52 +206,54 @@ export default function CreateUserGame() {
             {/* Game Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Game Name *
+                Game Name {gameMode === 'digital' ? '*' : '(optional)'}
               </label>
               <Input
                 type="text"
-                placeholder="e.g., Diwali Family Game"
+                placeholder={gameMode === 'audio' ? 'e.g., Family Tambola' : 'e.g., Diwali Family Game'}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
-                required
+                required={gameMode === 'digital'}
               />
             </div>
 
-            {/* Date & Time */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  <Calendar className="inline w-4 h-4 mr-1" /> Date *
-                </label>
-                <Input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white"
-                  required
-                />
+            {/* Date & Time - Only for Digital mode */}
+            {gameMode === 'digital' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <Calendar className="inline w-4 h-4 mr-1" /> Date *
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="bg-white/5 border-white/10 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <Clock className="inline w-4 h-4 mr-1" /> Time *
+                  </label>
+                  <Input
+                    type="time"
+                    value={formData.time}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    className="bg-white/5 border-white/10 text-white"
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  <Clock className="inline w-4 h-4 mr-1" /> Time *
-                </label>
-                <Input
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white"
-                  required
-                />
-              </div>
-            </div>
+            )}
 
             {/* Audio Mode Settings */}
             {gameMode === 'audio' && (
               <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
                 <div className="flex items-center gap-2 mb-3">
                   <Volume2 className="w-5 h-5 text-purple-400" />
-                  <span className="font-medium text-purple-400">Audio Caller Settings</span>
+                  <span className="font-medium text-purple-400">Auto-Call Settings</span>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-300 mb-2">
