@@ -70,11 +70,13 @@ export default function CreateUserGame() {
       return;
     }
 
-    // Check if at least one dividend is enabled
-    const hasEnabledDividend = Object.values(dividends).some(d => d.enabled);
-    if (!hasEnabledDividend) {
-      toast.error('Please select at least one prize');
-      return;
+    // For digital mode, check if at least one dividend is enabled
+    if (gameMode === 'digital') {
+      const hasEnabledDividend = Object.values(dividends).some(d => d.enabled);
+      if (!hasEnabledDividend) {
+        toast.error('Please select at least one prize');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -82,8 +84,13 @@ export default function CreateUserGame() {
       const response = await axios.post(
         `${API}/user-games`,
         {
-          ...formData,
-          prizes_description: getEnabledPrizesDescription()
+          name: formData.name,
+          date: formData.date,
+          time: formData.time,
+          max_tickets: gameMode === 'audio' ? 0 : formData.max_tickets,
+          prizes_description: gameMode === 'audio' ? 'Audio-only mode' : getEnabledPrizesDescription(),
+          audio_only: gameMode === 'audio',
+          call_interval: formData.call_interval
         },
         { 
           headers: getAuthHeaders(),
@@ -92,7 +99,13 @@ export default function CreateUserGame() {
       );
       
       toast.success('Game created successfully!');
-      navigate(`/my-games/${response.data.user_game_id}`);
+      
+      // Navigate to appropriate page based on mode
+      if (gameMode === 'audio') {
+        navigate(`/audio-caller/${response.data.user_game_id}`);
+      } else {
+        navigate(`/my-games/${response.data.user_game_id}`);
+      }
     } catch (error) {
       console.error('Failed to create game:', error);
       if (error.response?.status === 401) {
