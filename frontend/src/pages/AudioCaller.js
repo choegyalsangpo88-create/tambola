@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Pause, Square, Volume2, VolumeX, Share2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Play, Pause, RotateCcw, Square, Volume2, VolumeX, Share2, Copy, Check, Mic } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCallName } from '../utils/tambolaCallNames';
 import { unlockMobileAudio, speakText } from '../utils/audioHelper';
@@ -21,7 +21,7 @@ function NumberBoard({ calledNumbers, currentNumber }) {
   const numbers = Array.from({ length: 90 }, (_, i) => i + 1);
   
   return (
-    <div className="grid grid-cols-10 gap-1 p-2 bg-black/30 rounded-xl">
+    <div className="grid grid-cols-10 gap-1 p-3 bg-black/40 rounded-2xl">
       {numbers.map(num => {
         const isCalled = calledNumbers.includes(num);
         const isCurrent = num === currentNumber;
@@ -30,10 +30,10 @@ function NumberBoard({ calledNumbers, currentNumber }) {
           <div
             key={num}
             className={`
-              w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg 
+              aspect-square flex items-center justify-center rounded-lg 
               text-sm sm:text-base font-bold transition-all duration-300
-              ${isCurrent ? 'bg-amber-500 text-black scale-110 animate-pulse ring-2 ring-amber-300' : 
-                isCalled ? 'bg-green-500 text-white' : 
+              ${isCurrent ? 'bg-amber-500 text-black scale-110 ring-4 ring-amber-300/50 shadow-lg shadow-amber-500/30' : 
+                isCalled ? 'bg-green-500 text-white shadow-md' : 
                 'bg-white/10 text-gray-500'}
             `}
           >
@@ -45,22 +45,38 @@ function NumberBoard({ calledNumbers, currentNumber }) {
   );
 }
 
-// Current Ball Display
-function CurrentBall({ number, callName }) {
-  if (!number) return null;
+// Large Current Ball Display
+function CurrentBall({ number, callName, isAnimating }) {
+  if (!number) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border-4 border-gray-600">
+          <Mic className="w-16 h-16 text-gray-500" />
+        </div>
+        <p className="mt-4 text-gray-500 text-lg">Press Start to begin</p>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col items-center justify-center py-6">
       <div className="relative">
-        <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-2xl animate-bounce">
-          <span className="text-5xl sm:text-6xl font-black text-white drop-shadow-lg">
+        <div className={`
+          w-36 h-36 sm:w-44 sm:h-44 rounded-full 
+          bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 
+          flex items-center justify-center 
+          shadow-2xl shadow-amber-500/40
+          border-4 border-amber-300/50
+          ${isAnimating ? 'animate-bounce' : ''}
+        `}>
+          <span className="text-6xl sm:text-7xl font-black text-white drop-shadow-lg">
             {number}
           </span>
         </div>
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-3 bg-black/20 rounded-full blur-sm" />
+        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-28 h-4 bg-black/30 rounded-full blur-md" />
       </div>
       {callName && (
-        <p className="mt-4 text-lg sm:text-xl text-amber-400 font-bold text-center">
+        <p className="mt-5 text-xl sm:text-2xl text-amber-400 font-bold text-center px-4">
           &quot;{callName}&quot;
         </p>
       )}
@@ -82,6 +98,8 @@ export default function AudioCaller() {
   const [currentNumber, setCurrentNumber] = useState(null);
   const [currentCallName, setCurrentCallName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [gameStatus, setGameStatus] = useState('upcoming'); // upcoming, live, completed
   
   const pollIntervalRef = useRef(null);
   const autoCallIntervalRef = useRef(null);
@@ -89,6 +107,7 @@ export default function AudioCaller() {
   const isMountedRef = useRef(true);
   const lastAnnouncedRef = useRef(null);
   const isAnnouncingRef = useRef(false);
+  const gameIdRef = useRef(null);
 
   // Unlock audio on iOS/mobile
   const unlockAudio = useCallback(async () => {
@@ -117,13 +136,13 @@ export default function AudioCaller() {
   // Start polling when game is live
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (game && game.status === 'live') {
+    if (gameStatus === 'live') {
       pollIntervalRef.current = setInterval(pollGameState, 2000);
       return () => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       };
     }
-  }, [game?.status]);
+  }, [gameStatus]);
 
   const fetchGameData = async () => {
     try {
@@ -134,6 +153,7 @@ export default function AudioCaller() {
       } else {
         // Host mode - fetch by ID
         response = await axios.get(`${API}/user-games/${userGameId}`);
+        gameIdRef.current = userGameId;
         
         // Check if current user is host
         const userRes = await axios.get(`${API}/auth/me`, { 
@@ -148,9 +168,11 @@ export default function AudioCaller() {
       
       const gameData = response.data;
       setGame(gameData);
+      setGameStatus(gameData.status || 'upcoming');
       setCalledNumbers(gameData.called_numbers || []);
       setCurrentNumber(gameData.current_number);
       calledCountRef.current = gameData.called_numbers?.length || 0;
+      gameIdRef.current = gameData.user_game_id;
       
       if (gameData.current_number) {
         setCurrentCallName(getCallName(gameData.current_number));
@@ -167,9 +189,10 @@ export default function AudioCaller() {
     if (!isMountedRef.current) return;
     
     try {
+      const gameId = gameIdRef.current;
       const endpoint = shareCode 
         ? `${API}/user-games/share/${shareCode}/poll?last_count=${calledCountRef.current}`
-        : `${API}/user-games/${userGameId}/poll?last_count=${calledCountRef.current}`;
+        : `${API}/user-games/${gameId}/poll?last_count=${calledCountRef.current}`;
       
       const response = await axios.get(endpoint);
       const data = response.data;
@@ -177,8 +200,11 @@ export default function AudioCaller() {
       if (!isMountedRef.current) return;
       
       // Update game status
-      if (data.status !== game?.status) {
-        setGame(prev => prev ? { ...prev, status: data.status } : prev);
+      if (data.status !== gameStatus) {
+        setGameStatus(data.status);
+        if (data.status === 'completed') {
+          stopAutoCall();
+        }
       }
       
       // Update called numbers
@@ -191,15 +217,10 @@ export default function AudioCaller() {
         if (latestNumber && latestNumber !== lastAnnouncedRef.current) {
           setCurrentNumber(latestNumber);
           setCurrentCallName(getCallName(latestNumber));
+          setIsAnimating(true);
+          setTimeout(() => setIsAnimating(false), 1000);
           announceNumber(latestNumber);
         }
-      }
-      
-      // Stop polling if game completed
-      if (data.status === 'completed') {
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-        if (autoCallIntervalRef.current) clearInterval(autoCallIntervalRef.current);
-        setIsPlaying(false);
       }
     } catch (error) {
       console.error('Poll failed:', error);
@@ -225,28 +246,34 @@ export default function AudioCaller() {
   };
 
   const handleStartGame = async () => {
+    const gameId = gameIdRef.current || userGameId;
     try {
       await axios.post(
-        `${API}/user-games/${userGameId}/start`,
+        `${API}/user-games/${gameId}/start`,
         {},
         { headers: getAuthHeaders(), withCredentials: true }
       );
-      setGame(prev => prev ? { ...prev, status: 'live' } : prev);
+      setGameStatus('live');
       toast.success('Game started!');
+      
+      // Start auto-calling immediately (default behavior)
+      startAutoCall();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to start game');
     }
   };
 
-  const handleCallNextNumber = async () => {
+  const callNextNumber = async () => {
     if (calledNumbers.length >= 90) {
-      toast.info('All numbers have been called!');
-      return;
+      toast.info('All 90 numbers have been called!');
+      stopAutoCall();
+      return false;
     }
     
+    const gameId = gameIdRef.current || userGameId;
     try {
       const response = await axios.post(
-        `${API}/user-games/${userGameId}/call-number`,
+        `${API}/user-games/${gameId}/call-number`,
         {},
         { headers: getAuthHeaders(), withCredentials: true }
       );
@@ -257,62 +284,99 @@ export default function AudioCaller() {
         setCurrentCallName(getCallName(newNumber));
         setCalledNumbers(prev => [...prev, newNumber]);
         calledCountRef.current += 1;
+        setIsAnimating(true);
+        setTimeout(() => setIsAnimating(false), 1000);
         announceNumber(newNumber);
+        return true;
       }
+      return false;
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to call number');
+      return false;
     }
   };
 
-  const handleToggleAutoCall = () => {
-    if (isPlaying) {
-      // Stop auto-calling
-      if (autoCallIntervalRef.current) {
-        clearInterval(autoCallIntervalRef.current);
-        autoCallIntervalRef.current = null;
-      }
-      setIsPlaying(false);
-      toast.info('Auto-call paused');
-    } else {
-      // Start auto-calling
-      const interval = (game?.call_interval || 8) * 1000;
-      
-      // Call first number immediately
-      handleCallNextNumber();
-      
-      autoCallIntervalRef.current = setInterval(() => {
-        if (calledNumbers.length < 90) {
-          handleCallNextNumber();
-        } else {
-          if (autoCallIntervalRef.current) {
-            clearInterval(autoCallIntervalRef.current);
-            autoCallIntervalRef.current = null;
-          }
-          setIsPlaying(false);
-        }
-      }, interval);
-      
-      setIsPlaying(true);
-      toast.success(`Auto-calling every ${game?.call_interval || 8} seconds`);
-    }
-  };
-
-  const handleEndGame = async () => {
-    if (!window.confirm('Are you sure you want to end this game?')) return;
+  const startAutoCall = () => {
+    if (autoCallIntervalRef.current) return; // Already running
     
+    const interval = (game?.call_interval || 8) * 1000;
+    
+    // Call first number immediately
+    callNextNumber();
+    
+    autoCallIntervalRef.current = setInterval(async () => {
+      const success = await callNextNumber();
+      if (!success || calledNumbers.length >= 89) {
+        stopAutoCall();
+      }
+    }, interval);
+    
+    setIsPlaying(true);
+  };
+
+  const stopAutoCall = () => {
     if (autoCallIntervalRef.current) {
       clearInterval(autoCallIntervalRef.current);
       autoCallIntervalRef.current = null;
     }
     setIsPlaying(false);
+  };
+
+  const handleToggleAutoCall = () => {
+    if (isPlaying) {
+      stopAutoCall();
+      toast.info('Paused');
+    } else {
+      startAutoCall();
+      toast.success(`Auto-calling every ${game?.call_interval || 8}s`);
+    }
+  };
+
+  const handleResetGame = async () => {
+    if (!window.confirm('Reset game? This will clear all called numbers.')) return;
+    
+    stopAutoCall();
+    const gameId = gameIdRef.current || userGameId;
     
     try {
+      // Reset the game in backend
       await axios.post(
-        `${API}/user-games/${userGameId}/end`,
+        `${API}/user-games/${gameId}/reset`,
         {},
         { headers: getAuthHeaders(), withCredentials: true }
       );
-      setGame(prev => prev ? { ...prev, status: 'completed' } : prev);
+      
+      setCalledNumbers([]);
+      setCurrentNumber(null);
+      setCurrentCallName('');
+      calledCountRef.current = 0;
+      lastAnnouncedRef.current = null;
+      setGameStatus('live');
+      toast.success('Game reset!');
+    } catch (error) {
+      // If reset endpoint doesn't exist, just reset locally
+      setCalledNumbers([]);
+      setCurrentNumber(null);
+      setCurrentCallName('');
+      calledCountRef.current = 0;
+      lastAnnouncedRef.current = null;
+      toast.success('Game reset locally');
+    }
+  };
+
+  const handleEndGame = async () => {
+    if (!window.confirm('End this game?')) return;
+    
+    stopAutoCall();
+    const gameId = gameIdRef.current || userGameId;
+    
+    try {
+      await axios.post(
+        `${API}/user-games/${gameId}/end`,
+        {},
+        { headers: getAuthHeaders(), withCredentials: true }
+      );
+      setGameStatus('completed');
       toast.success('Game ended!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to end game');
@@ -344,9 +408,9 @@ export default function AudioCaller() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0c] to-[#1a1a2e]">
       {/* Header */}
-      <div className="bg-[#121216] border-b border-white/10 sticky top-0 z-50">
+      <div className="bg-black/50 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -358,11 +422,11 @@ export default function AudioCaller() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-lg font-bold text-white">{game.name}</h1>
+              <h1 className="text-lg font-bold text-white">{game.name || 'Audio Caller'}</h1>
               <p className="text-xs text-gray-400">
-                {isHost ? 'Host' : `Hosted by ${game.host_name}`}
-                {game.status === 'live' && <span className="ml-2 text-green-400">● LIVE</span>}
-                {game.status === 'completed' && <span className="ml-2 text-gray-400">● ENDED</span>}
+                {isHost ? 'You are hosting' : `Hosted by ${game.host_name}`}
+                {gameStatus === 'live' && <span className="ml-2 text-green-400 animate-pulse">● LIVE</span>}
+                {gameStatus === 'completed' && <span className="ml-2 text-gray-400">● ENDED</span>}
               </p>
             </div>
           </div>
@@ -376,7 +440,7 @@ export default function AudioCaller() {
                 className="bg-purple-500 hover:bg-purple-600 text-white"
               >
                 <Volume2 className="w-4 h-4 mr-1" />
-                Enable Sound
+                Sound
               </Button>
             ) : (
               <Button
@@ -397,8 +461,7 @@ export default function AudioCaller() {
                 onClick={copyShareLink}
                 className="border-purple-500/50 text-purple-400"
               >
-                {copied ? <Check className="w-4 h-4 mr-1" /> : <Share2 className="w-4 h-4 mr-1" />}
-                {copied ? 'Copied!' : 'Share'}
+                {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
               </Button>
             )}
           </div>
@@ -407,73 +470,88 @@ export default function AudioCaller() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        
         {/* Current Ball Display */}
-        <CurrentBall number={currentNumber} callName={currentCallName} />
+        <CurrentBall number={currentNumber} callName={currentCallName} isAnimating={isAnimating} />
         
         {/* Stats Bar */}
-        <div className="flex items-center justify-center gap-6 text-center">
-          <div>
-            <p className="text-3xl font-bold text-white">{calledNumbers.length}</p>
-            <p className="text-xs text-gray-400">Called</p>
+        <div className="flex items-center justify-center gap-8 text-center">
+          <div className="bg-green-500/20 rounded-xl px-6 py-3">
+            <p className="text-4xl font-black text-green-400">{calledNumbers.length}</p>
+            <p className="text-xs text-green-300/70">Called</p>
           </div>
-          <div className="w-px h-10 bg-white/20" />
-          <div>
-            <p className="text-3xl font-bold text-gray-400">{90 - calledNumbers.length}</p>
-            <p className="text-xs text-gray-400">Remaining</p>
+          <div className="bg-white/5 rounded-xl px-6 py-3">
+            <p className="text-4xl font-black text-gray-400">{90 - calledNumbers.length}</p>
+            <p className="text-xs text-gray-500">Remaining</p>
           </div>
         </div>
 
         {/* Host Controls */}
-        {isHost && game.status !== 'completed' && (
-          <div className="flex items-center justify-center gap-3">
-            {game.status === 'upcoming' ? (
+        {isHost && gameStatus !== 'completed' && (
+          <div className="space-y-4">
+            {gameStatus === 'upcoming' ? (
+              /* Start Game Button */
               <Button
                 onClick={handleStartGame}
-                className="h-14 px-8 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                className="w-full h-20 text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-2xl shadow-lg shadow-green-500/30"
               >
-                <Play className="w-5 h-5 mr-2" />
+                <Play className="w-8 h-8 mr-3" />
                 Start Game
               </Button>
             ) : (
               <>
+                {/* Large Pause/Play Button */}
                 <Button
                   onClick={handleToggleAutoCall}
-                  className={`h-14 px-6 text-lg font-bold ${
+                  className={`w-full h-24 text-3xl font-bold rounded-2xl shadow-xl transition-all ${
                     isPlaying 
-                      ? 'bg-amber-500 hover:bg-amber-600' 
-                      : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-amber-500/30' 
+                      : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-green-500/30'
                   }`}
                 >
                   {isPlaying ? (
                     <>
-                      <Pause className="w-5 h-5 mr-2" />
-                      Pause
+                      <Pause className="w-10 h-10 mr-3" />
+                      PAUSE
                     </>
                   ) : (
                     <>
-                      <Play className="w-5 h-5 mr-2" />
-                      Auto Call
+                      <Play className="w-10 h-10 mr-3" />
+                      RESUME
                     </>
                   )}
                 </Button>
                 
-                <Button
-                  onClick={handleCallNextNumber}
-                  variant="outline"
-                  className="h-14 px-6 text-lg font-bold border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
-                  disabled={isPlaying || calledNumbers.length >= 90}
-                >
-                  Call Next
-                </Button>
-                
-                <Button
-                  onClick={handleEndGame}
-                  variant="outline"
-                  className="h-14 px-6 text-lg font-bold border-red-500/50 text-red-400 hover:bg-red-500/10"
-                >
-                  <Square className="w-5 h-5 mr-2" />
-                  End
-                </Button>
+                {/* Secondary Controls Row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    onClick={callNextNumber}
+                    variant="outline"
+                    className="h-14 text-sm font-bold border-purple-500/50 text-purple-400 hover:bg-purple-500/10 rounded-xl"
+                    disabled={isPlaying || calledNumbers.length >= 90}
+                  >
+                    <Mic className="w-5 h-5 mr-2" />
+                    Manual Call
+                  </Button>
+                  
+                  <Button
+                    onClick={handleResetGame}
+                    variant="outline"
+                    className="h-14 text-sm font-bold border-blue-500/50 text-blue-400 hover:bg-blue-500/10 rounded-xl"
+                  >
+                    <RotateCcw className="w-5 h-5 mr-2" />
+                    Reset
+                  </Button>
+                  
+                  <Button
+                    onClick={handleEndGame}
+                    variant="outline"
+                    className="h-14 text-sm font-bold border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-xl"
+                  >
+                    <Square className="w-5 h-5 mr-2" />
+                    End
+                  </Button>
+                </div>
               </>
             )}
           </div>
@@ -486,19 +564,21 @@ export default function AudioCaller() {
         </div>
 
         {/* Game Ended Message */}
-        {game.status === 'completed' && (
-          <div className="text-center p-6 bg-white/5 rounded-xl border border-white/10">
-            <p className="text-2xl font-bold text-white mb-2">Game Ended!</p>
+        {gameStatus === 'completed' && (
+          <div className="text-center p-6 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl border border-purple-500/30">
+            <p className="text-3xl font-bold text-white mb-2">🎉 Game Over!</p>
             <p className="text-gray-400">{calledNumbers.length} numbers were called</p>
           </div>
         )}
 
-        {/* Share Code for Viewers */}
+        {/* Share Code Display */}
         {game.share_code && (
-          <div className="text-center p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-            <p className="text-sm text-purple-300 mb-2">Share Code</p>
-            <p className="text-3xl font-bold text-purple-400 tracking-widest">{game.share_code}</p>
-            <p className="text-xs text-gray-500 mt-2">Others can view at: /audio-view/{game.share_code}</p>
+          <div 
+            className="text-center p-4 bg-purple-500/10 rounded-2xl border border-purple-500/30 cursor-pointer hover:bg-purple-500/20 transition-colors"
+            onClick={copyShareLink}
+          >
+            <p className="text-xs text-purple-300 mb-1">Share Code (tap to copy link)</p>
+            <p className="text-4xl font-black text-purple-400 tracking-[0.3em]">{game.share_code}</p>
           </div>
         )}
       </div>
