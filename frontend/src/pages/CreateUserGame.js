@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Calendar, Clock, Trophy, Ticket } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, Clock, Trophy, Ticket, Volume2, Mic } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -30,11 +30,13 @@ const DEFAULT_DIVIDENDS = {
 export default function CreateUserGame() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [gameMode, setGameMode] = useState('digital'); // 'digital' or 'audio'
   const [formData, setFormData] = useState({
     name: '',
     date: '',
     time: '',
     max_tickets: 30,
+    call_interval: 8, // Seconds between auto-calls
   });
   const [dividends, setDividends] = useState({ ...DEFAULT_DIVIDENDS });
 
