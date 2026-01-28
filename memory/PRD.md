@@ -511,6 +511,23 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
     - Automatic polling stop when game completes
     - Response times < 500ms
 
+- **Audio Caller Mode (COMPLETED)**
+  - New "Audio Caller" mode in "Host Your Own Game"
+  - For users with physical tickets who just need number calling
+  - **Host Features:**
+    - Start Game button
+    - Auto Call with configurable interval (5-30 seconds, default 8)
+    - Pause auto-call
+    - Call Next (manual call)
+    - End Game button
+  - **Number Board:** 1-90 grid showing called numbers (green) and current number (amber, animated)
+  - **Current Ball Display:** Large animated ball with call name (e.g., "Two Little Ducks - 22")
+  - **Share Feature:** Public viewer link `/audio-view/{shareCode}` - no login required
+  - **Files:** 
+    - Backend: `audio_only`, `call_interval` fields in UserGame model
+    - Frontend: `/app/frontend/src/pages/AudioCaller.js`
+    - Routes: `/audio-caller/:userGameId` (host), `/audio-view/:shareCode` (viewer)
+
 ---
 
 ## Pending / Backlog
