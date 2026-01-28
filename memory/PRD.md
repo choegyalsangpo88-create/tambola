@@ -511,22 +511,26 @@ When all regular dividends (Top Line, Middle Line, Bottom Line, Full House, etc.
     - Automatic polling stop when game completes
     - Response times < 500ms
 
-- **Audio Caller Mode (COMPLETED)**
+- **Audio Caller Mode (COMPLETED - Simplified)**
   - New "Audio Caller" mode in "Host Your Own Game"
   - For users with physical tickets who just need number calling
-  - **Host Features:**
-    - Start Game button
-    - Auto Call with configurable interval (5-30 seconds, default 8)
-    - Pause auto-call
-    - Call Next (manual call)
-    - End Game button
-  - **Number Board:** 1-90 grid showing called numbers (green) and current number (amber, animated)
-  - **Current Ball Display:** Large animated ball with call name (e.g., "Two Little Ducks - 22")
-  - **Share Feature:** Public viewer link `/audio-view/{shareCode}` - no login required
-  - **Files:** 
-    - Backend: `audio_only`, `call_interval` fields in UserGame model
-    - Frontend: `/app/frontend/src/pages/AudioCaller.js`
-    - Routes: `/audio-caller/:userGameId` (host), `/audio-view/:shareCode` (viewer)
+  - **Simplified Flow:**
+    - No date/time fields required (auto-fills current date/time)
+    - Just enter game name (optional) and call interval
+    - Click "Start Game" to begin immediately
+  - **Host Controls:**
+    - **Large PAUSE/RESUME Button** - Primary control during live game
+    - Auto-call starts immediately when game starts
+    - Manual Call button (when paused)
+    - Reset button - clears all called numbers, keeps game live
+    - End button - completes the game
+  - **Number Board:** 1-90 grid with called numbers (green) and current (amber)
+  - **Current Ball Display:** Large animated ball with call name
+  - **Share Feature:** Public viewer link `/audio-view/{shareCode}`
+  - **Backend Endpoints:**
+    - `POST /api/user-games/{id}/reset` - Reset called numbers
+    - `POST /api/user-games/{id}/call-number` - Call next number
+  - **Files:** `/app/frontend/src/pages/AudioCaller.js`, `/app/frontend/src/pages/CreateUserGame.js`
 
 ---
 
