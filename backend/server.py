@@ -3225,9 +3225,11 @@ async def create_user_game(
         "prizes_description": game_data.prizes_description,
         "share_code": share_code,
         "status": "upcoming",
+        "audio_only": game_data.audio_only,
+        "call_interval": game_data.call_interval,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "players": [],
-        "tickets": tickets,
+        "tickets": tickets if not game_data.audio_only else [],  # No tickets for audio-only mode
         "dividends": dividends,
         "called_numbers": [],
         "current_number": None,
