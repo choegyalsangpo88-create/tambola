@@ -65,13 +65,19 @@ export default function CreateUserGame() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.date || !formData.time) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-
-    // For digital mode, check if at least one dividend is enabled
-    if (gameMode === 'digital') {
+    // For audio mode, only name is required
+    if (gameMode === 'audio') {
+      if (!formData.name) {
+        toast.error('Please enter a game name');
+        return;
+      }
+    } else {
+      // For digital mode, require all fields
+      if (!formData.name || !formData.date || !formData.time) {
+        toast.error('Please fill all required fields');
+        return;
+      }
+      
       const hasEnabledDividend = Object.values(dividends).some(d => d.enabled);
       if (!hasEnabledDividend) {
         toast.error('Please select at least one prize');
@@ -85,8 +91,8 @@ export default function CreateUserGame() {
         `${API}/user-games`,
         {
           name: formData.name,
-          date: formData.date,
-          time: formData.time,
+          date: gameMode === 'audio' ? new Date().toISOString().split('T')[0] : formData.date,
+          time: gameMode === 'audio' ? new Date().toTimeString().slice(0, 5) : formData.time,
           max_tickets: gameMode === 'audio' ? 0 : formData.max_tickets,
           prizes_description: gameMode === 'audio' ? 'Audio-only mode' : getEnabledPrizesDescription(),
           audio_only: gameMode === 'audio',
