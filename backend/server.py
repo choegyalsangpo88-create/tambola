@@ -3296,6 +3296,71 @@ async def get_user_game(user_game_id: str):
         raise HTTPException(status_code=404, detail="Game not found")
     return game
 
+@api_router.get("/user-games/{user_game_id}/poll")
+async def poll_user_game(user_game_id: str, last_count: int = 0):
+    """
+    Lightweight polling endpoint for user games (especially audio-only mode).
+    Returns only essential data for real-time updates.
+    """
+    game = await db.user_games.find_one(
+        {"user_game_id": user_game_id},
+        {"_id": 0, "name": 1, "status": 1, "called_numbers": 1, "current_number": 1, 
+         "winners": 1, "audio_only": 1, "call_interval": 1, "host_name": 1}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    called_numbers = game.get("called_numbers", [])
+    total_called = len(called_numbers)
+    new_numbers = called_numbers[last_count:] if total_called > last_count else []
+    
+    return {
+        "name": game.get("name"),
+        "host_name": game.get("host_name"),
+        "status": game.get("status", "upcoming"),
+        "audio_only": game.get("audio_only", False),
+        "call_interval": game.get("call_interval", 8),
+        "total_called": total_called,
+        "new_numbers": new_numbers,
+        "all_called_numbers": called_numbers,  # For number board
+        "current_number": game.get("current_number"),
+        "winners": game.get("winners", {}),
+        "has_changes": len(new_numbers) > 0
+    }
+
+@api_router.get("/user-games/share/{share_code}/poll")
+async def poll_user_game_by_code(share_code: str, last_count: int = 0):
+    """
+    Lightweight polling by share code - for viewers of audio-only games.
+    No authentication required.
+    """
+    game = await db.user_games.find_one(
+        {"share_code": share_code.upper()},
+        {"_id": 0, "name": 1, "status": 1, "called_numbers": 1, "current_number": 1, 
+         "winners": 1, "audio_only": 1, "call_interval": 1, "host_name": 1, "user_game_id": 1}
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    called_numbers = game.get("called_numbers", [])
+    total_called = len(called_numbers)
+    new_numbers = called_numbers[last_count:] if total_called > last_count else []
+    
+    return {
+        "user_game_id": game.get("user_game_id"),
+        "name": game.get("name"),
+        "host_name": game.get("host_name"),
+        "status": game.get("status", "upcoming"),
+        "audio_only": game.get("audio_only", False),
+        "call_interval": game.get("call_interval", 8),
+        "total_called": total_called,
+        "new_numbers": new_numbers,
+        "all_called_numbers": called_numbers,
+        "current_number": game.get("current_number"),
+        "winners": game.get("winners", {}),
+        "has_changes": len(new_numbers) > 0
+    }
+
 @api_router.put("/user-games/{user_game_id}")
 async def update_user_game(
     user_game_id: str,
