@@ -61,6 +61,9 @@ function AppRouter() {
         <Route path="/join/:shareCode" element={<JoinUserGame />} />
         {/* Public Play Route for user games - No auth required */}
         <Route path="/play/:userGameId" element={<UserGamePlay />} />
+        {/* Audio Caller Routes */}
+        <Route path="/audio-caller/:userGameId" element={<ProtectedRoute><AudioCaller /></ProtectedRoute>} />
+        <Route path="/audio-view/:shareCode" element={<AudioCaller />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <Toaster position="top-right" />
